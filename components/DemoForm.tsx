@@ -10,8 +10,12 @@ const BLOCKED_DOMAINS = new Set([
   "yahoo.co.uk", "googlemail.com", "me.com", "mac.com",
 ]);
 
+const WHITELISTED_EMAILS = new Set(["kunal.lexutra@gmail.com"]);
+
 function isPersonalEmail(email: string): boolean {
-  const domain = email.split("@")[1]?.toLowerCase();
+  const normalized = email.trim().toLowerCase();
+  if (WHITELISTED_EMAILS.has(normalized)) return false;
+  const domain = normalized.split("@")[1];
   return domain ? BLOCKED_DOMAINS.has(domain) : false;
 }
 
@@ -50,15 +54,16 @@ export function DemoForm() {
     setStatus("submitting");
 
     try {
-      const { error: dbError } = await supabase.from("demo_requests").insert([
-        {
+      const res = await fetch("/api/demo-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           company_name: form.company_name.trim(),
           email: form.email.trim().toLowerCase(),
           website_url: form.website_url.trim(),
-          status: "pending",
-        },
-      ]);
-      if (dbError) throw dbError;
+        }),
+      });
+      if (!res.ok) throw new Error("Request failed");
       setStatus("success");
     } catch {
       setStatus("error");
