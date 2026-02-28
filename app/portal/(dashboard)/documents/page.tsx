@@ -1,27 +1,18 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DocumentRepository } from "@/components/portal/DocumentRepository";
 
 export const metadata = { title: "Documents — LexSutra Portal" };
 
 export default async function DocumentsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/portal/login");
-
+  // TODO: re-enable auth before production
   const adminClient = createSupabaseAdminClient();
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("company_id")
-    .eq("id", user.id)
-    .single();
 
-  if (!profile?.company_id) redirect("/portal/login");
+  const companyId = "11111111-1111-1111-1111-111111111111";
 
   const { data: docs } = await adminClient
     .from("documents")
     .select("id, created_at, file_name, file_size, file_type, confirmed_at")
-    .eq("company_id", profile.company_id)
+    .eq("company_id", companyId)
     .order("created_at", { ascending: false });
 
   return (
@@ -41,7 +32,7 @@ export default async function DocumentsPage() {
 
       <DocumentRepository
         initialDocs={docs ?? []}
-        userEmail={user.email ?? ""}
+        userEmail="test@lexsutra.nl"
       />
     </div>
   );

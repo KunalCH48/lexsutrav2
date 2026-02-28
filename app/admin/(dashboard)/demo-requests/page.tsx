@@ -10,7 +10,7 @@ export default async function DemoRequestsPage() {
 
   const { data: requests } = await supabase
     .from("demo_requests")
-    .select("id, company_name, email, website_url, status, created_at")
+    .select("id, company_name, contact_email, website_url, status, created_at")
     .order("created_at", { ascending: false });
 
   const rows = requests ?? [];
@@ -61,7 +61,7 @@ export default async function DemoRequestsPage() {
             <TableRow key={r.id}>
               <TableCell muted>{fmtDate(r.created_at)}</TableCell>
               <TableCell>{r.company_name}</TableCell>
-              <TableCell muted>{r.email}</TableCell>
+              <TableCell muted>{r.contact_email}</TableCell>
               <TableCell>
                 {r.website_url ? (
                   <a

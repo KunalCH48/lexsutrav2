@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+// TODO: re-enable auth before production
 import { ClientSidebar } from "@/components/portal/ClientSidebar";
 import { MobileNav } from "@/components/portal/MobileNav";
 
@@ -8,40 +7,15 @@ export default async function PortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect("/portal/login");
-
-  const adminClient = createSupabaseAdminClient();
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("role, company_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || profile.role !== "client") redirect("/portal/login");
-
-  // Fetch company name for sidebar
-  let companyName = "My Company";
-  if (profile.company_id) {
-    const { data: company } = await adminClient
-      .from("companies")
-      .select("name")
-      .eq("id", profile.company_id)
-      .single();
-    if (company?.name) companyName = company.name;
-  }
+  const companyName = "Test Company";
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#080c14" }}>
-      {/* Desktop sidebar — hidden on mobile */}
       <div className="hidden md:block">
         <ClientSidebar companyName={companyName} />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
         <div
           className="h-14 flex items-center justify-between px-4 md:px-6 shrink-0"
           style={{
@@ -50,7 +24,6 @@ export default async function PortalLayout({
           }}
         >
           <div className="flex items-center gap-3">
-            {/* Hamburger — mobile only */}
             <MobileNav companyName={companyName} />
             <span className="text-sm hidden sm:block" style={{ color: "#8899aa" }}>
               Welcome back
@@ -59,7 +32,7 @@ export default async function PortalLayout({
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ background: "#2ecc71" }} />
             <span className="text-xs" style={{ color: "#3d4f60" }}>
-              {user.email}
+              test@lexsutra.nl
             </span>
           </div>
         </div>

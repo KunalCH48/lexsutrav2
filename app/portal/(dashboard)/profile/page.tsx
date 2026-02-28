@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { AddAiSystemForm } from "@/components/portal/AddAiSystemForm";
 
 export const metadata = { title: "Company Profile — LexSutra Portal" };
@@ -13,30 +12,21 @@ const RISK_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default async function ProfilePage() {
-  const supabase    = await createSupabaseServerClient();
+  // TODO: re-enable auth before production
   const adminClient = createSupabaseAdminClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/portal/login");
-
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("company_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.company_id) redirect("/portal");
+  const companyId = "11111111-1111-1111-1111-111111111111";
 
   const [companyRes, systemsRes] = await Promise.all([
     adminClient
       .from("companies")
       .select("id, name, email, website_url, created_at")
-      .eq("id", profile.company_id)
+      .eq("id", companyId)
       .single(),
     adminClient
       .from("ai_systems")
       .select("id, name, risk_category, description, created_at")
-      .eq("company_id", profile.company_id)
+      .eq("company_id", companyId)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -139,7 +129,7 @@ export default async function ProfilePage() {
           <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "#3d4f60" }}>
             Register a New AI System
           </p>
-          <AddAiSystemForm companyId={profile.company_id} />
+          <AddAiSystemForm companyId={companyId} />
         </div>
       </div>
     </div>

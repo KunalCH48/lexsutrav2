@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // Save to Supabase
     const { error: dbError } = await supabase
       .from("demo_requests")
-      .insert([{ company_name, email, website_url, status: "pending" }]);
+      .insert([{ company_name, contact_email: email, website_url, status: "pending" }]);
 
     if (dbError) {
       await logError({

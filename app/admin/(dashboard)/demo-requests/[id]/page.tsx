@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import DemoActionPanel from "@/components/admin/DemoActionPanel";
+import DemoAnalysisPanel from "@/components/admin/DemoAnalysisPanel";
 
 export const metadata = { title: "Review Demo Request — LexSutra Admin" };
 
@@ -77,7 +78,7 @@ export default async function DemoReviewPage({
 
   const { data: demo } = await adminClient
     .from("demo_requests")
-    .select("id, company_name, email, website_url, status, created_at")
+    .select("id, company_name, contact_email, website_url, status, created_at, insights_snapshot")
     .eq("id", id)
     .single();
 
@@ -87,7 +88,7 @@ export default async function DemoReviewPage({
   const { data: existingCompany } = await adminClient
     .from("companies")
     .select("id, name")
-    .eq("email", demo.email)
+    .eq("email", demo.contact_email)
     .maybeSingle();
 
   return (
@@ -129,7 +130,7 @@ export default async function DemoReviewPage({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <DetailField label="Company Name" value={demo.company_name} />
-            <DetailField label="Business Email" value={demo.email} mono />
+            <DetailField label="Business Email" value={demo.contact_email} mono />
             <DetailField label="Website" value={demo.website_url} link />
             <DetailField label="Submitted" value={fmtDate(demo.created_at)} />
           </div>
@@ -160,7 +161,16 @@ export default async function DemoReviewPage({
           demoId={demo.id}
           status={demo.status}
           companyName={demo.company_name}
-          email={demo.email}
+          email={demo.contact_email}
+        />
+      </div>
+
+      {/* AI Analysis Panel */}
+      <div className="mt-6">
+        <DemoAnalysisPanel
+          demoId={demo.id}
+          companyName={demo.company_name}
+          initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null }[] } | null}
         />
       </div>
     </div>

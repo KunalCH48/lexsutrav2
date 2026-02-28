@@ -47,7 +47,12 @@ export async function logError({
   metadata    = {},
   severity    = "error",
 }: LogErrorParams): Promise<void> {
-  const message    = error instanceof Error ? error.message : String(error);
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error !== null && "message" in error
+      ? String((error as { message: unknown }).message)
+      : String(error);
   const stackTrace = error instanceof Error ? (error.stack ?? null) : null;
 
   // Always log to console — shows in Vercel Functions logs

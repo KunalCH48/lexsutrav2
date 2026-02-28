@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 export const metadata = { title: "Dashboard — LexSutra Portal" };
@@ -53,25 +52,10 @@ function timeAgo(iso: string) {
 
 // --- Page ---
 export default async function PortalDashboardPage() {
-  const supabase     = await createSupabaseServerClient();
+  // TODO: re-enable auth before production
   const adminClient  = createSupabaseAdminClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/portal/login");
-
-  // Profile + company
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("company_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.company_id) {
-    // Account created but no company linked yet
-    return <NoCompanyState />;
-  }
-
-  const companyId = profile.company_id;
+  const companyId = "11111111-1111-1111-1111-111111111111";
 
   const [companyRes, systemsRes, activityRes, policyRes] = await Promise.all([
     adminClient.from("companies").select("id, name, email").eq("id", companyId).single(),
@@ -79,13 +63,12 @@ export default async function PortalDashboardPage() {
     adminClient
       .from("activity_log")
       .select("id, action, entity_type, created_at, metadata")
-      .eq("actor_id", user.id)
       .order("created_at", { ascending: false })
       .limit(6),
     adminClient
       .from("policy_versions")
-      .select("id, version, effective_date")
-      .is("deprecated_at", null)
+      .select("id, version_code, display_name, effective_date")
+      .eq("is_current", true)
       .order("created_at", { ascending: false })
       .limit(1)
       .single(),
@@ -187,7 +170,7 @@ export default async function PortalDashboardPage() {
             {latestDiagnostic ? fmtDate(latestDiagnostic.created_at) : "—"}
           </p>
           <p className="text-xs mt-1" style={{ color: "#3d4f60" }}>
-            {latestPolicy?.version ?? "No reports yet"}
+            {latestPolicy?.display_name ?? "No reports yet"}
           </p>
         </MetricCard>
 

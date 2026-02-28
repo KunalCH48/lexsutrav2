@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 
-type FindingScore = "compliant" | "partial" | "critical" | "not_started";
+type FindingScore = "compliant" | "partial" | "critical_gap" | "not_started" | "not_applicable";
 
 export type FindingPayload = {
   obligation_id: string;
@@ -12,6 +12,8 @@ export type FindingPayload = {
   finding_text: string;
   citation: string;
   remediation: string;
+  effort: string;
+  deadline: string;
 };
 
 async function getAdminUser() {
@@ -43,6 +45,8 @@ export async function saveFindings(
       finding_text:  f.finding_text,
       citation:      f.citation,
       remediation:   f.remediation,
+      effort:        f.effort,
+      deadline:      f.deadline,
     }));
 
     const { error } = await adminClient

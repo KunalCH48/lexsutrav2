@@ -50,24 +50,24 @@ export async function createClientAccount(
 
     const { data: company, error: companyError } = await adminClient
       .from("companies")
-      .insert({ name: demo.company_name, email: demo.email, website_url: demo.website_url ?? null })
+      .insert({ name: demo.company_name, email: demo.contact_email, website_url: demo.website_url ?? null })
       .select("id")
       .single();
 
     if (companyError || !company) {
-      await logError({ error: companyError ?? new Error("Company insert returned null"), source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.email } });
+      await logError({ error: companyError ?? new Error("Company insert returned null"), source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.contact_email } });
       return { error: companyError?.message ?? "Failed to create company." };
     }
 
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
-      demo.email,
+      demo.contact_email,
       { data: { company_id: company.id, role: "client" } }
     );
 
     if (inviteError) {
       // Roll back company creation
       await adminClient.from("companies").delete().eq("id", company.id);
-      await logError({ error: inviteError, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.email, company_id: company.id } });
+      await logError({ error: inviteError, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.contact_email, company_id: company.id } });
       return { error: inviteError.message };
     }
 
@@ -84,7 +84,7 @@ export async function createClientAccount(
       action: "create_client_account",
       entity_type: "companies",
       entity_id: company.id,
-      metadata: { demo_id: demoId, email: demo.email, company_name: demo.company_name, risk_tier: riskTier, notes: notes || null },
+      metadata: { demo_id: demoId, email: demo.contact_email, company_name: demo.company_name, risk_tier: riskTier, notes: notes || null },
     });
 
     revalidatePath("/admin/demo-requests");

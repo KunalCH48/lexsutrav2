@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
 
@@ -11,7 +10,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/admin/login?error=auth_failed`);
   }
 
-  const cookieStore = await cookies();
+  // Build the redirect response first — session cookies must be set ON this response
+  const response = NextResponse.redirect(`${origin}/admin`);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,12 +19,14 @@ export async function GET(request: Request) {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
+          // Set cookies on BOTH the request (for this handler) and the response (for the browser)
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
         },
       },
     }
@@ -36,10 +38,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/admin/login?error=auth_failed`);
   }
 
-  // Verify the signed-in user has admin role
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.redirect(`${origin}/admin/login?error=auth_failed`);
@@ -58,10 +57,9 @@ export async function GET(request: Request) {
     .single();
 
   if (!profile || profile.role !== "admin") {
-    // Sign out — this Google account has no admin access
     await supabase.auth.signOut();
     return NextResponse.redirect(`${origin}/admin/login?error=not_admin`);
   }
 
-  return NextResponse.redirect(`${origin}/admin`);
+  return response;
 }

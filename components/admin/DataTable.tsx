@@ -1,3 +1,5 @@
+"use client";
+
 interface DataTableProps {
   headers: string[];
   children: React.ReactNode;

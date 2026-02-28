@@ -21,7 +21,7 @@ async function getStats() {
         .select("*", { count: "exact", head: true }),
       supabase
         .from("demo_requests")
-        .select("id, company_name, email, website_url, status, created_at")
+        .select("id, company_name, contact_email, website_url, status, created_at")
         .order("created_at", { ascending: false })
         .limit(8),
       supabase
@@ -144,13 +144,11 @@ export default async function AdminOverviewPage() {
             return (
               <div
                 key={r.id}
-                className="grid items-center px-5 py-3.5 text-sm transition-colors"
+                className="grid items-center px-5 py-3.5 text-sm transition-colors hover:bg-[rgba(232,244,255,0.03)]"
                 style={{
                   gridTemplateColumns: "2fr 1fr 1fr 1fr 120px",
                   borderBottom: "1px solid rgba(45,156,219,0.08)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(232,244,255,0.03)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <div>
                   <div className="font-medium text-white">{r.company_name}</div>
@@ -160,7 +158,7 @@ export default async function AdminOverviewPage() {
                     </div>
                   )}
                 </div>
-                <div className="text-xs" style={{ color: "rgba(232,244,255,0.5)" }}>{r.email}</div>
+                <div className="text-xs" style={{ color: "rgba(232,244,255,0.5)" }}>{r.contact_email}</div>
                 <div className="text-xs" style={{ color: "rgba(232,244,255,0.5)" }}>{timeAgo(r.created_at)}</div>
                 <div>
                   <span
@@ -172,7 +170,7 @@ export default async function AdminOverviewPage() {
                 </div>
                 <div>
                   <Link
-                    href="/admin/demo-requests"
+                    href={`/admin/demo-requests/${r.id}`}
                     className="px-3 py-1.5 rounded text-xs font-medium transition-opacity hover:opacity-80"
                     style={{ background: "#2d9cdb", color: "#fff" }}
                   >
@@ -227,13 +225,11 @@ export default async function AdminOverviewPage() {
             return (
               <div
                 key={d.id}
-                className="grid items-center px-5 py-3.5 text-sm"
+                className="grid items-center px-5 py-3.5 text-sm transition-colors hover:bg-[rgba(232,244,255,0.03)]"
                 style={{
                   gridTemplateColumns: "2fr 1fr 1fr 1fr 120px",
                   borderBottom: "1px solid rgba(45,156,219,0.08)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(232,244,255,0.03)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <div>
                   <div className="font-medium text-white">

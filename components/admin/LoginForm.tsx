@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 interface LoginFormProps {
   error?: string;
@@ -25,24 +24,8 @@ export function LoginForm({ error }: LoginFormProps) {
   async function handleGoogleSignIn() {
     setStatus("loading");
     setErrorMsg("");
-
-    const supabase = createSupabaseBrowserClient();
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "select_account",
-        },
-      },
-    });
-
-    if (oauthError) {
-      setStatus("error");
-      setErrorMsg(oauthError.message ?? "Sign in failed. Please try again.");
-    }
-    // On success the browser navigates to Google — no further action needed here
+    // Server-side OAuth initiation — avoids PKCE state loss on browser client
+    window.location.href = "/auth/login";
   }
 
   const showError = (status === "error" || !!error) && !!errorMsg;

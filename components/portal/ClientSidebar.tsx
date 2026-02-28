@@ -1,3 +1,5 @@
+"use client";
+
 import { LayoutDashboard, FolderOpen, ClipboardList, FileText, Building2 } from "lucide-react";
 import { SidebarLink } from "@/components/admin/SidebarLink";
 import { ClientSignOutButton } from "./ClientSignOutButton";

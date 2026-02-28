@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const [{ data: diagnostic }, { data: obligations }, { data: responses }] = await Promise.all([
       adminClient
         .from("diagnostics")
-        .select(`id, status, policy_versions ( version, regulation_text ), ai_systems ( name, risk_category, description )`)
+        .select(`id, status, policy_versions ( version_code, display_name, notes ), ai_systems ( name, risk_category, description )`)
         .eq("id", diagnosticId)
         .single(),
       adminClient
@@ -114,7 +114,7 @@ Output ONLY valid JSON — no markdown code blocks, no extra text. Use this exac
     const userMessage = `AI System: ${sys?.name ?? "Unknown"}
 Risk Category: ${sys?.risk_category ?? "Unknown"}
 Description: ${sys?.description ?? "—"}
-Regulation Version: ${pv?.version ?? "EU AI Act — Regulation (EU) 2024/1689"}
+Regulation Version: ${pv?.display_name ?? "EU AI Act — Regulation (EU) 2024/1689"}
 
 Obligation IDs for reference:
 ${Object.entries(obligationQA).map(([id, ob]) => `- ${ob.name}: "${id}"`).join("\n")}

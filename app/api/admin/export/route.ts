@@ -30,15 +30,15 @@ export async function GET(req: NextRequest) {
   if (table === "demo-requests") {
     const { data } = await adminClient
       .from("demo_requests")
-      .select("id, created_at, company_name, email, website_url, status")
+      .select("id, created_at, company_name, contact_email, website_url, status")
       .order("created_at", { ascending: false });
 
     csv = toCSV(
       ["ID", "Submitted", "Company", "Email", "Website", "Status"],
       (data ?? []).map((r: {
         id: string; created_at: string; company_name: string;
-        email: string; website_url: string; status: string;
-      }) => [r.id, r.created_at, r.company_name, r.email, r.website_url, r.status])
+        contact_email: string; website_url: string; status: string;
+      }) => [r.id, r.created_at, r.company_name, r.contact_email, r.website_url, r.status])
     );
     filename = "demo-requests.csv";
 
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
       .select(`
         id, created_at, status, tier,
         ai_systems ( name, companies ( name, email ) ),
-        policy_versions ( version )
+        policy_versions ( version_code, display_name )
       `)
       .order("created_at", { ascending: false });
 
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       (data ?? []).map((r: {
         id: string; created_at: string; status: string; tier: string;
         ai_systems: { name: string; companies: { name: string; email: string } | { name: string; email: string }[] | null } | { name: string; companies: { name: string; email: string } | { name: string; email: string }[] | null }[] | null;
-        policy_versions: { version: string } | { version: string }[] | null;
+        policy_versions: { version_code: string; display_name: string } | { version_code: string; display_name: string }[] | null;
       }) => {
         const sys     = Array.isArray(r.ai_systems) ? r.ai_systems[0] : r.ai_systems;
         const company = sys?.companies
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
         return [
           r.id, r.created_at, r.status, r.tier ?? "core",
           sys?.name ?? "", company?.name ?? "", company?.email ?? "",
-          pv?.version ?? "",
+          pv?.version_code ?? "",
         ];
       })
     );

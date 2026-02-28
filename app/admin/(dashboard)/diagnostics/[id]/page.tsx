@@ -28,7 +28,7 @@ export default async function DiagnosticReviewPage({
       .from("diagnostics")
       .select(`
         id, status, created_at,
-        policy_versions ( version ),
+        policy_versions ( version_code, display_name ),
         ai_systems (
           id, name, risk_category, description,
           companies ( id, name, email )
@@ -44,7 +44,7 @@ export default async function DiagnosticReviewPage({
 
     adminClient
       .from("diagnostic_findings")
-      .select("obligation_id, score, finding_text, citation, remediation")
+      .select("obligation_id, score, finding_text, citation, remediation, effort, deadline")
       .eq("diagnostic_id", id),
 
     adminClient
@@ -98,9 +98,9 @@ export default async function DiagnosticReviewPage({
           <p className="text-sm" style={{ color: "#8899aa" }}>
             {sys?.name ?? "AI System"} · {sys?.risk_category ?? "Unknown Risk"} · Created {fmtDate(diagnostic.created_at)}
           </p>
-          {policyVersion?.version && (
+          {policyVersion?.version_code && (
             <p className="text-xs mt-1" style={{ color: "#3d4f60" }}>
-              Policy: {policyVersion.version}
+              Policy: {policyVersion.version_code}
             </p>
           )}
         </div>
@@ -140,12 +140,16 @@ export default async function DiagnosticReviewPage({
           finding_text: string | null;
           citation: string | null;
           remediation: string | null;
+          effort: string | null;
+          deadline: string | null;
         }) => ({
           obligation_id: f.obligation_id,
-          score: f.score as "compliant" | "partial" | "critical" | "not_started",
+          score: f.score as "compliant" | "partial" | "critical_gap" | "not_started" | "not_applicable",
           finding_text: f.finding_text ?? "",
           citation: f.citation ?? "",
           remediation: f.remediation ?? "",
+          effort: f.effort ?? "",
+          deadline: f.deadline ?? "",
         }))}
       />
     </div>

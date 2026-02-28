@@ -1,6 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { QuestionnaireForm } from "@/components/portal/QuestionnaireForm";
 
 export const metadata = { title: "Questionnaire — LexSutra Portal" };
@@ -12,26 +12,17 @@ export default async function QuestionnairePage({
 }) {
   const { id: diagnosticId } = await params;
 
-  const supabase    = await createSupabaseServerClient();
+  // TODO: re-enable auth before production
   const adminClient = createSupabaseAdminClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/portal/login");
-
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("company_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || profile.role !== "client") redirect("/portal/login");
+  const companyId = "11111111-1111-1111-1111-111111111111";
 
   // Fetch diagnostic
   const { data: diagnostic } = await adminClient
     .from("diagnostics")
     .select(`
       id, status, created_at,
-      policy_versions ( version ),
+      policy_versions ( version_code, display_name ),
       ai_systems ( name, company_id )
     `)
     .eq("id", diagnosticId)
@@ -39,11 +30,11 @@ export default async function QuestionnairePage({
 
   if (!diagnostic) notFound();
 
-  // Verify this diagnostic belongs to the client's company
+  // Verify this diagnostic belongs to the company
   const sys = Array.isArray(diagnostic.ai_systems)
     ? diagnostic.ai_systems[0]
     : diagnostic.ai_systems;
-  if (!sys || sys.company_id !== profile.company_id) notFound();
+  if (!sys || sys.company_id !== companyId) notFound();
 
   const pv = Array.isArray(diagnostic.policy_versions)
     ? diagnostic.policy_versions[0]
@@ -117,7 +108,7 @@ export default async function QuestionnairePage({
               {sys.name}
             </h2>
             <p className="text-sm mt-0.5" style={{ color: "#3d4f60" }}>
-              {pv?.version ?? "—"} · EU AI Act Compliance Questionnaire
+              {pv?.version_code ?? "—"} · EU AI Act Compliance Questionnaire
             </p>
           </div>
           {/* Progress */}
