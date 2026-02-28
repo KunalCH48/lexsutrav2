@@ -25,11 +25,25 @@ export default async function DemoRequestsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-serif font-semibold text-white">Demo Requests</h2>
-        <p className="text-sm mt-1" style={{ color: "#3d4f60" }}>
-          {rows.length} request{rows.length !== 1 ? "s" : ""} total
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-serif font-semibold text-white">Demo Requests</h2>
+          <p className="text-sm mt-1" style={{ color: "#3d4f60" }}>
+            {rows.length} request{rows.length !== 1 ? "s" : ""} total
+          </p>
+        </div>
+        <a
+          href="/api/admin/export?table=demo-requests"
+          download
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg shrink-0"
+          style={{
+            background: "rgba(201,168,76,0.1)",
+            color: "#c9a84c",
+            border: "1px solid rgba(201,168,76,0.2)",
+          }}
+        >
+          ↓ Export CSV
+        </a>
       </div>
 
       <DataTable

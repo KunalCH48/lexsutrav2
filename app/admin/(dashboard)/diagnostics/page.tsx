@@ -34,11 +34,25 @@ export default async function DiagnosticsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-serif font-semibold text-white">Diagnostics</h2>
-        <p className="text-sm mt-1" style={{ color: "#3d4f60" }}>
-          {rows.length} diagnostic{rows.length !== 1 ? "s" : ""} total
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-serif font-semibold text-white">Diagnostics</h2>
+          <p className="text-sm mt-1" style={{ color: "#3d4f60" }}>
+            {rows.length} diagnostic{rows.length !== 1 ? "s" : ""} total
+          </p>
+        </div>
+        <a
+          href="/api/admin/export?table=diagnostics"
+          download
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg shrink-0"
+          style={{
+            background: "rgba(201,168,76,0.1)",
+            color: "#c9a84c",
+            border: "1px solid rgba(201,168,76,0.2)",
+          }}
+        >
+          ↓ Export CSV
+        </a>
       </div>
 
       <DataTable headers={["Company", "AI System", "Risk", "Status", "Created", "Action"]}>

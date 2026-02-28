@@ -6,10 +6,10 @@ export const metadata = { title: "Revenue — LexSutra Admin" };
 
 // Tier prices — update as pricing changes
 const TIER_PRICES: Record<string, number> = {
-  starter:  300,
-  core:     2200,
-  premium:  3500,
-  full:     4500,
+  starter:      300,
+  core:         2200,
+  premium:      3500,
+  full_package: 4500,
 };
 
 function getTierPrice(tier: string | null): number {
@@ -45,7 +45,7 @@ export default async function RevenuePage() {
   const { data: diagnostics } = await adminClient
     .from("diagnostics")
     .select(`
-      id, status, created_at,
+      id, status, created_at, tier,
       ai_systems (
         name,
         companies ( name, email )
@@ -57,28 +57,25 @@ export default async function RevenuePage() {
   // Also fetch all diagnostics for pipeline view
   const { data: allDiagnostics } = await adminClient
     .from("diagnostics")
-    .select("id, status, created_at")
+    .select("id, status, created_at, tier")
     .order("created_at", { ascending: false });
 
   const delivered = diagnostics ?? [];
   const all       = allDiagnostics ?? [];
 
-  // NOTE: tier is not yet a column on diagnostics — using 'core' as default until
-  // tier tracking is added to the schema. Replace with d.tier once column exists.
-  const defaultTier = "core";
-
   // Totals
-  const totalRevenue   = delivered.length * getTierPrice(defaultTier);
-  const pipelineCount  = all.filter((d: { id: string; status: string; created_at: string }) => ["draft", "in_review"].includes(d.status)).length;
-  const pipelineValue  = pipelineCount * getTierPrice(defaultTier);
+  const totalRevenue  = delivered.reduce((sum: number, d: { tier?: string }) => sum + getTierPrice(d.tier ?? "core"), 0);
+  const pipeline      = all.filter((d: { status: string }) => ["draft", "in_review"].includes(d.status));
+  const pipelineCount = pipeline.length;
+  const pipelineValue = pipeline.reduce((sum: number, d: { tier?: string }) => sum + getTierPrice(d.tier ?? "core"), 0);
 
   // Monthly breakdown
   const byMonth: Record<string, { count: number; revenue: number }> = {};
-  for (const d of delivered) {
+  for (const d of delivered as { created_at: string; tier?: string }[]) {
     const key = monthKey(d.created_at);
     if (!byMonth[key]) byMonth[key] = { count: 0, revenue: 0 };
     byMonth[key].count   += 1;
-    byMonth[key].revenue += getTierPrice(defaultTier);
+    byMonth[key].revenue += getTierPrice(d.tier ?? "core");
   }
   const months = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0]));
 
@@ -93,7 +90,7 @@ export default async function RevenuePage() {
           Revenue
         </h2>
         <p className="text-sm" style={{ color: "#3d4f60" }}>
-          Based on delivered diagnostics. Tier tracking column coming in next schema update.
+          Based on delivered diagnostics and their assigned tier.
         </p>
       </div>
 
@@ -172,12 +169,13 @@ export default async function RevenuePage() {
               </td>
             </tr>
           ) : (
-            delivered.map((d: { id: string; status: string; created_at: string; ai_systems: unknown }) => {
+            delivered.map((d: { id: string; status: string; created_at: string; tier?: string; ai_systems: unknown }) => {
               const sys = Array.isArray(d.ai_systems) ? (d.ai_systems as { name?: string; companies?: unknown }[])[0] : d.ai_systems as { name?: string; companies?: unknown } | null;
               const company = sys?.companies
                 ? Array.isArray(sys.companies) ? sys.companies[0] : sys.companies
                 : null;
-              const price = getTierPrice(defaultTier);
+              const tier  = d.tier ?? "core";
+              const price = getTierPrice(tier);
 
               return (
                 <TableRow key={d.id}>
@@ -193,7 +191,7 @@ export default async function RevenuePage() {
                         border: "1px solid rgba(200,168,75,0.2)",
                       }}
                     >
-                      {defaultTier}
+                      {tier}
                     </span>
                   </TableCell>
                   <TableCell>
