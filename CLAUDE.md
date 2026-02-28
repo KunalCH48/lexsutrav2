@@ -11,34 +11,38 @@ LexSutra is an AI Compliance Diagnostic platform — like a professional house i
 - **Domains:** lexsutra.nl (primary), lexsutra.eu, lexsutra.com
 - **Deadline:** EU AI Act high-risk compliance deadline is August 2, 2026
 
+---
+
 ## Tech Stack
 
-- **Framework:** Next.js (App Router, TypeScript, Tailwind CSS)
+- **Framework:** Next.js 16 (App Router, TypeScript, Tailwind CSS 4)
 - **Database:** Supabase (EU region, PostgreSQL, Row-Level Security)
 - **File Storage:** Supabase Storage (EU-based, encrypted)
-- **PDF Generation:** Puppeteer or WeasyPrint
-- **AI Layer:** Claude API (Anthropic)
-- **Hosting:** Vercel Pro (EU edge)
-- **Key packages:** @supabase/supabase-js, lucide-react
+- **PDF Generation:** Puppeteer (headless Chromium → PDF)
+- **AI Layer:** Claude API (Anthropic) — for findings generation
+- **Hosting:** Vercel (EU edge)
+- **Key packages:** @supabase/supabase-js, @supabase/ssr, lucide-react
+- **Auth:** Supabase Auth (Google OAuth SSO)
+- **Email:** Resend API (notifications, OTP delivery)
 
-## Database Schema (Already Set Up in Supabase)
+---
 
-12 tables are already created in Supabase:
+## Database Schema (12 tables — all live in Supabase)
 
-1. **policy_versions** — Versioned regulations (like Git). Every report stamped with exact version forever.
-2. **obligations** — The 8 EU AI Act diagnostic areas (pre-seeded with Articles 9-15, 43)
+1. **policy_versions** — Versioned regulations (Git-style). Every report stamped with exact version forever.
+2. **obligations** — The 8 EU AI Act diagnostic areas (pre-seeded with Articles 9–15, 43)
 3. **diagnostic_questions** — Questionnaire items per obligation
 4. **companies** — Client companies
 5. **ai_systems** — AI systems being assessed (linked to companies)
-6. **diagnostics** — Assessment instances, stamped with policy version at creation
+6. **diagnostics** — Assessment instances, stamped with policy_version_id at creation
 7. **diagnostic_responses** — Client answers to questionnaire
-8. **diagnostic_findings** — Scored findings per obligation with legal citations (this becomes the report)
-9. **demo_requests** — Lead gen from public website (Layer 1)
+8. **diagnostic_findings** — Scored findings per obligation with legal citations (becomes the report)
+9. **demo_requests** — Lead gen from public website
 10. **documents** — Client file uploads with OTP confirmation
 11. **profiles** — Extends Supabase Auth with roles (admin/reviewer/client) and company link
 12. **activity_log** — Full audit trail on every action
 
-The 8 obligations are pre-seeded:
+**Pre-seeded obligations:**
 1. Risk Management System (Art. 9)
 2. Data Governance (Art. 10)
 3. Technical Documentation (Art. 11 & Annex IV)
@@ -48,16 +52,30 @@ The 8 obligations are pre-seeded:
 7. Accuracy and Robustness (Art. 15)
 8. Conformity Assessment (Art. 43 & Annex VI/VII)
 
-Initial policy version seeded: "EU AI Act — Regulation (EU) 2024/1689" with EUR-Lex link.
+**Pre-seeded policy version:** "EU AI Act — Regulation (EU) 2024/1689"
 
-## Product Architecture (5 Layers)
+---
 
-- **Layer 0:** Public website — marketing, SEO, educational content (← BUILD THIS FIRST)
-- **Layer 1:** Lead gen demo tool — company email + URL → automated scan → 5-insight snapshot within 24hrs
+## Product Architecture (6 Layers)
+
+- **Layer 0:** Public website — marketing, SEO, educational content ✅ DONE
+- **Layer 1:** Lead gen demo tool — company email + URL → snapshot ✅ DONE
 - **Layer 2:** Client portal — SSO login, company profile, AI system profile, consent/T&Cs
 - **Layer 3:** Document repository — secure upload, OTP confirmation, encrypted EU storage, 18-month retention
 - **Layer 4:** Diagnostic engine — 80% automated (scan + classify + score + draft), 20% human review
-- **Layer 5:** Admin dashboard — all clients, queues, activity tracking, revenue dashboard
+- **Layer 5:** Admin dashboard — all clients, queues, activity tracking, revenue dashboard (partially done)
+
+---
+
+## Roles
+
+| Role | Access |
+|------|--------|
+| `admin` | Full access — all admin pages, all client data, can approve/deliver reports |
+| `reviewer` | Can view and edit diagnostic findings, cannot manage users/companies |
+| `client` | Can see only their own company, AI systems, diagnostics, documents, reports |
+
+---
 
 ## Pricing Tiers
 
@@ -69,71 +87,318 @@ Initial policy version seeded: "EU AI Act — Regulation (EU) 2024/1689" with EU
 | Full Package | €4,500 | Everything + Competitor Compliance Snapshot |
 | Founding clients (first 3) | 50% off | In exchange for testimonial + case study |
 
+---
+
 ## Brand & Design Direction
 
 - **Aesthetic:** Dark, premium, authoritative — law meets tech
-- **Primary colours:** Deep navy (#060a14 to #1a2332), Gold accents (#c9a84c, #dbbf6a)
-- **Typography:** Playfair Display (headings — serif, elegant), DM Sans (body — clean, modern)
-- **Tone:** Professional but accessible. Confident, not arrogant. Think high-end consultancy.
-- **RAG colours:** Red (#e74c4c), Amber (#e8a735), Green (#4caf7c) for compliance scoring
-- **Grain overlay:** Subtle texture for depth
-- **Animations:** Fade-up on scroll, gold shimmer on key text
+- **Primary colours (admin/client portal):**
+  - Navy: `#080c14` (bg), `#0d1520` (cards), `#111d2e` (elevated)
+  - Blue accent: `#2d9cdb` (primary), `#5bb8f0` (hover)
+  - Gold: `#c8a84b` (premium accent)
+  - Text: `#e8f4ff` (bright), with rgba transparency variants
+  - Borders: `rgba(45,156,219,0.15)`
+- **Status / RAG colours:** Red `#e05252`, Amber `#e0a832`, Green `#2ecc71`
+- **Typography:** Cormorant Garamond (headings — serif), DM Sans (body — clean)
+- **Admin indicator:** Red `#e05252` top bar + "ADMIN MODE" label
+- **Report (PDF view):** Light theme — cream `#f4f0e8` background, dark `#1a1a2e` text
+- **Grain overlay:** Subtle texture on public pages only
 
-## Key Business Rules (Enforce These)
+---
+
+## Key Business Rules (Enforce These in Code)
 
 - Personal email domains BLOCKED on demo tool (gmail, outlook, yahoo, etc.)
-- Every diagnostic STAMPED with policy_version_id at creation — never changes
+- Every diagnostic STAMPED with `policy_version_id` at creation — never changes
 - OTP confirmation on document upload confirms authenticity + consent
 - All data stored EU region only
 - 18-month minimum data retention on all documents
 - LexSutra provides compliance infrastructure tools, NOT legal advice — always maintain this distinction
-- Human expert review on every diagnostic before delivery — this is the USP, not a limitation
+- Human expert review on every diagnostic before delivery — this is the USP
 - Policy versioning from day one in ALL design decisions
 
-## Supabase Connection
+---
 
-- Client file: `src/lib/supabase.ts`
-- Environment variables in `.env.local`:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-## Current Build Priority
-
-### NOW — Landing Page (Layer 0)
-Build a complete landing page at `src/app/page.tsx` with:
-1. Fixed navbar with LexSutra logo (gold "Lex" + white "Sutra"), nav links, CTA button
-2. Hero section — "A compliance inspection for your AI system" headline, house inspection analogy, two CTAs
-3. Urgency banner — live countdown to August 2, 2026 deadline
-4. "Not a chatbot. A defensible document." differentiation section with 4 feature cards
-5. "How a diagnostic works" — 4-step process (Pre-Scan → Assessment → AI + Human Review → Report Delivery)
-6. "The 8 obligations we diagnose" — grid of 8 cards with icons, article refs, descriptions
-7. Pricing section — 3 tiers (Starter €300, Core €2,200 featured, Premium €3,500)
-8. Demo request form — company name, business email, website URL → saves to demo_requests table
-9. Footer — logo, tagline, platform links, legal links, LinkedIn, email, disclaimer
-
-### NEXT — Diagnostic Questionnaire + PDF Report (the €2,200 product)
-### LATER — Client Portal, Document Repository, Admin Dashboard
-
-## File Structure Target
+## Environment Variables
 
 ```
-src/
+NEXT_PUBLIC_SUPABASE_URL=https://pmnjcumaytqxfigiuhgr.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+RESEND_API_KEY=...              # Email OTP + notifications
+ANTHROPIC_API_KEY=...           # Claude API for findings generation
+```
+
+---
+
+## File Structure
+
+```
+lexsutrav2/
 ├── app/
-│   ├── globals.css          # Custom styles, variables, animations
-│   ├── layout.tsx           # Root layout with meta tags
-│   ├── page.tsx             # Landing page
-│   └── (future routes...)
+│   ├── layout.tsx                          # Root layout (fonts, metadata)
+│   ├── page.tsx                            # Landing page ✅
+│   ├── globals.css                         # Theme, animations, button styles
+│   ├── api/
+│   │   ├── demo-request/route.ts           # POST /api/demo-request ✅
+│   │   ├── documents/upload/route.ts       # POST /api/documents/upload [TODO]
+│   │   ├── documents/otp/route.ts          # POST /api/documents/otp [TODO]
+│   │   └── diagnostics/generate/route.ts   # POST /api/diagnostics/generate (Claude) [TODO]
+│   ├── auth/
+│   │   └── callback/route.ts               # OAuth callback ✅
+│   ├── admin/
+│   │   ├── login/page.tsx                  # Admin login ✅
+│   │   └── (dashboard)/
+│   │       ├── layout.tsx                  # Protected layout + sidebar ✅
+│   │       ├── page.tsx                    # Admin overview ✅
+│   │       ├── demo-requests/
+│   │       │   ├── page.tsx                # Demo queue table ✅
+│   │       │   ├── actions.ts              # updateDemoStatus server action ✅
+│   │       │   └── [id]/page.tsx           # Demo snapshot review [TODO]
+│   │       ├── diagnostics/
+│   │       │   ├── page.tsx                # Diagnostic queue table ✅
+│   │       │   └── [id]/
+│   │       │       ├── page.tsx            # Findings editor / review draft [TODO]
+│   │       │       └── actions.ts          # saveFinding, approveDiagnostic [TODO]
+│   │       ├── companies/page.tsx          # Companies table ✅
+│   │       ├── activity/page.tsx           # Activity log ✅
+│   │       ├── policy-versions/page.tsx    # Policy version management [TODO]
+│   │       └── revenue/page.tsx            # Revenue dashboard [TODO]
+│   ├── portal/                             # CLIENT PORTAL [TODO]
+│   │   ├── login/page.tsx                  # Client login (Google SSO)
+│   │   ├── auth/callback/route.ts          # Client OAuth callback
+│   │   └── (dashboard)/
+│   │       ├── layout.tsx                  # Client layout + sidebar
+│   │       ├── page.tsx                    # Compliance overview
+│   │       ├── documents/
+│   │       │   ├── page.tsx                # Document repository
+│   │       │   └── actions.ts              # uploadDocument, confirmOtp
+│   │       ├── diagnostics/
+│   │       │   ├── page.tsx                # My diagnostics list
+│   │       │   └── [id]/page.tsx           # Questionnaire form
+│   │       ├── reports/
+│   │       │   └── [id]/page.tsx           # Report viewer (light theme)
+│   │       └── profile/page.tsx            # Company profile
+├── components/
+│   ├── Countdown.tsx                       # Deadline countdown ✅
+│   ├── DemoForm.tsx                        # Demo form ✅
+│   └── admin/
+│       ├── AdminSidebar.tsx                # ✅
+│       ├── SidebarLink.tsx                 # ✅
+│       ├── DataTable.tsx                   # ✅
+│       ├── StatusBadge.tsx                 # ✅
+│       ├── StatusDropdown.tsx              # ✅
+│       ├── SignOutButton.tsx               # ✅
+│       ├── PaginationControls.tsx          # ✅
+│       ├── DemoReviewPanel.tsx             # [TODO] Demo snapshot detail view
+│       ├── FindingsEditor.tsx              # [TODO] Admin findings edit form
+│       └── ProgressBar.tsx                 # [TODO] Diagnostic progress indicator
+│   └── portal/                             # [TODO] All client-facing components
+│       ├── ClientSidebar.tsx
+│       ├── ObligationStatusGrid.tsx
+│       ├── ActivityTimeline.tsx
+│       ├── ComplianceScoreCard.tsx
+│       ├── DocumentUploadZone.tsx
+│       ├── OtpConfirmModal.tsx
+│       ├── DocumentCard.tsx
+│       └── QuestionnaireForm.tsx
 ├── lib/
-│   └── supabase.ts          # Supabase client
-└── components/
-    └── (future components...)
+│   ├── supabase-server.ts                  # ✅ createSupabaseServerClient, createSupabaseAdminClient
+│   └── supabase-browser.ts                 # ✅ createSupabaseBrowserClient
+├── supabase/
+│   └── rls_policies.sql                    # ✅ All RLS policies
+└── CLAUDE.md                               # This file
 ```
+
+---
+
+## What's Built vs What's Next
+
+### ✅ COMPLETE
+
+| Area | Files |
+|------|-------|
+| Landing page (all sections) | `app/page.tsx` |
+| Admin auth (Google SSO + role check) | `app/auth/callback/route.ts`, `app/admin/login/` |
+| Admin layout + sidebar | `app/admin/(dashboard)/layout.tsx`, `components/admin/AdminSidebar.tsx` |
+| Admin overview dashboard | `app/admin/(dashboard)/page.tsx` |
+| Demo requests table + status update | `app/admin/(dashboard)/demo-requests/` |
+| Diagnostics list | `app/admin/(dashboard)/diagnostics/page.tsx` |
+| Companies list | `app/admin/(dashboard)/companies/page.tsx` |
+| Activity log (paginated) | `app/admin/(dashboard)/activity/page.tsx` |
+| Demo request API + email | `app/api/demo-request/route.ts` |
+| All RLS policies | `supabase/rls_policies.sql` |
+
+---
+
+### 🔨 PHASE 1 — Admin Completion (Next to build)
+
+**Goal:** Make the existing admin fully operational so we can actually run the first diagnostic end-to-end.
+
+#### 1A. Demo Queue — Review Flow
+**Route:** `/admin/demo-requests/[id]`
+**Prototype reference:** "Review →" button in Demo Snapshot Queue table
+- Show full demo request detail: company name, email, website URL, submitted date
+- "Risk Indicator" classification: Likely High-Risk / Needs Assessment / Likely Limited-Risk
+- Admin sets risk tier manually (dropdown)
+- Action buttons: "Create Client Account →", "Mark as Contacted", "Reject"
+- When "Create Client Account →": creates `companies` row + `profiles` row with `role='client'`, sends invite email via Resend
+- Logs all actions to `activity_log`
+
+#### 1B. Diagnostic Queue — Findings Editor
+**Route:** `/admin/diagnostics/[id]`
+**Prototype reference:** "Review Draft →" button in Diagnostic Queue
+- Shows diagnostic detail: company, AI system, risk category, policy version
+- Progress bar showing questionnaire completion %
+- Per-obligation findings editor (8 sections):
+  - Status dropdown: CRITICAL / PARTIAL / COMPLIANT / NOT STARTED
+  - Finding text (rich textarea, pre-populated by Claude API output)
+  - Legal citation (auto-filled from obligation, editable)
+  - Remediation suggestion (textarea)
+- Overall grade calculator (A/B/C/D based on obligation scores)
+- "Approve & Deliver" button → sets diagnostic status to 'delivered', sends email to client
+- "Save Draft" → saves without delivering
+
+#### 1C. Policy Versions Page
+**Route:** `/admin/policy-versions`
+- List all policy versions with: version name, regulation_text excerpt, effective_date, deprecated_at
+- "Add New Version" form (modal or inline)
+- Mark a version as deprecated
+- View which diagnostics are stamped with each version
+
+#### 1D. Revenue Dashboard
+**Route:** `/admin/revenue`
+- Total revenue (count diagnostics × tier price)
+- Monthly breakdown (chart or table)
+- Per-tier breakdown: Starter / Core / Premium
+- Client list with tier and payment status
+
+---
+
+### 🔨 PHASE 2 — Client Portal
+
+**Goal:** Clients can log in, see their compliance status, upload documents, and fill out the questionnaire.
+
+#### 2A. Client Auth
+**Route:** `/portal/login`
+- Google SSO (same Supabase, different role check — must have `role='client'`)
+- Redirect to `/portal` on success
+- Separate from admin login
+
+#### 2B. Client Layout + Sidebar
+**File:** `app/portal/(dashboard)/layout.tsx`
+**Prototype reference:** Client dashboard sidebar
+- Sidebar: Dashboard, Documents, Diagnostics, Reports, Company Profile
+- Top bar: "Welcome back, [name]" + company name + status dot
+- Role check: must be `role='client'`, redirect to `/portal/login` if not
+
+#### 2C. Client Dashboard — Compliance Overview
+**Route:** `/portal`
+**Prototype reference:** Screen #dashboard
+- 3 metric cards: Overall Score (letter grade), Last Assessment (date + policy version), Days to Deadline (countdown)
+- Obligation Status grid (8 rows): each with RAG status badge (CRITICAL / PARTIAL / COMPLIANT / NOT STARTED)
+- Recent Activity timeline (last 5 events from `activity_log`)
+- Policy Update Alert if a newer policy version exists since last diagnostic
+- "+ Request Diagnostic" button
+
+#### 2D. Company Profile
+**Route:** `/portal/profile`
+- Company name, contact email, website
+- AI system list with: name, risk category, description
+- "+ Add AI System" form
+- Links to each system's active diagnostic
+
+---
+
+### 🔨 PHASE 3 — Document Repository
+
+**Goal:** Clients can securely upload compliance documents with OTP-confirmed consent.
+
+**Route:** `/portal/documents`
+**Prototype reference:** Screen #repository
+
+#### 3A. Upload Zone
+- Drag-and-drop zone (or click to browse)
+- Accepted: PDF, DOCX, XLSX — max 25MB
+- Upload via `/api/documents/upload`
+- Stores to Supabase Storage bucket (`documents/`)
+- Inserts `documents` row with `otp_hash` and `confirmed_at = null`
+
+#### 3B. OTP Confirmation Flow
+- After upload, modal appears: "Check your email for a 6-digit code"
+- Code sent via Resend to client's registered email
+- Client enters code → `POST /api/documents/otp` → verifies hash → sets `confirmed_at`
+- Without OTP confirmation, document is not usable in diagnostics
+- Logs to `activity_log`
+
+#### 3C. Document Grid
+- Cards per document: icon, name, upload date, file size, format
+- Status tag: "OTP Confirmed" (green) or "Pending Confirmation" (amber)
+- "Resend OTP" button for pending documents
+- Storage info bar: "[N] documents stored · All encrypted · Retained for 18 months minimum"
+- Security & Retention info box
+
+---
+
+### 🔨 PHASE 4 — Diagnostic Engine
+
+**Goal:** Client fills out questionnaire → Claude API drafts findings → Admin reviews → Report delivered.
+
+#### 4A. Diagnostic Questionnaire
+**Route:** `/portal/diagnostics/[id]`
+- Organized by obligation (8 tabs or accordion sections)
+- Each section: obligation name + article ref, questions with response types (text, yes/no, select, file-link)
+- Progress tracker (X of 80 questions answered)
+- Auto-save responses to `diagnostic_responses` table
+- "Submit for Review" → sets diagnostic status to 'in_review', notifies admin
+
+#### 4B. Claude API Integration
+**Route:** `POST /api/diagnostics/generate`
+- Triggered when admin clicks "Generate Draft" on a submitted diagnostic
+- Sends: questionnaire responses + obligation descriptions + policy version text to Claude
+- Claude returns: per-obligation finding text + compliance status + remediation suggestion + legal citation
+- Saves to `diagnostic_findings` table
+- Sets diagnostic status to 'draft' (ready for admin review)
+- Admin can then edit in the Findings Editor (Phase 1B)
+
+#### 4C. Report Viewer
+**Route:** `/portal/reports/[id]`
+**Prototype reference:** Screen #report (light cream theme)
+- Only accessible when diagnostic status = 'delivered'
+- Cover page: company name, AI system, report ref (LSR-YYYY-NNNN), grade, date, policy version
+- Executive Summary: obligation breakdown stats
+- Obligation Assessment: each of 8 obligations with status color, finding text, legal citation
+- Prioritised Remediation Roadmap: table with Priority (P1/P2/P3), Action, Obligation, Effort, Deadline
+- Report Stamp footer: assessed against, version, review date, disclaimer
+- Fixed top bar: "← Back to Portal" + "⬇ Download PDF" buttons
+
+#### 4D. PDF Generation
+- Puppeteer renders `/portal/reports/[id]?print=true` (print-optimized variant)
+- Served via `/api/reports/[id]/pdf`
+- A4 format, cream background, page breaks between sections
+
+---
+
+### 🔨 PHASE 5 — Polish & Launch
+
+- Rate limiting on `/api/demo-request` (prevent spam)
+- Error boundaries on all pages
+- Mobile responsiveness audit
+- Loading skeletons on data-fetch pages
+- Sentry error monitoring
+- Email templates: welcome, OTP, report delivered, policy update alert
+- CSV export from admin tables
+- Automated policy update alert to affected clients
+
+---
 
 ## Important Reminders
 
-- Resist feature creep — MVP scope only
+- Resist feature creep — follow the phases above in order
 - August 2026 deadline is real — urgency matters
 - The PDF report IS the product — it justifies the €2,200 fee
 - Revenue is the best fundraising strategy — get 5 clients first
 - Build for policy versioning from day one
 - Mobile responsive is important — founders browse on phones
+- LexSutra = compliance infrastructure tools, NOT legal advice
+- All storage = EU region only, always

@@ -5,7 +5,9 @@ import { ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const BLOCKED_DOMAINS = new Set([
-  "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com",
+  // "gmail.com", // TODO: REMOVE THIS COMMENT AND RE-ENABLE BEFORE PRODUCTION DEPLOY
+  //              // gmail.com is temporarily allowed for internal testing — must be blocked for launch
+  "yahoo.com", "outlook.com", "hotmail.com", "icloud.com",
   "protonmail.com", "aol.com", "mail.com", "live.com", "msn.com",
   "yahoo.co.uk", "googlemail.com", "me.com", "mac.com",
 ]);
@@ -38,7 +40,7 @@ export function DemoForm() {
     if (error) setError("");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 

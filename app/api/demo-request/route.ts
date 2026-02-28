@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logError } from "@/lib/log-error";
 
 const NOTIFY_EMAIL = "kunal.lexutra@gmail.com";
 
@@ -9,22 +10,37 @@ const supabase = createClient(
 );
 
 export async function POST(req: NextRequest) {
+  let company_name = "";
+  let email        = "";
+
   try {
-    const { company_name, email, website_url } = await req.json();
+    const body = await req.json();
+    company_name = body.company_name ?? "";
+    email        = body.email        ?? "";
+    const website_url: string = body.website_url ?? "";
 
     if (!company_name || !email || !website_url) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
     // Save to Supabase
-    const { error: dbError } = await supabase.from("demo_requests").insert([
-      { company_name, email, website_url, status: "pending" },
-    ]);
-    if (dbError) throw dbError;
+    const { error: dbError } = await supabase
+      .from("demo_requests")
+      .insert([{ company_name, email, website_url, status: "pending" }]);
+
+    if (dbError) {
+      await logError({
+        error: dbError,
+        source: "api/demo-request",
+        action: "POST",
+        metadata: { company_name, email, website_url },
+      });
+      return NextResponse.json({ error: "Failed to save your request. Please try again." }, { status: 500 });
+    }
 
     // Send email notification via Resend
     if (process.env.RESEND_API_KEY) {
-      await fetch("https://api.resend.com/emails", {
+      const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -32,7 +48,7 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           from: "LexSutra <hello@lexsutra.nl>",
-          to: [NOTIFY_EMAIL],
+          to:   [NOTIFY_EMAIL],
           subject: `New demo request — ${company_name}`,
           html: `
             <h2>New Demo Request</h2>
@@ -42,16 +58,36 @@ export async function POST(req: NextRequest) {
               <tr><td><strong>Website</strong></td><td><a href="${website_url}">${website_url}</a></td></tr>
             </table>
             <p style="color:#888;font-size:12px;margin-top:24px;">
-              Submitted via lexsutrav2.vercel.app
+              Submitted via lexsutra.nl
             </p>
           `,
         }),
       });
+
+      if (!emailRes.ok) {
+        // Don't fail the request — the lead is saved. Just log the email failure.
+        await logError({
+          error: new Error(`Resend returned ${emailRes.status}`),
+          source: "api/demo-request",
+          action: "POST:sendNotificationEmail",
+          severity: "warning",
+          metadata: { company_name, email, resend_status: emailRes.status },
+        });
+      }
     }
 
     return NextResponse.json({ success: true });
+
   } catch (err) {
-    console.error("demo-request error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    await logError({
+      error: err,
+      source: "api/demo-request",
+      action: "POST",
+      metadata: { company_name, email },
+    });
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again or email us at hello@lexsutra.nl." },
+      { status: 500 }
+    );
   }
 }

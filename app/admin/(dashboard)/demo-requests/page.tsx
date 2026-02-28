@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { StatusDropdown } from "@/components/admin/StatusDropdown";
 
 export const metadata = { title: "Demo Requests — LexSutra Admin" };
 
@@ -66,7 +66,17 @@ export default async function DemoRequestsPage() {
                 <StatusBadge status={r.status} />
               </TableCell>
               <TableCell>
-                <StatusDropdown id={r.id} current={r.status} />
+                <Link
+                  href={`/admin/demo-requests/${r.id}`}
+                  className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                  style={{
+                    background: "rgba(45,156,219,0.12)",
+                    color: "#2d9cdb",
+                    border: "1px solid rgba(45,156,219,0.25)",
+                  }}
+                >
+                  Review →
+                </Link>
               </TableCell>
             </TableRow>
           ))

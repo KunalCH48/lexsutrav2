@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -40,10 +41,10 @@ export default async function DiagnosticsPage() {
         </p>
       </div>
 
-      <DataTable headers={["Company", "AI System", "Risk", "Status", "Created"]}>
+      <DataTable headers={["Company", "AI System", "Risk", "Status", "Created", "Action"]}>
         {rows.length === 0 ? (
           <tr>
-            <td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: "#3d4f60" }}>
+            <td colSpan={6} className="px-4 py-8 text-center text-sm" style={{ color: "#3d4f60" }}>
               No diagnostics yet.
             </td>
           </tr>
@@ -80,6 +81,19 @@ export default async function DiagnosticsPage() {
                   <StatusBadge status={d.status} />
                 </TableCell>
                 <TableCell muted>{fmtDate(d.created_at)}</TableCell>
+                <TableCell>
+                  <Link
+                    href={`/admin/diagnostics/${d.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                    style={{
+                      background: "rgba(45,156,219,0.12)",
+                      color: "#2d9cdb",
+                      border: "1px solid rgba(45,156,219,0.25)",
+                    }}
+                  >
+                    Review →
+                  </Link>
+                </TableCell>
               </TableRow>
             );
           })
