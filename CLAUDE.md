@@ -212,26 +212,62 @@ lexsutrav2/
 
 ---
 
-## What's Built vs What's Next
+## Build Status
 
-### ✅ COMPLETE
+### ✅ PHASE 1 — Admin Completion — COMPLETE
 
 | Area | Files |
 |------|-------|
-| Landing page (all sections) | `app/page.tsx` |
+| Landing page | `app/page.tsx` |
 | Admin auth (Google SSO + role check) | `app/auth/callback/route.ts`, `app/admin/login/` |
-| Admin layout + sidebar | `app/admin/(dashboard)/layout.tsx`, `components/admin/AdminSidebar.tsx` |
+| Admin layout + sidebar + all nav links | `app/admin/(dashboard)/layout.tsx`, `components/admin/AdminSidebar.tsx` |
 | Admin overview dashboard | `app/admin/(dashboard)/page.tsx` |
-| Demo requests table + status update | `app/admin/(dashboard)/demo-requests/` |
-| Diagnostics list | `app/admin/(dashboard)/diagnostics/page.tsx` |
+| Demo requests list + review flow | `app/admin/(dashboard)/demo-requests/` |
+| Demo request detail + account creation | `app/admin/(dashboard)/demo-requests/[id]/` |
+| Diagnostics queue | `app/admin/(dashboard)/diagnostics/page.tsx` |
+| Findings editor + AI generate + approve | `app/admin/(dashboard)/diagnostics/[id]/` |
 | Companies list | `app/admin/(dashboard)/companies/page.tsx` |
 | Activity log (paginated) | `app/admin/(dashboard)/activity/page.tsx` |
-| Demo request API + email | `app/api/demo-request/route.ts` |
+| Error logs viewer | `app/admin/(dashboard)/errors/page.tsx` |
+| Policy versions | `app/admin/(dashboard)/policy-versions/page.tsx` |
+| Revenue dashboard | `app/admin/(dashboard)/revenue/page.tsx` |
+| Demo request API + email notification | `app/api/demo-request/route.ts` |
+| Centralised error logging | `lib/log-error.ts`, `supabase/error_logs.sql` |
 | All RLS policies | `supabase/rls_policies.sql` |
+
+### ✅ PHASE 2 — Client Portal — COMPLETE
+
+| Area | Files |
+|------|-------|
+| Client Google SSO login | `app/portal/login/page.tsx`, `app/portal/auth/callback/route.ts` |
+| Portal layout + sidebar | `app/portal/(dashboard)/layout.tsx`, `components/portal/ClientSidebar.tsx` |
+| Compliance overview dashboard | `app/portal/(dashboard)/page.tsx` |
+| Company profile + AI system list | `app/portal/(dashboard)/profile/` |
+| Diagnostics list (with links) | `app/portal/(dashboard)/diagnostics/page.tsx` |
+| Reports list (with links) | `app/portal/(dashboard)/reports/page.tsx` |
+
+### ✅ PHASE 3 — Document Repository — COMPLETE
+
+| Area | Files |
+|------|-------|
+| Document upload → Supabase Storage | `app/api/documents/upload/route.ts` |
+| OTP verify + resend | `app/api/documents/otp/route.ts` |
+| Document grid + drag-drop + OTP modal | `app/portal/(dashboard)/documents/page.tsx`, `components/portal/DocumentRepository.tsx` |
+| DB schema | `supabase/documents.sql` |
+
+### ✅ PHASE 4 — Diagnostic Engine — COMPLETE
+
+| Area | Files |
+|------|-------|
+| 80-question seed (10 × 8 obligations) | `supabase/seed_questions.sql` |
+| Questionnaire form + auto-save | `app/portal/(dashboard)/diagnostics/[id]/`, `components/portal/QuestionnaireForm.tsx` |
+| Claude API findings generation | `app/api/diagnostics/generate/route.ts` |
+| Admin "Generate with AI" button | `components/admin/GenerateFindingsButton.tsx` |
+| Report viewer (light cream theme) | `app/portal/(dashboard)/reports/[id]/page.tsx`, `components/portal/ReportViewer.tsx` |
 
 ---
 
-### 🔨 PHASE 1 — Admin Completion (Next to build)
+### 🔨 PHASE 5 — Polish & Launch (NEXT)
 
 **Goal:** Make the existing admin fully operational so we can actually run the first diagnostic end-to-end.
 
@@ -381,14 +417,36 @@ lexsutrav2/
 
 ### 🔨 PHASE 5 — Polish & Launch
 
-- Rate limiting on `/api/demo-request` (prevent spam)
-- Error boundaries on all pages
-- Mobile responsiveness audit
-- Loading skeletons on data-fetch pages
-- Sentry error monitoring
-- Email templates: welcome, OTP, report delivered, policy update alert
-- CSV export from admin tables
-- Automated policy update alert to affected clients
+**5A. Rate Limiting**
+- `POST /api/demo-request` — max 3 per IP per hour (Vercel edge middleware or Upstash)
+
+**5B. Error Boundaries + Loading States**
+- `app/portal/(dashboard)/error.tsx` + `loading.tsx`
+- `app/admin/(dashboard)/error.tsx` + `loading.tsx`
+- Skeleton components for diagnostics, reports, documents lists
+
+**5C. Mobile Responsiveness**
+- Admin + portal sidebars need hamburger menu on small screens (currently fixed-width)
+- Admin tables need horizontal scroll wrapper on mobile
+- QuestionnaireForm section nav needs to collapse on mobile
+
+**5D. Production Cleanup — CRITICAL**
+- Re-enable gmail.com block in `components/DemoForm.tsx` (see TODO comment)
+- Remove unused `proxy.ts` from project root
+- Add `NEXT_PUBLIC_APP_URL` to Vercel env vars
+
+**5E. Monitoring**
+- Add `@sentry/nextjs` for production error tracking
+- Configure alert rules for error_logs severity=critical
+
+**5F. Admin Enhancements**
+- CSV export on demo-requests, companies, diagnostics tables
+- Add `tier` column to `diagnostics` table (starter/core/premium) for accurate revenue
+- Automated policy update alert email when new policy version added
+
+**5G. Email Polish**
+- Welcome email on client account creation (replace Supabase invite default)
+- Branded OTP email already done in Phase 3
 
 ---
 
