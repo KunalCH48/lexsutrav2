@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         .single(),
       adminClient
         .from("obligations")
-        .select("id, name, article_ref, description")
+        .select("id, name:title, article_ref:eu_article_ref, description")
         .order("id"),
       adminClient
         .from("diagnostic_responses")

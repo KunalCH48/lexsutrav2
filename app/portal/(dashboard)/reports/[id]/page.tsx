@@ -61,7 +61,7 @@ export default async function ReportPage({
 
   // Fetch obligations + findings in parallel
   const [{ data: obligations }, { data: findings }] = await Promise.all([
-    adminClient.from("obligations").select("id, name, article_ref, description").order("id"),
+    adminClient.from("obligations").select("id, name:title, article_ref:eu_article_ref, description").order("id"),
     adminClient.from("diagnostic_findings")
       .select("obligation_id, score, finding_text, citation, remediation")
       .eq("diagnostic_id", diagnosticId),

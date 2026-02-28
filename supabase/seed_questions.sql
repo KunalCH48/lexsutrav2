@@ -7,14 +7,14 @@
 WITH obligation_ids AS (
   SELECT id,
     CASE
-      WHEN name ILIKE '%Risk Management%'         THEN 'risk_mgmt'
-      WHEN name ILIKE '%Data Governance%'          THEN 'data_gov'
-      WHEN name ILIKE '%Technical Documentation%'  THEN 'tech_doc'
-      WHEN name ILIKE '%Logging%'                  THEN 'logging'
-      WHEN name ILIKE '%Transparency%'             THEN 'transparency'
-      WHEN name ILIKE '%Human Oversight%'          THEN 'human_oversight'
-      WHEN name ILIKE '%Accuracy%'                 THEN 'accuracy'
-      WHEN name ILIKE '%Conformity%'               THEN 'conformity'
+      WHEN title ILIKE '%Risk Management%'         THEN 'risk_mgmt'
+      WHEN title ILIKE '%Data Governance%'          THEN 'data_gov'
+      WHEN title ILIKE '%Technical Documentation%'  THEN 'tech_doc'
+      WHEN title ILIKE '%Logging%'                  THEN 'logging'
+      WHEN title ILIKE '%Transparency%'             THEN 'transparency'
+      WHEN title ILIKE '%Human Oversight%'          THEN 'human_oversight'
+      WHEN title ILIKE '%Accuracy%'                 THEN 'accuracy'
+      WHEN title ILIKE '%Conformity%'               THEN 'conformity'
     END AS key
   FROM obligations
 ),

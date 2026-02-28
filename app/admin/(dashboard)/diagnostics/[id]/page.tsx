@@ -39,8 +39,8 @@ export default async function DiagnosticReviewPage({
 
     adminClient
       .from("obligations")
-      .select("id, name, article_ref, description")
-      .order("article_ref", { ascending: true }),
+      .select("id, name:title, article_ref:eu_article_ref, description")
+      .order("eu_article_ref", { ascending: true }),
 
     adminClient
       .from("diagnostic_findings")

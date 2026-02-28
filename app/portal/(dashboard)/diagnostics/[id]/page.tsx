@@ -53,7 +53,7 @@ export default async function QuestionnairePage({
   const [{ data: obligations }, { data: responses }] = await Promise.all([
     adminClient
       .from("obligations")
-      .select("id, name, article_ref, description")
+      .select("id, name:title, article_ref:eu_article_ref, description")
       .order("id"),
     adminClient
       .from("diagnostic_responses")

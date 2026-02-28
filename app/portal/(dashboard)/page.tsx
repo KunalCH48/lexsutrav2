@@ -115,7 +115,7 @@ export default async function PortalDashboardPage() {
     latestDiagnostic = diagnostics?.[0] ?? null;
 
     const [oblRes, findingsRes] = await Promise.all([
-      adminClient.from("obligations").select("id, name, article_ref").order("article_ref"),
+      adminClient.from("obligations").select("id, name:title, article_ref:eu_article_ref").order("eu_article_ref"),
       latestDiagnostic
         ? adminClient
             .from("diagnostic_findings")
