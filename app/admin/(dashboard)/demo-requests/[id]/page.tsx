@@ -170,6 +170,7 @@ export default async function DemoReviewPage({
         <DemoAnalysisPanel
           demoId={demo.id}
           companyName={demo.company_name}
+          contactEmail={demo.contact_email}
           initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null }[] } | null}
         />
       </div>

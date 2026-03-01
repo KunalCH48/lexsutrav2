@@ -69,8 +69,8 @@ export default async function PolicyVersionsPage() {
             is_current: boolean;
             created_at: string;
           }) => {
-            const stamped   = diagnostics.filter((d) => d.policy_version_id === v.id);
-            const delivered = stamped.filter((d) => d.status === "delivered").length;
+            const stamped   = diagnostics.filter((d: { id: string; policy_version_id: string | null; status: string | null }) => d.policy_version_id === v.id);
+            const delivered = stamped.filter((d: { status: string | null }) => d.status === "delivered").length;
             const hasStampedDiagnostics = stamped.length > 0;
 
             return (

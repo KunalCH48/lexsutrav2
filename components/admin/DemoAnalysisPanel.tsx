@@ -31,8 +31,9 @@ type StructuredReport = {
 };
 
 type Props = {
-  demoId: string;
-  companyName: string;
+  demoId:          string;
+  companyName:     string;
+  contactEmail?:   string;
   initialSnapshot: { versions: InsightVersion[] } | null;
 };
 
@@ -462,93 +463,296 @@ function renderMarkdown(text: string) {
   });
 }
 
-// ── Approve button section ─────────────────────────────────────────
+// ── Approve + PDF + Email section ─────────────────────────────────
 
-function ApproveSection({ demoId, version }: { demoId: string; version: number }) {
-  const [stage, setStage] = useState<"idle" | "confirm" | "done" | "error">("idle");
-  const [errMsg, setErrMsg] = useState("");
-  const [isPending, startTransition] = useTransition();
+function ApproveSection({
+  demoId,
+  version,
+  contactEmail,
+}: {
+  demoId:       string;
+  version:      number;
+  contactEmail?: string;
+}) {
+  type Stage = "idle" | "confirm" | "approving" | "generating_pdf" | "done" | "error";
+  const [stage, setStage]         = useState<Stage>("idle");
+  const [errMsg, setErrMsg]       = useState("");
+  const [pdfUrl, setPdfUrl]       = useState<string | null>(null);
+  const [emailTo, setEmailTo]     = useState(contactEmail ?? "");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailErr, setEmailErr]   = useState("");
+  const [, startTransition]       = useTransition();
 
-  function handleConfirm() {
+  async function handleApprove() {
     setErrMsg("");
+    setStage("approving");
+
+    // Step 1: mark as approved
     startTransition(async () => {
       const result = await approveSnapshot(demoId, version);
       if ("error" in result) {
         setErrMsg(result.error);
         setStage("error");
-      } else {
+        return;
+      }
+
+      // Step 2: generate PDF
+      setStage("generating_pdf");
+      try {
+        const res  = await fetch("/api/admin/demo-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ demoId }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          // Approved but PDF failed — still show done, just no download
+          setErrMsg(`Snapshot approved, but PDF generation failed: ${data.error ?? "unknown error"}. You can retry PDF generation later.`);
+          setStage("done");
+          return;
+        }
+        setPdfUrl(data.url);
+        setStage("done");
+      } catch {
+        setErrMsg("Snapshot approved, but PDF generation encountered a network error.");
         setStage("done");
       }
     });
   }
 
-  if (stage === "done") {
+  async function handleSendEmail() {
+    if (!emailTo.trim()) return;
+    setEmailSending(true);
+    setEmailErr("");
+    try {
+      const res  = await fetch("/api/admin/demo-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ demoId, toEmail: emailTo.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setEmailErr(data.error ?? "Email failed.");
+      } else {
+        setEmailSent(true);
+      }
+    } catch {
+      setEmailErr("Network error. Please try again.");
+    } finally {
+      setEmailSending(false);
+    }
+  }
+
+  // ── Idle ────────────────────────────────────────────────────────
+  if (stage === "idle") {
     return (
-      <div
-        className="rounded-lg px-4 py-3 flex items-center gap-3 text-sm font-semibold"
+      <button
+        onClick={() => setStage("confirm")}
+        className="w-full rounded-lg py-2.5 text-sm font-semibold transition-colors"
         style={{ background: "rgba(46,204,113,0.1)", border: "1px solid rgba(46,204,113,0.3)", color: "#2ecc71" }}
       >
-        ✓ Snapshot approved — Rev {version} is now the finalised client document.
+        ✓ Approve Snapshot &amp; Generate PDF — Rev {version}
+      </button>
+    );
+  }
+
+  // ── Confirm ──────────────────────────────────────────────────────
+  if (stage === "confirm") {
+    return (
+      <div className="rounded-lg px-4 py-4 space-y-3"
+        style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.25)" }}>
+        <p className="text-sm font-semibold" style={{ color: "#e8f4ff" }}>
+          Approve Rev {version} as the finalised client document?
+        </p>
+        <p className="text-xs" style={{ color: "#8899aa", lineHeight: 1.6 }}>
+          This will:<br/>
+          1. Mark the demo as <strong style={{ color: "#2d9cdb" }}>Snapshot Approved</strong><br/>
+          2. Generate a PDF (with LexSutra watermark) and save it to storage<br/>
+          3. Show download + email options
+        </p>
+        <div className="flex gap-3">
+          <button onClick={handleApprove}
+            className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            style={{ background: "#2d9cdb", color: "#fff" }}>
+            Confirm &amp; Generate PDF
+          </button>
+          <button onClick={() => setStage("idle")}
+            className="px-4 py-2 rounded-lg text-sm"
+            style={{ color: "#8899aa", border: "1px solid rgba(255,255,255,0.08)" }}>
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (stage === "confirm") {
+  // ── Approving / Generating ───────────────────────────────────────
+  if (stage === "approving" || stage === "generating_pdf") {
     return (
-      <div
-        className="rounded-lg px-4 py-3 space-y-3"
-        style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.25)" }}
-      >
-        <p className="text-sm font-semibold" style={{ color: "#e8f4ff" }}>
-          Approve Rev {version} as the finalised snapshot?
-        </p>
-        <p className="text-xs" style={{ color: "#8899aa" }}>
-          This marks the demo request as <strong>Snapshot Approved</strong> in the system.
-          You can still regenerate or refine after approval.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={handleConfirm}
-            disabled={isPending}
-            className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors"
-            style={{ background: "#2d9cdb", color: "#fff" }}
-          >
-            {isPending ? "Approving…" : "Confirm Approval"}
-          </button>
-          <button
-            onClick={() => setStage("idle")}
-            disabled={isPending}
-            className="px-4 py-2 rounded-lg text-sm disabled:opacity-40"
-            style={{ color: "#8899aa", border: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            Cancel
-          </button>
+      <div className="rounded-lg px-4 py-4 space-y-3"
+        style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.2)" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: "#2d9cdb", borderTopColor: "transparent" }} />
+          <span className="text-sm" style={{ color: "#2d9cdb" }}>
+            {stage === "approving" ? "Approving snapshot…" : "Generating PDF — this takes 15–30 seconds…"}
+          </span>
         </div>
-        {errMsg && (
-          <p className="text-xs" style={{ color: "#e05252" }}>{errMsg}</p>
+        {stage === "generating_pdf" && (
+          <p className="text-xs" style={{ color: "#3d4f60" }}>
+            Rendering all 6–8 pages with LexSutra watermark, cover, obligation cards, roadmap and authenticity stamp.
+          </p>
         )}
       </div>
     );
   }
 
+  // ── Error ────────────────────────────────────────────────────────
+  if (stage === "error") {
+    return (
+      <div className="rounded-lg px-4 py-3 text-sm space-y-2"
+        style={{ background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.25)", color: "#e05252" }}>
+        <p className="font-semibold">Approval failed</p>
+        <p className="text-xs">{errMsg}</p>
+        <button onClick={() => { setStage("idle"); setErrMsg(""); }}
+          className="text-xs underline" style={{ color: "#e05252" }}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // ── Done ─────────────────────────────────────────────────────────
   return (
-    <button
-      onClick={() => setStage("confirm")}
-      className="w-full rounded-lg py-2.5 text-sm font-semibold transition-colors"
-      style={{
-        background: "rgba(46,204,113,0.1)",
-        border: "1px solid rgba(46,204,113,0.3)",
-        color: "#2ecc71",
-      }}
-    >
-      ✓ Approve Snapshot — Finalise Rev {version}
-    </button>
+    <div className="space-y-4">
+      {/* Success banner */}
+      <div className="rounded-lg px-4 py-3"
+        style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.25)" }}>
+        <p className="text-sm font-semibold mb-0.5" style={{ color: "#2ecc71" }}>
+          ✓ Snapshot approved — Rev {version}
+        </p>
+        <p className="text-xs" style={{ color: "#3d4f60" }}>
+          Status updated to Snapshot Approved. PDF generated and saved to storage.
+        </p>
+      </div>
+
+      {/* Partial warning */}
+      {errMsg && (
+        <div className="rounded px-3 py-2 text-xs"
+          style={{ background: "rgba(224,168,50,0.08)", border: "1px solid rgba(224,168,50,0.2)", color: "#e0a832" }}>
+          {errMsg}
+        </div>
+      )}
+
+      {/* Download + Email side by side */}
+      <div className="grid grid-cols-1 gap-4">
+
+        {/* Download */}
+        <div className="rounded-lg px-4 py-4 space-y-2"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
+            Download PDF
+          </p>
+          {pdfUrl ? (
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              style={{ background: "#2d9cdb", color: "#fff", textDecoration: "none" }}
+            >
+              ↓ Download Report PDF
+            </a>
+          ) : (
+            <button
+              onClick={async () => {
+                const res = await fetch(`/api/admin/demo-pdf?demoId=${demoId}`);
+                const d   = await res.json();
+                if (d.url) setPdfUrl(d.url);
+              }}
+              className="text-sm px-4 py-2 rounded-lg"
+              style={{ background: "rgba(45,156,219,0.1)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.25)" }}
+            >
+              Get Download Link
+            </button>
+          )}
+          <p className="text-xs" style={{ color: "#3d4f60" }}>
+            Download link valid for 24 hours. Click again to refresh.
+          </p>
+        </div>
+
+        {/* Send to client */}
+        <div className="rounded-lg px-4 py-4 space-y-3"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
+            Send to Client
+          </p>
+
+          {emailSent ? (
+            <div className="rounded px-3 py-2.5 text-xs font-semibold"
+              style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.2)", color: "#2ecc71" }}>
+              ✓ Email sent successfully to {emailTo}
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs mb-1.5" style={{ color: "#8899aa" }}>
+                  Recipient email address
+                  <span className="ml-1.5" style={{ color: "#3d4f60" }}>(confirm or edit before sending)</span>
+                </label>
+                <input
+                  type="email"
+                  value={emailTo}
+                  onChange={(e) => setEmailTo(e.target.value)}
+                  placeholder="client@company.com"
+                  className="w-full rounded-lg px-3 py-2 text-sm"
+                  style={{
+                    background: "#111d2e",
+                    border: "1px solid rgba(45,156,219,0.25)",
+                    color: "#e8f4ff", outline: "none",
+                  }}
+                />
+              </div>
+              <p className="text-xs" style={{ color: "#3d4f60", lineHeight: 1.6 }}>
+                Sends branded LexSutra email with grade summary, report details, and 7-day PDF download link.
+              </p>
+              {emailErr && (
+                <p className="text-xs" style={{ color: "#e05252" }}>{emailErr}</p>
+              )}
+              <button
+                onClick={handleSendEmail}
+                disabled={emailSending || !emailTo.trim()}
+                className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 transition-colors"
+                style={{
+                  background: "rgba(200,168,75,0.12)",
+                  border: "1px solid rgba(200,168,75,0.3)",
+                  color: "#c8a84b",
+                }}
+              >
+                {emailSending ? "Sending…" : "Send Email to Client →"}
+              </button>
+            </>
+          )}
+
+          {emailSent && (
+            <button
+              onClick={() => { setEmailSent(false); setEmailErr(""); }}
+              className="text-xs underline"
+              style={{ color: "#3d4f60" }}
+            >
+              Send to a different address
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
 // ── Main component ─────────────────────────────────────────────────
 
-export default function DemoAnalysisPanel({ demoId, companyName, initialSnapshot }: Props) {
+export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, initialSnapshot }: Props) {
   const [versions, setVersions]       = useState<InsightVersion[]>(initialSnapshot?.versions ?? []);
   const [viewingV, setViewingV]       = useState<number>(versions.length > 0 ? versions.length : 0);
   const [feedback, setFeedback]       = useState("");
@@ -762,7 +966,7 @@ export default function DemoAnalysisPanel({ demoId, companyName, initialSnapshot
           {/* ── Approve button — latest version only ─────────────── */}
           {isLatest && parsedReport && (
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
-              <ApproveSection demoId={demoId} version={latestV} />
+              <ApproveSection demoId={demoId} version={latestV} contactEmail={contactEmail} />
             </div>
           )}
         </>
