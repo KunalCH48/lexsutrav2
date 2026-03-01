@@ -1,37 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 
 type RiskTier = "likely_high_risk" | "needs_assessment" | "likely_limited_risk";
 
-async function getAdminUser() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated");
-
-  const adminClient = createSupabaseAdminClient();
-  const { data: profile } = await adminClient
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || profile.role !== "admin") throw new Error("Forbidden");
-  return { user, adminClient };
-}
+// Admin layout already verifies admin role before these actions are reachable.
+// We use the admin client directly — no session-based auth needed here.
 
 export async function createClientAccount(
   demoId: string,
   riskTier: RiskTier,
   notes: string
 ): Promise<{ success: true; companyName: string } | { error: string }> {
-  let userId: string | null = null;
-
   try {
-    const { user, adminClient } = await getAdminUser();
-    userId = user.id;
+    const adminClient = createSupabaseAdminClient();
 
     const { data: demo, error: demoError } = await adminClient
       .from("demo_requests")
@@ -40,7 +24,7 @@ export async function createClientAccount(
       .single();
 
     if (demoError || !demo) {
-      await logError({ error: demoError ?? new Error("Demo not found"), source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId } });
+      await logError({ error: demoError ?? new Error("Demo not found"), source: "admin/demo-requests/[id]/actions", action: "createClientAccount", metadata: { demoId } });
       return { error: "Demo request not found." };
     }
 
@@ -59,11 +43,10 @@ export async function createClientAccount(
       .single();
 
     if (companyError || !company) {
-      await logError({ error: companyError ?? new Error("Company insert returned null"), source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.contact_email } });
+      await logError({ error: companyError ?? new Error("Company insert returned null"), source: "admin/demo-requests/[id]/actions", action: "createClientAccount", metadata: { demoId, email: demo.contact_email } });
       return { error: companyError?.message ?? "Failed to create company." };
     }
 
-    // Generate a one-time magic link the client can use to sign in
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       type:    "magiclink",
@@ -73,13 +56,12 @@ export async function createClientAccount(
 
     if (linkError) {
       await adminClient.from("companies").delete().eq("id", company.id);
-      await logError({ error: linkError, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.contact_email, company_id: company.id } });
+      await logError({ error: linkError, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", metadata: { demoId, email: demo.contact_email, company_id: company.id } });
       return { error: linkError.message };
     }
 
     const magicLink = linkData?.properties?.action_link ?? `${appUrl}/portal/login`;
 
-    // Send branded welcome email — client can use the magic link OR sign in via Google
     if (process.env.RESEND_API_KEY) {
       const emailRes = await fetch("https://api.resend.com/emails", {
         method:  "POST",
@@ -89,22 +71,19 @@ export async function createClientAccount(
         },
         body: JSON.stringify({
           from:    "LexSutra <onboarding@resend.dev>",
-          to:      ["kunal.lexutra@gmail.com"], // TODO: restore to demo.contact_email once hello@lexsutra.nl is verified
+          to:      ["kunal.lexutra@gmail.com"], // TODO: restore to demo.contact_email once domain is verified
           subject: `Your LexSutra compliance portal is ready — ${demo.company_name}`,
           html: `
             <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
               <p style="color:#2d9cdb;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">LexSutra · EU AI Act Compliance</p>
               <h1 style="font-size:24px;margin:0 0 12px;color:#e8f4ff;">Your compliance portal is ready</h1>
               <p style="color:#8899aa;margin:0 0 24px;">Hi ${demo.company_name} — your LexSutra client portal has been set up. You can sign in using the button below.</p>
-
               <a href="${magicLink}" style="display:inline-block;background:#2d9cdb;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:24px;">
                 Sign in to your portal →
               </a>
-
               <p style="color:#3d4f60;font-size:13px;margin:0 0 8px;">This link is valid for 24 hours. After that, visit your portal and sign in with Google using <strong style="color:#8899aa;">${demo.contact_email}</strong>.</p>
-
               <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:28px 0;" />
-              <p style="color:#3d4f60;font-size:12px;margin:0;">LexSutra · Compliance infrastructure for AI startups · <a href="https://lexsutra.nl" style="color:#2d9cdb;">lexsutra.nl</a></p>
+              <p style="color:#3d4f60;font-size:12px;margin:0;">LexSutra · Compliance infrastructure for AI startups</p>
             </div>
           `,
         }),
@@ -112,37 +91,18 @@ export async function createClientAccount(
 
       if (!emailRes.ok) {
         const body = await emailRes.text();
-        await logError({
-          error:    new Error(`Resend ${emailRes.status}: ${body}`),
-          source:   "admin/demo-requests/[id]/actions",
-          action:   "createClientAccount:sendWelcomeEmail",
-          severity: "warning",
-          userId,
-          metadata: { email: demo.contact_email, company_id: company.id, resend_status: emailRes.status },
-        });
+        await logError({ error: new Error(`Resend ${emailRes.status}: ${body}`), source: "admin/demo-requests/[id]/actions", action: "createClientAccount:sendWelcomeEmail", severity: "warning", metadata: { email: demo.contact_email, company_id: company.id } });
       }
-    } else {
-      await logError({
-        error:    new Error("RESEND_API_KEY not set — welcome email not sent"),
-        source:   "admin/demo-requests/[id]/actions",
-        action:   "createClientAccount:sendWelcomeEmail",
-        severity: "warning",
-        userId,
-        metadata: { email: demo.contact_email, company_id: company.id, magic_link: magicLink },
-      });
     }
-
-    // Profile is auto-created in /portal/auth/callback on first sign-in
-    // by matching contact_email — no need to pre-create here.
 
     await adminClient.from("demo_requests").update({ status: "converted" }).eq("id", demoId);
 
     await adminClient.from("activity_log").insert({
-      actor_id: user.id,
-      action: "create_client_account",
+      actor_id:    null,
+      action:      "create_client_account",
       entity_type: "companies",
-      entity_id: company.id,
-      metadata: { demo_id: demoId, email: demo.contact_email, company_name: demo.company_name, risk_tier: riskTier, notes: notes || null },
+      entity_id:   company.id,
+      metadata:    { demo_id: demoId, email: demo.contact_email, company_name: demo.company_name, risk_tier: riskTier, notes: notes || null },
     });
 
     revalidatePath("/admin/demo-requests");
@@ -150,87 +110,61 @@ export async function createClientAccount(
     return { success: true, companyName: demo.company_name };
 
   } catch (err) {
-    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId } });
+    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", metadata: { demoId } });
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
 
 export async function markDemoContacted(demoId: string): Promise<{ success: true } | { error: string }> {
-  let userId: string | null = null;
   try {
-    const { user, adminClient } = await getAdminUser();
-    userId = user.id;
-
+    const adminClient = createSupabaseAdminClient();
     const { error } = await adminClient.from("demo_requests").update({ status: "contacted" }).eq("id", demoId);
     if (error) {
-      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "markDemoContacted", userId, metadata: { demoId } });
+      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "markDemoContacted", metadata: { demoId } });
       return { error: error.message };
     }
-
-    await adminClient.from("activity_log").insert({ actor_id: user.id, action: "update_demo_status", entity_type: "demo_requests", entity_id: demoId, metadata: { status: "contacted" } });
+    await adminClient.from("activity_log").insert({ actor_id: null, action: "update_demo_status", entity_type: "demo_requests", entity_id: demoId, metadata: { status: "contacted" } });
     revalidatePath("/admin/demo-requests");
     revalidatePath(`/admin/demo-requests/${demoId}`);
     return { success: true };
-
   } catch (err) {
-    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "markDemoContacted", userId, metadata: { demoId } });
+    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "markDemoContacted", metadata: { demoId } });
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
 
 export async function markDemoRejected(demoId: string): Promise<{ success: true } | { error: string }> {
-  let userId: string | null = null;
   try {
-    const { user, adminClient } = await getAdminUser();
-    userId = user.id;
-
+    const adminClient = createSupabaseAdminClient();
     const { error } = await adminClient.from("demo_requests").update({ status: "rejected" }).eq("id", demoId);
     if (error) {
-      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "markDemoRejected", userId, metadata: { demoId } });
+      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "markDemoRejected", metadata: { demoId } });
       return { error: error.message };
     }
-
-    await adminClient.from("activity_log").insert({ actor_id: user.id, action: "update_demo_status", entity_type: "demo_requests", entity_id: demoId, metadata: { status: "rejected" } });
+    await adminClient.from("activity_log").insert({ actor_id: null, action: "update_demo_status", entity_type: "demo_requests", entity_id: demoId, metadata: { status: "rejected" } });
     revalidatePath("/admin/demo-requests");
     revalidatePath(`/admin/demo-requests/${demoId}`);
     return { success: true };
-
   } catch (err) {
-    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "markDemoRejected", userId, metadata: { demoId } });
+    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "markDemoRejected", metadata: { demoId } });
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
 
 export async function approveSnapshot(demoId: string, approvedVersion: number): Promise<{ success: true } | { error: string }> {
-  let userId: string | null = null;
   try {
-    const { user, adminClient } = await getAdminUser();
-    userId = user.id;
-
-    const { error } = await adminClient
-      .from("demo_requests")
-      .update({ status: "snapshot_approved" })
-      .eq("id", demoId);
-
+    const adminClient = createSupabaseAdminClient();
+    const { error } = await adminClient.from("demo_requests").update({ status: "snapshot_approved" }).eq("id", demoId);
     if (error) {
-      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "approveSnapshot", userId, metadata: { demoId } });
+      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "approveSnapshot", metadata: { demoId } });
       return { error: error.message };
     }
-
-    await adminClient.from("activity_log").insert({
-      actor_id: user.id,
-      action: "approve_snapshot",
-      entity_type: "demo_requests",
-      entity_id: demoId,
-      metadata: { approved_version: approvedVersion },
-    });
-
+    await adminClient.from("activity_log").insert({ actor_id: null, action: "approve_snapshot", entity_type: "demo_requests", entity_id: demoId, metadata: { approved_version: approvedVersion } });
     revalidatePath("/admin/demo-requests");
     revalidatePath(`/admin/demo-requests/${demoId}`);
     return { success: true };
-
   } catch (err) {
-    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "approveSnapshot", userId, metadata: { demoId } });
+    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "approveSnapshot", metadata: { demoId } });
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }

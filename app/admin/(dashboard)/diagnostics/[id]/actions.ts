@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 
 type FindingScore = "compliant" | "partial" | "critical_gap" | "not_started" | "not_applicable";
@@ -16,27 +16,14 @@ export type FindingPayload = {
   deadline: string;
 };
 
-async function getAdminUser() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated");
-
-  const adminClient = createSupabaseAdminClient();
-  const { data: profile } = await adminClient
-    .from("profiles").select("role").eq("id", user.id).single();
-
-  if (!profile || profile.role !== "admin") throw new Error("Forbidden");
-  return { user, adminClient };
-}
+// Admin layout already verifies admin role before these actions are reachable.
 
 export async function saveFindings(
   diagnosticId: string,
   findings: FindingPayload[]
 ): Promise<{ success: true } | { error: string }> {
-  let userId: string | null = null;
   try {
-    const { user, adminClient } = await getAdminUser();
-    userId = user.id;
+    const adminClient = createSupabaseAdminClient();
 
     const rows = findings.map((f) => ({
       diagnostic_id: diagnosticId,
@@ -54,14 +41,14 @@ export async function saveFindings(
       .upsert(rows, { onConflict: "diagnostic_id,obligation_id" });
 
     if (error) {
-      await logError({ error, source: "admin/diagnostics/[id]/actions", action: "saveFindings", userId, metadata: { diagnosticId, finding_count: findings.length } });
+      await logError({ error, source: "admin/diagnostics/[id]/actions", action: "saveFindings", metadata: { diagnosticId, finding_count: findings.length } });
       return { error: error.message };
     }
 
     await adminClient.from("diagnostics").update({ status: "draft" }).eq("id", diagnosticId);
 
     await adminClient.from("activity_log").insert({
-      actor_id: user.id, action: "save_findings_draft",
+      actor_id: null, action: "save_findings_draft",
       entity_type: "diagnostics", entity_id: diagnosticId,
       metadata: { finding_count: findings.length },
     });
@@ -71,7 +58,7 @@ export async function saveFindings(
     return { success: true };
 
   } catch (err) {
-    await logError({ error: err, source: "admin/diagnostics/[id]/actions", action: "saveFindings", userId, metadata: { diagnosticId } });
+    await logError({ error: err, source: "admin/diagnostics/[id]/actions", action: "saveFindings", metadata: { diagnosticId } });
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
@@ -79,12 +66,10 @@ export async function saveFindings(
 export async function approveAndDeliver(
   diagnosticId: string
 ): Promise<{ success: true } | { error: string }> {
-  let userId: string | null = null;
   let companyId: string | null = null;
 
   try {
-    const { user, adminClient } = await getAdminUser();
-    userId = user.id;
+    const adminClient = createSupabaseAdminClient();
 
     const { data: diagnostic, error: diagError } = await adminClient
       .from("diagnostics")
@@ -93,7 +78,7 @@ export async function approveAndDeliver(
       .single();
 
     if (diagError || !diagnostic) {
-      await logError({ error: diagError ?? new Error("Diagnostic not found"), source: "admin/diagnostics/[id]/actions", action: "approveAndDeliver", userId, metadata: { diagnosticId } });
+      await logError({ error: diagError ?? new Error("Diagnostic not found"), source: "admin/diagnostics/[id]/actions", action: "approveAndDeliver", metadata: { diagnosticId } });
       return { error: "Diagnostic not found." };
     }
 
@@ -105,7 +90,7 @@ export async function approveAndDeliver(
       .from("diagnostics").update({ status: "delivered" }).eq("id", diagnosticId);
 
     if (updateError) {
-      await logError({ error: updateError, source: "admin/diagnostics/[id]/actions", action: "approveAndDeliver", userId, companyId, metadata: { diagnosticId } });
+      await logError({ error: updateError, source: "admin/diagnostics/[id]/actions", action: "approveAndDeliver", companyId, metadata: { diagnosticId } });
       return { error: updateError.message };
     }
 
@@ -142,7 +127,6 @@ export async function approveAndDeliver(
           error: new Error(`Resend API returned ${emailRes.status}`),
           source: "admin/diagnostics/[id]/actions",
           action: "approveAndDeliver:sendEmail",
-          userId,
           companyId,
           severity: "warning",
           metadata: { diagnosticId, email: (company as { email?: string } | null)?.email },
@@ -151,7 +135,7 @@ export async function approveAndDeliver(
     }
 
     await adminClient.from("activity_log").insert({
-      actor_id: user.id, action: "approve_and_deliver",
+      actor_id: null, action: "approve_and_deliver",
       entity_type: "diagnostics", entity_id: diagnosticId,
       metadata: { company: (company as { name?: string } | null)?.name, email: (company as { email?: string } | null)?.email, ai_system: sys?.name },
     });
@@ -161,7 +145,7 @@ export async function approveAndDeliver(
     return { success: true };
 
   } catch (err) {
-    await logError({ error: err, source: "admin/diagnostics/[id]/actions", action: "approveAndDeliver", userId, companyId, metadata: { diagnosticId } });
+    await logError({ error: err, source: "admin/diagnostics/[id]/actions", action: "approveAndDeliver", companyId, metadata: { diagnosticId } });
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
