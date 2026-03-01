@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 export const metadata = { title: "Demo Requests — LexSutra Admin" };
 
 export default async function DemoRequestsPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
 
   const { data: requests } = await supabase
     .from("demo_requests")
@@ -57,7 +57,7 @@ export default async function DemoRequestsPage() {
             </td>
           </tr>
         ) : (
-          rows.map((r) => (
+          rows.map((r: any) => (
             <TableRow key={r.id}>
               <TableCell muted>{fmtDate(r.created_at)}</TableCell>
               <TableCell>{r.company_name}</TableCell>
