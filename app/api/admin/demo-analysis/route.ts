@@ -274,6 +274,7 @@ export async function POST(req: NextRequest) {
 
   } catch (err) {
     await logError({ error: err, source: "api/admin/demo-analysis", action: "POST", metadata: {} });
-    return NextResponse.json({ error: "Analysis generation failed. Please try again." }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Analysis generation failed: ${msg}` }, { status: 500 });
   }
 }
