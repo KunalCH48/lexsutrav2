@@ -25,23 +25,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session — this writes fresh tokens back into cookies so server
-  // actions that call auth.getUser() always see a valid session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-
-  // Protect all /admin routes except the login page and OAuth callback
-  const isAdminRoute =
-    pathname.startsWith("/admin") &&
-    !pathname.startsWith("/admin/login") &&
-    !pathname.startsWith("/auth/callback");
-
-  if (isAdminRoute && !user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
-  }
+  // Refresh session — writes fresh tokens back into cookies so that
+  // server actions calling auth.getUser() always see a valid session
+  await supabase.auth.getUser();
 
   return response;
 }
