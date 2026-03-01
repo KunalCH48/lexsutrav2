@@ -55,6 +55,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/portal`);
   }
 
+  // Admin/reviewer with a linked company — allow portal preview without changing their role
+  if ((profile?.role === "admin" || profile?.role === "reviewer") && profile?.company_id) {
+    return NextResponse.redirect(`${origin}/portal`);
+  }
+
   // No client profile yet — check if this email matches an invited company
   // This handles both first-time Google SSO and magic link sign-ins
   if (user.email) {

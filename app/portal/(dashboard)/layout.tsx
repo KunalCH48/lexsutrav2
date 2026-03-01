@@ -29,19 +29,33 @@ export default async function PortalLayout({
         .single();
 
       if (profile?.company_id) {
+        // Fetch name separately from onboarding so a missing column doesn't hide the company name
         const { data: company } = await adminClient
           .from("companies")
-          .select("name, onboarding")
+          .select("name")
           .eq("id", profile.company_id)
           .single();
 
         if (company) {
           companyName = company.name ?? companyName;
+        }
 
-          const onboarding = company.onboarding as { completed_at?: string } | null;
-          if (!onboarding?.completed_at) {
-            onboardingPending = true;
+        // onboarding column may not exist yet — check without failing the whole layout
+        try {
+          const { data: ob } = await adminClient
+            .from("companies")
+            .select("onboarding")
+            .eq("id", profile.company_id)
+            .single();
+
+          if (ob) {
+            const onboarding = (ob as { onboarding?: { completed_at?: string } | null }).onboarding ?? null;
+            if (!onboarding?.completed_at) {
+              onboardingPending = true;
+            }
           }
+        } catch {
+          // column not yet migrated — skip banner
         }
       }
     }

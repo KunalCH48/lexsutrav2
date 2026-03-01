@@ -8,10 +8,15 @@ function fmtDate(iso: string) {
 }
 
 export default async function PortalReportsPage() {
-  // TODO: re-enable auth before production
+  const supabase    = await (await import("@/lib/supabase-server")).createSupabaseServerClient();
   const adminClient = createSupabaseAdminClient();
 
-  const companyId = "11111111-1111-1111-1111-111111111111";
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return <div className="text-sm" style={{ color: "#3d4f60" }}>Sign in to view reports.</div>;
+
+  const { data: profile } = await adminClient.from("profiles").select("company_id").eq("id", user.id).single();
+  const companyId = profile?.company_id ?? null;
+  if (!companyId) return <div className="text-sm" style={{ color: "#3d4f60" }}>No company linked to your account.</div>;
 
   const { data: systems } = await adminClient
     .from("ai_systems").select("id").eq("company_id", companyId);

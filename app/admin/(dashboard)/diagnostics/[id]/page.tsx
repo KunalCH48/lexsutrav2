@@ -31,7 +31,7 @@ export default async function DiagnosticReviewPage({
         policy_versions ( version_code, display_name ),
         ai_systems (
           id, name, risk_category, description,
-          companies ( id, name, email )
+          companies ( id, name, contact_email )
         )
       `)
       .eq("id", id)
@@ -113,7 +113,7 @@ export default async function DiagnosticReviewPage({
         style={{ background: "#0d1520", border: "1px solid rgba(255,255,255,0.06)" }}
       >
         <MetaStat label="Company"       value={company?.name ?? "—"} />
-        <MetaStat label="Contact Email" value={company?.email ?? "—"} mono />
+        <MetaStat label="Contact Email" value={company?.contact_email ?? "—"} mono />
         <MetaStat label="Responses"     value={`${responseCount} submitted`} />
         <MetaStat
           label="Questionnaire"

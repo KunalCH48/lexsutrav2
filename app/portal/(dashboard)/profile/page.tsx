@@ -12,15 +12,20 @@ const RISK_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default async function ProfilePage() {
-  // TODO: re-enable auth before production
+  const supabase    = await (await import("@/lib/supabase-server")).createSupabaseServerClient();
   const adminClient = createSupabaseAdminClient();
 
-  const companyId = "11111111-1111-1111-1111-111111111111";
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await adminClient.from("profiles").select("company_id").eq("id", user.id).single();
+  const companyId = profile?.company_id ?? null;
+  if (!companyId) return null;
 
   const [companyRes, systemsRes] = await Promise.all([
     adminClient
       .from("companies")
-      .select("id, name, email, website_url, created_at")
+      .select("id, name, contact_email, website_url, created_at")
       .eq("id", companyId)
       .single(),
     adminClient
@@ -63,7 +68,7 @@ export default async function ProfilePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <InfoField label="Company Name"  value={company?.name} />
-          <InfoField label="Contact Email" value={company?.email} mono />
+          <InfoField label="Contact Email" value={company?.contact_email} mono />
           <InfoField label="Website"       value={company?.website_url} link />
           <InfoField label="Client Since"  value={company?.created_at ? fmtDate(company.created_at) : null} />
         </div>

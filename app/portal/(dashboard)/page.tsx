@@ -69,7 +69,7 @@ export default async function PortalDashboardPage() {
   const companyId = profile.company_id;
 
   const [companyRes, systemsRes, activityRes, policyRes] = await Promise.all([
-    adminClient.from("companies").select("id, name, email").eq("id", companyId).single(),
+    adminClient.from("companies").select("id, name, contact_email").eq("id", companyId).single(),
     adminClient.from("ai_systems").select("id, name, risk_category").eq("company_id", companyId),
     adminClient
       .from("activity_log")
@@ -93,7 +93,7 @@ export default async function PortalDashboardPage() {
 
   // Latest delivered diagnostic + findings
   let latestDiagnostic: { id: string; status: string; created_at: string; policy_version_id: string | null } | null = null;
-  let findings: { obligation_id: string; score: FindingScore }[] = [];
+  let findings: { obligation_id: string; rag_status: string | null; score: number | null }[] = [];
   let obligations: { id: string; name: string; article_ref: string }[] = [];
 
   if (systems.length > 0) {
@@ -114,21 +114,29 @@ export default async function PortalDashboardPage() {
       latestDiagnostic
         ? adminClient
             .from("diagnostic_findings")
-            .select("obligation_id, score")
+            .select("obligation_id, rag_status, score")
             .eq("diagnostic_id", latestDiagnostic.id)
         : Promise.resolve({ data: [] }),
     ]);
 
     obligations = oblRes.data ?? [];
-    findings    = (findingsRes.data ?? []) as { obligation_id: string; score: FindingScore }[];
+    findings    = (findingsRes.data ?? []) as { obligation_id: string; rag_status: string | null; score: number | null }[];
   }
 
-  const grade    = calcGrade(findings);
+  // Map DB rag_status → FindingScore for display
+  function ragToScore(rag: string | null, numScore: number | null): FindingScore {
+    if (rag === "green") return "compliant";
+    if (rag === "amber") return "partial";
+    if (rag === "red")   return numScore === 0 ? "critical" : "not_started";
+    return "not_started";
+  }
+
+  const grade    = calcGrade(findings.map((f) => ({ score: ragToScore(f.rag_status, f.score) })));
   const deadline = daysUntil("2026-08-02");
 
   const obligationRows = obligations.map((ob) => {
     const finding = findings.find((f) => f.obligation_id === ob.id);
-    const score: FindingScore = finding?.score ?? "not_started";
+    const score: FindingScore = finding ? ragToScore(finding.rag_status, finding.score) : "not_started";
     return { ...ob, score };
   });
 
