@@ -10,6 +10,7 @@ import {
   ScrollText,
   DollarSign,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 import { SidebarLink } from "./SidebarLink";
 import { SignOutButton } from "./SignOutButton";
@@ -20,6 +21,7 @@ const OPERATIONS = [
   { href: "/admin/diagnostics", label: "Diagnostic Queue", icon: ClipboardList, exact: false },
   { href: "/admin/companies", label: "All Clients",  icon: Users,         exact: false },
   { href: "/admin/feedback",  label: "Feedback",     icon: MessageSquare, exact: false },
+  { href: "/admin/reports",   label: "Reports",      icon: FileText,      exact: false },
 ];
 
 const PLATFORM = [
