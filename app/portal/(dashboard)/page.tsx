@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 export const metadata = { title: "Dashboard — LexSutra Portal" };
@@ -52,10 +52,21 @@ function timeAgo(iso: string) {
 
 // --- Page ---
 export default async function PortalDashboardPage() {
-  // TODO: re-enable auth before production
-  const adminClient  = createSupabaseAdminClient();
+  const supabase    = await createSupabaseServerClient();
+  const adminClient = createSupabaseAdminClient();
 
-  const companyId = "11111111-1111-1111-1111-111111111111";
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return <NoCompanyState />;
+
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.company_id) return <NoCompanyState />;
+
+  const companyId = profile.company_id;
 
   const [companyRes, systemsRes, activityRes, policyRes] = await Promise.all([
     adminClient.from("companies").select("id, name, email").eq("id", companyId).single(),
@@ -63,6 +74,7 @@ export default async function PortalDashboardPage() {
     adminClient
       .from("activity_log")
       .select("id, action, entity_type, created_at, metadata")
+      .eq("actor_id", user.id)
       .order("created_at", { ascending: false })
       .limit(6),
     adminClient
@@ -114,14 +126,12 @@ export default async function PortalDashboardPage() {
   const grade    = calcGrade(findings);
   const deadline = daysUntil("2026-08-02");
 
-  // Build obligation rows — merge obligations with findings
   const obligationRows = obligations.map((ob) => {
     const finding = findings.find((f) => f.obligation_id === ob.id);
     const score: FindingScore = finding?.score ?? "not_started";
     return { ...ob, score };
   });
 
-  // Check if policy update available since last diagnostic
   const policyOutdated =
     latestDiagnostic &&
     latestPolicy &&
@@ -154,7 +164,6 @@ export default async function PortalDashboardPage() {
 
       {/* Metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Grade */}
         <MetricCard label="Overall Score">
           <p className="text-4xl font-bold mt-1" style={{ color: grade.color, fontFamily: "var(--font-serif, serif)" }}>
             {grade.letter}
@@ -164,7 +173,6 @@ export default async function PortalDashboardPage() {
           </p>
         </MetricCard>
 
-        {/* Last assessment */}
         <MetricCard label="Last Assessment">
           <p className="text-xl font-semibold mt-1" style={{ color: "#e8f4ff" }}>
             {latestDiagnostic ? fmtDate(latestDiagnostic.created_at) : "—"}
@@ -174,7 +182,6 @@ export default async function PortalDashboardPage() {
           </p>
         </MetricCard>
 
-        {/* Days to deadline */}
         <MetricCard label="Days to Deadline">
           <p
             className="text-4xl font-bold mt-1"
@@ -370,12 +377,14 @@ function NoCompanyState() {
 
 function formatAction(action: string): string {
   const map: Record<string, string> = {
-    create_client_account: "Client account created",
-    update_demo_status:    "Demo request updated",
-    save_findings_draft:   "Findings draft saved",
-    approve_and_deliver:   "Diagnostic report delivered",
-    upload_document:       "Document uploaded",
-    confirm_document_otp:  "Document confirmed via OTP",
+    create_client_account:  "Client account created",
+    update_demo_status:     "Demo request updated",
+    save_findings_draft:    "Findings draft saved",
+    approve_and_deliver:    "Diagnostic report delivered",
+    upload_document:        "Document uploaded",
+    confirm_document_otp:   "Document confirmed via OTP",
+    complete_onboarding:    "Onboarding completed",
+    request_diagnostic:     "Diagnostic requested",
   };
   return map[action] ?? action.replace(/_/g, " ");
 }

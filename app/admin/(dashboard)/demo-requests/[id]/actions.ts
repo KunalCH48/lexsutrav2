@@ -50,7 +50,11 @@ export async function createClientAccount(
 
     const { data: company, error: companyError } = await adminClient
       .from("companies")
-      .insert({ name: demo.company_name, email: demo.contact_email, website_url: demo.website_url ?? null })
+      .insert({
+        name:          demo.company_name,
+        contact_name:  demo.company_name,
+        contact_email: demo.contact_email,
+      })
       .select("id")
       .single();
 
@@ -59,23 +63,77 @@ export async function createClientAccount(
       return { error: companyError?.message ?? "Failed to create company." };
     }
 
-    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
-      demo.contact_email,
-      { data: { company_id: company.id, role: "client" } }
-    );
+    // Generate a one-time magic link the client can use to sign in
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type:    "magiclink",
+      email:   demo.contact_email,
+      options: { redirectTo: `${appUrl}/portal/auth/callback` },
+    });
 
-    if (inviteError) {
-      // Roll back company creation
+    if (linkError) {
       await adminClient.from("companies").delete().eq("id", company.id);
-      await logError({ error: inviteError, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.contact_email, company_id: company.id } });
-      return { error: inviteError.message };
+      await logError({ error: linkError, source: "admin/demo-requests/[id]/actions", action: "createClientAccount", userId, metadata: { demoId, email: demo.contact_email, company_id: company.id } });
+      return { error: linkError.message };
     }
 
-    await adminClient.from("profiles").upsert({
-      id: inviteData.user.id,
-      role: "client",
-      company_id: company.id,
-    });
+    const magicLink = linkData?.properties?.action_link ?? `${appUrl}/portal/login`;
+
+    // Send branded welcome email — client can use the magic link OR sign in via Google
+    if (process.env.RESEND_API_KEY) {
+      const emailRes = await fetch("https://api.resend.com/emails", {
+        method:  "POST",
+        headers: {
+          Authorization:  `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from:    "LexSutra <onboarding@resend.dev>",
+          to:      ["kunal.lexutra@gmail.com"], // TODO: restore to demo.contact_email once hello@lexsutra.nl is verified
+          subject: `Your LexSutra compliance portal is ready — ${demo.company_name}`,
+          html: `
+            <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
+              <p style="color:#2d9cdb;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">LexSutra · EU AI Act Compliance</p>
+              <h1 style="font-size:24px;margin:0 0 12px;color:#e8f4ff;">Your compliance portal is ready</h1>
+              <p style="color:#8899aa;margin:0 0 24px;">Hi ${demo.company_name} — your LexSutra client portal has been set up. You can sign in using the button below.</p>
+
+              <a href="${magicLink}" style="display:inline-block;background:#2d9cdb;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:24px;">
+                Sign in to your portal →
+              </a>
+
+              <p style="color:#3d4f60;font-size:13px;margin:0 0 8px;">This link is valid for 24 hours. After that, visit your portal and sign in with Google using <strong style="color:#8899aa;">${demo.contact_email}</strong>.</p>
+
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:28px 0;" />
+              <p style="color:#3d4f60;font-size:12px;margin:0;">LexSutra · Compliance infrastructure for AI startups · <a href="https://lexsutra.nl" style="color:#2d9cdb;">lexsutra.nl</a></p>
+            </div>
+          `,
+        }),
+      });
+
+      if (!emailRes.ok) {
+        const body = await emailRes.text();
+        await logError({
+          error:    new Error(`Resend ${emailRes.status}: ${body}`),
+          source:   "admin/demo-requests/[id]/actions",
+          action:   "createClientAccount:sendWelcomeEmail",
+          severity: "warning",
+          userId,
+          metadata: { email: demo.contact_email, company_id: company.id, resend_status: emailRes.status },
+        });
+      }
+    } else {
+      await logError({
+        error:    new Error("RESEND_API_KEY not set — welcome email not sent"),
+        source:   "admin/demo-requests/[id]/actions",
+        action:   "createClientAccount:sendWelcomeEmail",
+        severity: "warning",
+        userId,
+        metadata: { email: demo.contact_email, company_id: company.id, magic_link: magicLink },
+      });
+    }
+
+    // Profile is auto-created in /portal/auth/callback on first sign-in
+    // by matching contact_email — no need to pre-create here.
 
     await adminClient.from("demo_requests").update({ status: "converted" }).eq("id", demoId);
 

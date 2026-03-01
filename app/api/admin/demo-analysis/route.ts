@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     // Load demo
     const { data: demo, error: demoError } = await adminClient
       .from("demo_requests")
-      .select("id, company_name, website_url, insights_snapshot")
+      .select("id, company_name, website_url, contact_email, insights_snapshot")
       .eq("id", demoId)
       .single();
 
@@ -186,7 +186,34 @@ export async function POST(req: NextRequest) {
       userMessage  = `Current report JSON:\n${currentVersion.content}\n\nInternal revision notes from expert reviewer:\n${feedback}\n\nReturn the complete revised report as JSON.`;
     } else {
       systemPrompt = SYSTEM_INITIAL;
-      userMessage  = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}\n\nAssessment date: ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}\n\nGenerate the full diagnostic snapshot report JSON.`;
+
+      // Look up company by demo email to get questionnaire context
+      const { data: company } = await adminClient
+        .from("companies")
+        .select("onboarding")
+        .eq("email", demo.contact_email)
+        .maybeSingle();
+
+      const answers = (company?.onboarding as { answers?: Record<string, unknown> } | null)?.answers;
+
+      let clientContext = "";
+      if (answers && Object.keys(answers).length > 0) {
+        const lines: string[] = [];
+        if (answers.ai_system_description) lines.push(`- AI System Description: ${answers.ai_system_description}`);
+        if (answers.decision_making_role)   lines.push(`- Decision-making role: ${answers.decision_making_role}`);
+        if (answers.who_is_affected)        lines.push(`- Who is affected: ${Array.isArray(answers.who_is_affected) ? (answers.who_is_affected as string[]).join(", ") : answers.who_is_affected}`);
+        if (answers.scale_of_impact)        lines.push(`- Scale of impact (people/month): ${answers.scale_of_impact}`);
+        if (answers.existing_compliance_docs) lines.push(`- Existing compliance docs: ${answers.existing_compliance_docs}`);
+        if (answers.human_override_capability) lines.push(`- Human override capability: ${answers.human_override_capability}`);
+        if (answers.deployment_status)      lines.push(`- Deployment status: ${answers.deployment_status}`);
+        if (answers.additional_context)     lines.push(`- Additional context: ${answers.additional_context}`);
+
+        if (lines.length > 0) {
+          clientContext = `\n\nCLIENT-PROVIDED CONTEXT (from company onboarding questionnaire — treat as self-reported, unverified):\n${lines.join("\n")}\nNote: This context was provided directly by the client. Use it to refine obligation findings where relevant, but maintain the public-information caveat in all findings.`;
+        }
+      }
+
+      userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}\n\nAssessment date: ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
     }
 
     // Call Claude — higher token limit for full report

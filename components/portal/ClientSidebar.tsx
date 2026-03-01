@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, FolderOpen, ClipboardList, FileText, Building2 } from "lucide-react";
+import { LayoutDashboard, FolderOpen, ClipboardList, FileText, Building2, MessageSquare } from "lucide-react";
 import { SidebarLink } from "@/components/admin/SidebarLink";
 import { ClientSignOutButton } from "./ClientSignOutButton";
 
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/portal/diagnostics", label: "Diagnostics", icon: ClipboardList, exact: false },
   { href: "/portal/reports",   label: "Reports",     icon: FileText,        exact: false },
   { href: "/portal/profile",   label: "Company",     icon: Building2,       exact: false },
+  { href: "/portal/feedback",  label: "Feedback",    icon: MessageSquare,   exact: false },
 ];
 
 type Props = {

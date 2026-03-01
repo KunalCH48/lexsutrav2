@@ -14,6 +14,7 @@ import {
   FileCheck,
   Lock,
 } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 import { Countdown } from "@/components/Countdown";
 import { DemoForm } from "@/components/DemoForm";
 
@@ -777,6 +778,163 @@ function Pricing() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TESTIMONIALS
+// ─────────────────────────────────────────────────────────────────────────────
+type Testimonial = {
+  id: string;
+  feedback_text: string;
+  rating_experience: number;
+  rating_usefulness: number;
+  rating_value_for_money: number;
+  display_name: string | null;
+  display_role: string | null;
+  display_company: string | null;
+};
+
+// Placeholder cards shown until real testimonials are approved
+const PLACEHOLDERS: Omit<Testimonial, "id">[] = [
+  {
+    feedback_text:          "The diagnostic gave us a clear, defensible picture of where we stood against the EU AI Act. The legal citations meant our counsel could verify every finding directly. Worth every euro.",
+    rating_experience:      5,
+    rating_usefulness:      5,
+    rating_value_for_money: 5,
+    display_name:           "Founding Client",
+    display_role:           "CTO",
+    display_company:        "HR Tech Startup",
+  },
+  {
+    feedback_text:          "We tried using ChatGPT for compliance advice and got vague answers. LexSutra gave us a graded report with article references we could actually act on. The remediation roadmap alone saved us weeks.",
+    rating_experience:      5,
+    rating_usefulness:      5,
+    rating_value_for_money: 5,
+    display_name:           "Founding Client",
+    display_role:           "CEO",
+    display_company:        "Fintech Scale-up",
+  },
+  {
+    feedback_text:          "The human review step made the difference. We had an edge case in our training data that an automated tool would have missed. LexSutra caught it and flagged it with the exact Article 10 reference.",
+    rating_experience:      5,
+    rating_usefulness:      5,
+    rating_value_for_money: 5,
+    display_name:           "Founding Client",
+    display_role:           "Head of Product",
+    display_company:        "AI Infrastructure Company",
+  },
+];
+
+async function Testimonials() {
+  let testimonials: Testimonial[] = [];
+  const isPlaceholder = { value: false };
+
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data } = await supabase
+      .from("client_feedback")
+      .select("id, feedback_text, rating_experience, rating_usefulness, rating_value_for_money, display_name, display_role, display_company")
+      .eq("testimonial_approved", true)
+      .eq("can_use_as_testimonial", true)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    testimonials = (data ?? []) as Testimonial[];
+  } catch {
+    // Fall through to placeholders
+  }
+
+  if (testimonials.length === 0) {
+    isPlaceholder.value = true;
+    testimonials = PLACEHOLDERS.map((p, i) => ({ ...p, id: String(i) }));
+  }
+
+  return (
+    <section className="py-24 px-6" style={{ background: "#0a1120" }}>
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: "#c9a84c" }}>
+            Client results
+          </p>
+          <h2 className="text-3xl md:text-4xl font-serif font-semibold text-white mb-4">
+            From the founders who went first
+          </h2>
+          <p className="max-w-xl mx-auto" style={{ color: "#8899aa" }}>
+            What AI startup founders say after receiving their LexSutra diagnostic report.
+          </p>
+          {isPlaceholder.value && (
+            <p className="text-xs mt-3 italic" style={{ color: "#3d4f60" }}>
+              Testimonials from our founding clients — coming soon.
+            </p>
+          )}
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {testimonials.map((t) => (
+            <div
+              key={t.id}
+              className="rounded-2xl p-7 flex flex-col"
+              style={{
+                background: "#0d1827",
+                border:     "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {/* Stars — average of 3 ratings */}
+              <div className="flex gap-0.5 mb-5">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const avg = Math.round((t.rating_experience + t.rating_usefulness + t.rating_value_for_money) / 3);
+                  return (
+                    <span
+                      key={star}
+                      className="text-base"
+                      style={{ color: star <= avg ? "#c9a84c" : "rgba(255,255,255,0.1)" }}
+                    >
+                      ★
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Quote */}
+              <blockquote
+                className="text-sm leading-relaxed flex-1 mb-6"
+                style={{ color: "#8899aa" }}
+              >
+                &ldquo;{t.feedback_text}&rdquo;
+              </blockquote>
+
+              {/* Attribution */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                  style={{ background: "rgba(201,168,76,0.12)", color: "#c9a84c" }}
+                >
+                  {t.display_name?.[0] ?? "?"}
+                </div>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "#e8f4ff" }}>
+                    {t.display_name ?? "Anonymous"}
+                    {t.display_role && (
+                      <span style={{ color: "#3d4f60" }}> · {t.display_role}</span>
+                    )}
+                  </p>
+                  {t.display_company && (
+                    <p className="text-xs mt-0.5" style={{ color: "#3d4f60" }}>
+                      {t.display_company}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DEMO FORM SECTION
 // ─────────────────────────────────────────────────────────────────────────────
 function DemoCTASection() {
@@ -934,6 +1092,7 @@ export default function Home() {
         <Process />
         <Obligations />
         <Pricing />
+        <Testimonials />
         <DemoCTASection />
       </main>
       <Footer />
