@@ -142,3 +142,37 @@ export async function markDemoRejected(demoId: string): Promise<{ success: true 
     return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
+
+export async function approveSnapshot(demoId: string, approvedVersion: number): Promise<{ success: true } | { error: string }> {
+  let userId: string | null = null;
+  try {
+    const { user, adminClient } = await getAdminUser();
+    userId = user.id;
+
+    const { error } = await adminClient
+      .from("demo_requests")
+      .update({ status: "snapshot_approved" })
+      .eq("id", demoId);
+
+    if (error) {
+      await logError({ error, source: "admin/demo-requests/[id]/actions", action: "approveSnapshot", userId, metadata: { demoId } });
+      return { error: error.message };
+    }
+
+    await adminClient.from("activity_log").insert({
+      actor_id: user.id,
+      action: "approve_snapshot",
+      entity_type: "demo_requests",
+      entity_id: demoId,
+      metadata: { approved_version: approvedVersion },
+    });
+
+    revalidatePath("/admin/demo-requests");
+    revalidatePath(`/admin/demo-requests/${demoId}`);
+    return { success: true };
+
+  } catch (err) {
+    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "approveSnapshot", userId, metadata: { demoId } });
+    return { error: err instanceof Error ? err.message : "Unexpected error." };
+  }
+}
