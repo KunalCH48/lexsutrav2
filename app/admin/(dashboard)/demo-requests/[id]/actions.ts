@@ -62,6 +62,15 @@ export async function createClientAccount(
 
     const magicLink = linkData?.properties?.action_link ?? `${appUrl}/portal/login`;
 
+    // Link the Supabase user's profile to the new company
+    if (linkData?.user?.id) {
+      await adminClient.from("profiles").upsert({
+        id:         linkData.user.id,
+        company_id: company.id,
+        role:       "client",
+      }, { onConflict: "id" });
+    }
+
     if (process.env.RESEND_API_KEY) {
       const emailRes = await fetch("https://api.resend.com/emails", {
         method:  "POST",
