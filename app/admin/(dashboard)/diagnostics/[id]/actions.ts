@@ -25,16 +25,30 @@ export async function saveFindings(
   try {
     const adminClient = createSupabaseAdminClient();
 
-    const rows = findings.map((f) => ({
-      diagnostic_id: diagnosticId,
-      obligation_id: f.obligation_id,
-      score:         f.score,
-      finding_text:  f.finding_text,
-      citation:      f.citation,
-      remediation:   f.remediation,
-      effort:        f.effort,
-      deadline:      f.deadline,
-    }));
+    // Translate editor field names → actual DB columns
+    function scoreToRag(score: FindingScore): { rag_status: string; score: number } {
+      switch (score) {
+        case "compliant":      return { rag_status: "green", score: 100 };
+        case "partial":        return { rag_status: "amber", score: 50  };
+        case "critical_gap":   return { rag_status: "red",   score: 0   };
+        case "not_applicable": return { rag_status: "na",    score: -1  };
+        default:               return { rag_status: "red",   score: 25  }; // not_started
+      }
+    }
+
+    const rows = findings.map((f) => {
+      const { rag_status, score } = scoreToRag(f.score);
+      return {
+        diagnostic_id:   diagnosticId,
+        obligation_id:   f.obligation_id,
+        rag_status,
+        score,
+        summary:         f.finding_text,
+        recommendations: f.remediation,
+        eu_article_refs: f.citation ? [f.citation] : [],
+        priority:        f.effort || null,
+      };
+    });
 
     const { error } = await adminClient
       .from("diagnostic_findings")
@@ -101,7 +115,7 @@ export async function approveAndDeliver(
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "LexSutra <reports@lexsutra.nl>",
-          to: [(company as { contact_email: string }).email],
+          to: [(company as { contact_email: string }).contact_email],
           subject: `Your LexSutra Diagnostic Report is Ready — ${sys?.name ?? "AI System"}`,
           html: `
             <div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px;border-radius:12px;">

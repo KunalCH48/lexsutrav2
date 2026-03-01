@@ -159,15 +159,26 @@ ${obligationSummaries}`;
       return NextResponse.json({ error: "AI response could not be parsed. Please try again." }, { status: 500 });
     }
 
-    // Upsert findings
-    const rows = findings.map((f) => ({
-      diagnostic_id: diagnosticId,
-      obligation_id: f.obligation_id,
-      score:         f.score,
-      finding_text:  f.finding_text,
-      citation:      f.citation,
-      remediation:   f.remediation,
-    }));
+    // Translate Claude output → actual DB columns
+    function scoreToRag(score: string): { rag_status: string; score: number } {
+      if (score === "compliant") return { rag_status: "green", score: 100 };
+      if (score === "partial")   return { rag_status: "amber", score: 50  };
+      if (score === "critical")  return { rag_status: "red",   score: 0   };
+      return                            { rag_status: "red",   score: 25  }; // not_started
+    }
+
+    const rows = findings.map((f) => {
+      const { rag_status, score } = scoreToRag(f.score);
+      return {
+        diagnostic_id:   diagnosticId,
+        obligation_id:   f.obligation_id,
+        rag_status,
+        score,
+        summary:         f.finding_text,
+        recommendations: f.remediation,
+        eu_article_refs: f.citation ? [f.citation] : [],
+      };
+    });
 
     const { error: upsertError } = await adminClient
       .from("diagnostic_findings")

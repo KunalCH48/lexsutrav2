@@ -44,7 +44,7 @@ export default async function DiagnosticReviewPage({
 
     adminClient
       .from("diagnostic_findings")
-      .select("obligation_id, score, finding_text, citation, remediation, effort, deadline")
+      .select("obligation_id, score, rag_status, summary, recommendations, eu_article_refs, priority")
       .eq("diagnostic_id", id),
 
     adminClient
@@ -135,22 +135,31 @@ export default async function DiagnosticReviewPage({
         diagnosticStatus={diagnostic.status}
         obligations={obligations}
         initialFindings={findings.map((f: {
-          obligation_id: string;
-          score: string;
-          finding_text: string | null;
-          citation: string | null;
-          remediation: string | null;
-          effort: string | null;
-          deadline: string | null;
-        }) => ({
-          obligation_id: f.obligation_id,
-          score: f.score as "compliant" | "partial" | "critical_gap" | "not_started" | "not_applicable",
-          finding_text: f.finding_text ?? "",
-          citation: f.citation ?? "",
-          remediation: f.remediation ?? "",
-          effort: f.effort ?? "",
-          deadline: f.deadline ?? "",
-        }))}
+          obligation_id:   string;
+          score:           number | null;
+          rag_status:      string | null;
+          summary:         string | null;
+          recommendations: string | null;
+          eu_article_refs: string[] | null;
+          priority:        string | null;
+        }) => {
+          // Convert rag_status → editor score string
+          function ragToScore(rag: string | null): "compliant" | "partial" | "critical_gap" | "not_started" {
+            if (rag === "green") return "compliant";
+            if (rag === "amber") return "partial";
+            if (rag === "red")   return "critical_gap";
+            return "not_started";
+          }
+          return {
+            obligation_id: f.obligation_id,
+            score:         ragToScore(f.rag_status),
+            finding_text:  f.summary ?? "",
+            citation:      (f.eu_article_refs ?? []).join(", "),
+            remediation:   f.recommendations ?? "",
+            effort:        f.priority ?? "",
+            deadline:      "",
+          };
+        })}
       />
     </div>
   );
