@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createClientAccount, markDemoContacted, markDemoRejected } from "@/app/admin/(dashboard)/demo-requests/[id]/actions";
+import { createClientAccount, markDemoContacted, markDemoRejected, resendWelcomeEmail } from "@/app/admin/(dashboard)/demo-requests/[id]/actions";
 
 type RiskTier = "likely_high_risk" | "needs_assessment" | "likely_limited_risk";
 
@@ -96,11 +96,35 @@ export default function DemoActionPanel({ demoId, status, companyName, email }: 
 
       {/* Locked state */}
       {isConverted && (
-        <div
-          className="rounded-lg px-4 py-3 text-sm"
-          style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.2)", color: "#2ecc71" }}
-        >
-          ✓ Client account has been created. Invite sent to {email}.
+        <div className="space-y-3">
+          <div
+            className="rounded-lg px-4 py-3 text-sm"
+            style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.2)", color: "#2ecc71" }}
+          >
+            ✓ Client account has been created. Invite sent to {email}.
+          </div>
+          <button
+            onClick={() => {
+              setFeedback(null);
+              startTransition(async () => {
+                const result = await resendWelcomeEmail(email, companyName);
+                if ("error" in result) {
+                  setFeedback({ type: "error", message: result.error });
+                } else {
+                  setFeedback({ type: "success", message: `Welcome email resent to ${email}.` });
+                }
+              });
+            }}
+            disabled={isPending}
+            className="w-full rounded-lg py-2 text-xs font-medium transition-colors disabled:opacity-50"
+            style={{
+              background: "rgba(45,156,219,0.1)",
+              border:     "1px solid rgba(45,156,219,0.25)",
+              color:      "#2d9cdb",
+            }}
+          >
+            {isPending ? "Sending…" : "Resend welcome email →"}
+          </button>
         </div>
       )}
 

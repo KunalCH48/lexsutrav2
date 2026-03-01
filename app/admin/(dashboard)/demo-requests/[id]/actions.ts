@@ -115,6 +115,61 @@ export async function createClientAccount(
   }
 }
 
+export async function resendWelcomeEmail(
+  email: string,
+  companyName: string
+): Promise<{ success: true } | { error: string }> {
+  try {
+    const adminClient = createSupabaseAdminClient();
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type:    "magiclink",
+      email,
+      options: { redirectTo: `${appUrl}/portal/auth/callback` },
+    });
+
+    if (linkError) return { error: linkError.message };
+
+    const magicLink = linkData?.properties?.action_link ?? `${appUrl}/portal/login`;
+
+    if (!process.env.RESEND_API_KEY) return { error: "RESEND_API_KEY not set." };
+
+    const emailRes = await fetch("https://api.resend.com/emails", {
+      method:  "POST",
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from:    "LexSutra <onboarding@resend.dev>",
+        to:      ["kunal.lexutra@gmail.com"], // TODO: restore to email once domain is verified
+        subject: `Your LexSutra compliance portal — ${companyName}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
+            <p style="color:#2d9cdb;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">LexSutra · EU AI Act Compliance</p>
+            <h1 style="font-size:24px;margin:0 0 12px;color:#e8f4ff;">Sign in to your compliance portal</h1>
+            <p style="color:#8899aa;margin:0 0 24px;">Hi ${companyName} — here is your sign-in link for the LexSutra client portal.</p>
+            <a href="${magicLink}" style="display:inline-block;background:#2d9cdb;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:24px;">
+              Sign in to your portal →
+            </a>
+            <p style="color:#3d4f60;font-size:13px;margin:0 0 8px;">This link is valid for 24 hours. After that, visit the portal and sign in with Google using <strong style="color:#8899aa;">${email}</strong>.</p>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:28px 0;" />
+            <p style="color:#3d4f60;font-size:12px;margin:0;">LexSutra · Compliance infrastructure for AI startups</p>
+          </div>
+        `,
+      }),
+    });
+
+    if (!emailRes.ok) {
+      const body = await emailRes.text();
+      return { error: `Email failed: ${emailRes.status} ${body}` };
+    }
+
+    return { success: true };
+  } catch (err) {
+    await logError({ error: err, source: "admin/demo-requests/[id]/actions", action: "resendWelcomeEmail", metadata: { email } });
+    return { error: err instanceof Error ? err.message : "Unexpected error." };
+  }
+}
+
 export async function markDemoContacted(demoId: string): Promise<{ success: true } | { error: string }> {
   try {
     const adminClient = createSupabaseAdminClient();
