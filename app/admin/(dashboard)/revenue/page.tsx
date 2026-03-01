@@ -48,7 +48,7 @@ export default async function RevenuePage() {
       id, status, created_at, tier,
       ai_systems (
         name,
-        companies ( name, email )
+        companies ( name, contact_email )
       )
     `)
     .eq("status", "delivered")

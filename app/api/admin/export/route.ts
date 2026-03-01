@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       .from("diagnostics")
       .select(`
         id, created_at, status, tier,
-        ai_systems ( name, companies ( name, email ) ),
+        ai_systems ( name, companies ( name, contact_email ) ),
         policy_versions ( version_code, display_name )
       `)
       .order("created_at", { ascending: false });

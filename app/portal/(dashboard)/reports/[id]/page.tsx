@@ -56,7 +56,7 @@ export default async function ReportPage({
   // Verify this diagnostic belongs to the logged-in user's company
   if (!company || (company as { id: string }).id !== companyId) notFound();
 
-  // Fetch obligations + findings with actual DB column names
+  // Fetch obligations + findings using actual DB column names
   const [{ data: obligations }, { data: findings }] = await Promise.all([
     adminClient
       .from("obligations")
@@ -64,28 +64,29 @@ export default async function ReportPage({
       .order("eu_article_ref", { ascending: true }),
     adminClient
       .from("diagnostic_findings")
-      .select("obligation_id, score, rag_status, grade, summary, details, gaps_identified, recommendations, eu_article_refs, priority")
+      .select("obligation_id, score, rag_status, finding_text, citation, remediation, effort, deadline")
       .eq("diagnostic_id", diagnosticId),
   ]);
 
   type RawFinding = {
-    obligation_id:  string;
-    score:          number | null;
-    rag_status:     string | null;
-    grade:          string | null;
-    summary:        string | null;
-    details:        string | null;
-    gaps_identified: string | null;
-    recommendations: string | null;
-    eu_article_refs: string[] | null;
-    priority:       string | null;
+    obligation_id: string;
+    score:         string | null;
+    rag_status:    string | null;
+    finding_text:  string | null;
+    citation:      string | null;
+    remediation:   string | null;
+    effort:        string | null;
+    deadline:      string | null;
   };
 
-  // Map rag_status → display score used by ReportViewer
-  function ragToScore(rag: string | null, numScore: number | null): string {
-    if (rag === "green")  return "compliant";
-    if (rag === "amber")  return "partial";
-    if (rag === "red")    return numScore === 0 ? "critical_gap" : "not_started";
+  // score column stores display strings ("compliant"/"partial"/"critical_gap"/…) when set by admin.
+  // rag_status stores "green"/"amber"/"red" when set by AI generation. Use whichever is available.
+  function toDisplayScore(score: string | null, rag: string | null): string {
+    if (score === "compliant" || score === "partial" || score === "critical_gap" ||
+        score === "not_started" || score === "not_applicable") return score;
+    if (rag === "green") return "compliant";
+    if (rag === "amber") return "partial";
+    if (rag === "red")   return "critical_gap";
     return "not_started";
   }
 
@@ -94,17 +95,13 @@ export default async function ReportPage({
     findingMap[f.obligation_id] = f;
   }
 
-  // Grade calculation from numeric scores
-  const activeObligations = (obligations ?? []).filter((ob: { id: string }) =>
-    findingMap[ob.id]?.rag_status !== null
-  );
-
-  const totalPoints = activeObligations.reduce((acc: number, ob: { id: string }) => {
-    const f = findingMap[ob.id];
-    const s = ragToScore(f?.rag_status ?? null, f?.score ?? null);
+  // Grade calculation
+  const scoredFindings = (findings ?? []) as RawFinding[];
+  const totalPoints = scoredFindings.reduce((acc, f) => {
+    const s = toDisplayScore(f.score, f.rag_status);
     return acc + (s === "compliant" ? 3 : s === "partial" ? 1 : 0);
   }, 0);
-  const maxPoints = activeObligations.length * 3;
+  const maxPoints = scoredFindings.length * 3;
   const pct = maxPoints > 0 ? totalPoints / maxPoints : 0;
 
   const baseGrade =
@@ -140,16 +137,15 @@ export default async function ReportPage({
         description: string;
       }) => {
         const f = findingMap[ob.id];
-        const displayScore = f ? ragToScore(f.rag_status, f.score) : "not_started";
         return {
           ...ob,
           finding: f ? {
-            score:        displayScore,
-            finding_text: f.summary ?? "",
-            citation:     (f.eu_article_refs ?? []).join(" · ") ?? "",
-            remediation:  f.recommendations ?? "",
-            effort:       f.priority ?? null,
-            deadline:     null,
+            score:        toDisplayScore(f.score, f.rag_status),
+            finding_text: f.finding_text ?? "",
+            citation:     f.citation ?? "",
+            remediation:  f.remediation ?? "",
+            effort:       f.effort ?? null,
+            deadline:     f.deadline ?? null,
           } : null,
         };
       })}

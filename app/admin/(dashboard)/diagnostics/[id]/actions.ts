@@ -73,7 +73,7 @@ export async function approveAndDeliver(
 
     const { data: diagnostic, error: diagError } = await adminClient
       .from("diagnostics")
-      .select(`id, status, ai_systems ( name, companies ( id, name, email ) )`)
+      .select(`id, status, ai_systems ( name, companies ( id, name, contact_email ) )`)
       .eq("id", diagnosticId)
       .single();
 
@@ -95,13 +95,13 @@ export async function approveAndDeliver(
     }
 
     // Send delivery email
-    if (process.env.RESEND_API_KEY && (company as { email?: string } | null)?.email) {
+    if (process.env.RESEND_API_KEY && (company as { contact_email?: string } | null)?.contact_email) {
       const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "LexSutra <reports@lexsutra.nl>",
-          to: [(company as { email: string }).email],
+          to: [(company as { contact_email: string }).email],
           subject: `Your LexSutra Diagnostic Report is Ready — ${sys?.name ?? "AI System"}`,
           html: `
             <div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px;border-radius:12px;">
@@ -129,7 +129,7 @@ export async function approveAndDeliver(
           action: "approveAndDeliver:sendEmail",
           companyId,
           severity: "warning",
-          metadata: { diagnosticId, email: (company as { email?: string } | null)?.email },
+          metadata: { diagnosticId, email: (company as { contact_email?: string } | null)?.contact_email },
         });
       }
     }
@@ -137,7 +137,7 @@ export async function approveAndDeliver(
     await adminClient.from("activity_log").insert({
       actor_id: null, action: "approve_and_deliver",
       entity_type: "diagnostics", entity_id: diagnosticId,
-      metadata: { company: (company as { name?: string } | null)?.name, email: (company as { email?: string } | null)?.email, ai_system: sys?.name },
+      metadata: { company: (company as { name?: string } | null)?.name, email: (company as { contact_email?: string } | null)?.contact_email, ai_system: sys?.name },
     });
 
     revalidatePath(`/admin/diagnostics/${diagnosticId}`);
