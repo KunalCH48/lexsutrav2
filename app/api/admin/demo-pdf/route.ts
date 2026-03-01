@@ -79,7 +79,14 @@ export async function POST(req: NextRequest) {
       }) as unknown as React.ReactElement<DocumentProps>
     );
 
-    // Upload to Supabase Storage (demo-reports bucket — create this bucket in Supabase dashboard)
+    // Ensure demo-reports bucket exists (create if not)
+    const { data: buckets } = await adminClient.storage.listBuckets();
+    const bucketExists = buckets?.some((b: { name: string }) => b.name === "demo-reports");
+    if (!bucketExists) {
+      await adminClient.storage.createBucket("demo-reports", { public: false });
+    }
+
+    // Upload to Supabase Storage
     const { error: uploadError } = await adminClient.storage
       .from("demo-reports")
       .upload(storagePath, pdfBuffer, {
@@ -95,7 +102,7 @@ export async function POST(req: NextRequest) {
         metadata: { demoId, storagePath },
       });
       return NextResponse.json(
-        { error: `Storage upload failed: ${uploadError.message}. Ensure the 'demo-reports' bucket exists in Supabase Storage.` },
+        { error: `Storage upload failed: ${uploadError.message}` },
         { status: 500 }
       );
     }

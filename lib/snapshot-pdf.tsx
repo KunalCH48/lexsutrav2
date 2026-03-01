@@ -111,7 +111,7 @@ const st = StyleSheet.create({
 
   // Watermark
   wm:           { position: "absolute", top: "40%", left: "10%", right: "10%", textAlign: "center", opacity: 0.04 },
-  wmText:       { fontFamily: "Helvetica-Bold", fontSize: 64, color: C.dark, transform: "rotate(-35deg)" },
+  wmText:       { fontFamily: "Helvetica-Bold", fontSize: 64, color: C.dark },
 
   // Content padding
   body:         { paddingHorizontal: 36, paddingVertical: 22, flex: 1 },
@@ -139,7 +139,7 @@ const st = StyleSheet.create({
   metaValueRed: { flex: 1,   paddingHorizontal: 10, paddingVertical: 7, fontSize: 7.5, color: C.red, fontFamily: "Helvetica-Bold" },
 
   // Risk callout box
-  callout:      { borderLeftWidth: 3, borderLeftColor: C.gold, backgroundColor: "#fdf8ee", padding: 12, marginBottom: 10, borderRadius: "0 4 4 0" },
+  callout:      { borderLeftWidth: 3, borderLeftColor: C.gold, backgroundColor: "#fdf8ee", padding: 12, marginBottom: 10 },
   calloutTitle: { fontFamily: "Helvetica-Bold", fontSize: 8.5, color: C.text, marginBottom: 5 },
 
   // Table (summary + roadmap)
