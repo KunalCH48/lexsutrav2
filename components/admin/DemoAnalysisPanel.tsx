@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { approveSnapshot } from "@/app/admin/(dashboard)/demo-requests/[id]/actions";
+import { deleteReport } from "@/app/admin/(dashboard)/reports/actions";
 
 type InsightVersion = {
   v: number;
@@ -31,10 +32,10 @@ type StructuredReport = {
 };
 
 type Props = {
-  demoId:          string;
-  companyName:     string;
-  contactEmail?:   string;
-  initialSnapshot: { versions: InsightVersion[] } | null;
+  demoId:            string;
+  companyName:       string;
+  contactEmail?:     string;
+  initialSnapshot:   { versions: InsightVersion[]; approved_pdf_path?: string } | null;
 };
 
 function fmtDateTime(iso: string) {
@@ -469,20 +470,29 @@ function ApproveSection({
   demoId,
   version,
   contactEmail,
+  approvedPdfPath,
 }: {
-  demoId:       string;
-  version:      number;
-  contactEmail?: string;
+  demoId:           string;
+  version:          number;
+  contactEmail?:    string;
+  approvedPdfPath?: string;
 }) {
   type Stage = "idle" | "confirm" | "approving" | "generating_pdf" | "done" | "error";
-  const [stage, setStage]         = useState<Stage>("idle");
-  const [errMsg, setErrMsg]       = useState("");
-  const [pdfUrl, setPdfUrl]       = useState<string | null>(null);
-  const [emailTo, setEmailTo]     = useState(contactEmail ?? "");
+  const [stage, setStage]               = useState<Stage>("idle");
+  const [errMsg, setErrMsg]             = useState("");
+  const [pdfUrl, setPdfUrl]             = useState<string | null>(null);
+  const [emailTo, setEmailTo]           = useState(contactEmail ?? "");
   const [emailSending, setEmailSending] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailErr, setEmailErr]   = useState("");
-  const [, startTransition]       = useTransition();
+  const [emailSent, setEmailSent]       = useState(false);
+  const [emailErr, setEmailErr]         = useState("");
+  const [, startTransition]             = useTransition();
+
+  // Saved PDF state
+  const [savedPath, setSavedPath]       = useState(approvedPdfPath ?? null);
+  const [showSaved, setShowSaved]       = useState(false);
+  const [savedDownloading, setSavedDownloading] = useState(false);
+  const [savedDeleting, setSavedDeleting]       = useState(false);
+  const [savedErr, setSavedErr]                 = useState("");
 
   async function handleApprove() {
     setErrMsg("");
@@ -513,6 +523,7 @@ function ApproveSection({
           return;
         }
         setPdfUrl(data.url);
+        if (data.path) setSavedPath(data.path);
         setStage("done");
       } catch {
         setErrMsg("Snapshot approved, but PDF generation encountered a network error.");
@@ -544,9 +555,103 @@ function ApproveSection({
     }
   }
 
-  // ── Idle ────────────────────────────────────────────────────────
+  // ── Saved PDF handlers ───────────────────────────────────────────
+  async function handleDownloadSaved() {
+    setSavedDownloading(true);
+    setSavedErr("");
+    try {
+      const res  = await fetch(`/api/admin/demo-pdf?demoId=${demoId}`);
+      const data = await res.json();
+      if (!res.ok || data.error) { setSavedErr(data.error ?? "Failed to get link."); return; }
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch {
+      setSavedErr("Network error.");
+    } finally {
+      setSavedDownloading(false);
+    }
+  }
+
+  async function handleDeleteSaved() {
+    if (!savedPath) return;
+    if (!confirm("Delete this PDF from storage?\n\nThe analysis data is kept — you can regenerate the PDF anytime.")) return;
+    setSavedDeleting(true);
+    setSavedErr("");
+    const result = await deleteReport(demoId, savedPath);
+    if ("error" in result) {
+      setSavedErr(result.error);
+    } else {
+      setSavedPath(null);
+      setShowSaved(false);
+    }
+    setSavedDeleting(false);
+  }
+
+  // ── Saved PDF toggle (shown in all stages when a PDF exists) ─────
+  const savedPdfToggle = savedPath ? (
+    <div>
+      <button
+        onClick={() => setShowSaved((s) => !s)}
+        className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg transition-colors w-full"
+        style={{
+          background: showSaved ? "rgba(45,156,219,0.08)" : "rgba(255,255,255,0.03)",
+          border:     "1px solid rgba(45,156,219,0.15)",
+          color:      "#3d4f60",
+        }}
+      >
+        <span style={{ color: "#2d9cdb" }}>📄</span>
+        <span style={{ color: "#8899aa", flex: 1, textAlign: "left" }}>
+          Saved PDF
+        </span>
+        <span style={{ color: "#3d4f60" }}>{showSaved ? "▴" : "▾"}</span>
+      </button>
+
+      {showSaved && (
+        <div
+          className="mt-1 rounded-lg px-4 py-3 space-y-2"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(45,156,219,0.1)" }}
+        >
+          <p className="text-xs truncate" style={{ color: "#3d4f60" }}>
+            {savedPath.split("/").pop()}
+          </p>
+          {savedErr && (
+            <p className="text-xs" style={{ color: "#e05252" }}>{savedErr}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={handleDownloadSaved}
+              disabled={savedDownloading || savedDeleting}
+              className="px-3 py-1.5 rounded text-xs font-medium disabled:opacity-40 transition-opacity hover:opacity-80"
+              style={{
+                background: "rgba(45,156,219,0.1)",
+                border:     "1px solid rgba(45,156,219,0.25)",
+                color:      "#2d9cdb",
+              }}
+            >
+              {savedDownloading ? "…" : "↓ Download"}
+            </button>
+            <button
+              onClick={handleDeleteSaved}
+              disabled={savedDownloading || savedDeleting}
+              className="px-3 py-1.5 rounded text-xs font-medium disabled:opacity-40 transition-opacity hover:opacity-80"
+              style={{
+                background: "rgba(224,82,82,0.08)",
+                border:     "1px solid rgba(224,82,82,0.2)",
+                color:      "#e05252",
+              }}
+            >
+              {savedDeleting ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  // ── Stage UI ─────────────────────────────────────────────────────
+  let stageContent: React.ReactNode;
+
   if (stage === "idle") {
-    return (
+    stageContent = (
       <button
         onClick={() => setStage("confirm")}
         className="w-full rounded-lg py-2.5 text-sm font-semibold transition-colors"
@@ -555,11 +660,8 @@ function ApproveSection({
         ✓ Approve Snapshot &amp; Generate PDF — Rev {version}
       </button>
     );
-  }
-
-  // ── Confirm ──────────────────────────────────────────────────────
-  if (stage === "confirm") {
-    return (
+  } else if (stage === "confirm") {
+    stageContent = (
       <div className="rounded-lg px-4 py-4 space-y-3"
         style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.25)" }}>
         <p className="text-sm font-semibold" style={{ color: "#e8f4ff" }}>
@@ -585,11 +687,8 @@ function ApproveSection({
         </div>
       </div>
     );
-  }
-
-  // ── Approving / Generating ───────────────────────────────────────
-  if (stage === "approving" || stage === "generating_pdf") {
-    return (
+  } else if (stage === "approving" || stage === "generating_pdf") {
+    stageContent = (
       <div className="rounded-lg px-4 py-4 space-y-3"
         style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.2)" }}>
         <div className="flex items-center gap-3">
@@ -606,11 +705,8 @@ function ApproveSection({
         )}
       </div>
     );
-  }
-
-  // ── Error ────────────────────────────────────────────────────────
-  if (stage === "error") {
-    return (
+  } else if (stage === "error") {
+    stageContent = (
       <div className="rounded-lg px-4 py-3 text-sm space-y-2"
         style={{ background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.25)", color: "#e05252" }}>
         <p className="font-semibold">Approval failed</p>
@@ -621,131 +717,111 @@ function ApproveSection({
         </button>
       </div>
     );
+  } else {
+    // done
+    stageContent = (
+      <div className="space-y-4">
+        <div className="rounded-lg px-4 py-3"
+          style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.25)" }}>
+          <p className="text-sm font-semibold mb-0.5" style={{ color: "#2ecc71" }}>
+            ✓ Snapshot approved — Rev {version}
+          </p>
+          <p className="text-xs" style={{ color: "#3d4f60" }}>
+            Status updated to Snapshot Approved. PDF generated and saved to storage.
+          </p>
+        </div>
+
+        {errMsg && (
+          <div className="rounded px-3 py-2 text-xs"
+            style={{ background: "rgba(224,168,50,0.08)", border: "1px solid rgba(224,168,50,0.2)", color: "#e0a832" }}>
+            {errMsg}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4">
+          <div className="rounded-lg px-4 py-4 space-y-2"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
+              Download PDF
+            </p>
+            {pdfUrl ? (
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                style={{ background: "#2d9cdb", color: "#fff", textDecoration: "none" }}>
+                ↓ Download Report PDF
+              </a>
+            ) : (
+              <button
+                onClick={async () => {
+                  const res = await fetch(`/api/admin/demo-pdf?demoId=${demoId}`);
+                  const d   = await res.json();
+                  if (d.url) setPdfUrl(d.url);
+                }}
+                className="text-sm px-4 py-2 rounded-lg"
+                style={{ background: "rgba(45,156,219,0.1)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.25)" }}>
+                Get Download Link
+              </button>
+            )}
+            <p className="text-xs" style={{ color: "#3d4f60" }}>
+              Download link valid for 24 hours. Click again to refresh.
+            </p>
+          </div>
+
+          <div className="rounded-lg px-4 py-4 space-y-3"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
+              Send to Client
+            </p>
+            {emailSent ? (
+              <div className="rounded px-3 py-2.5 text-xs font-semibold"
+                style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.2)", color: "#2ecc71" }}>
+                ✓ Email sent successfully to {emailTo}
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs mb-1.5" style={{ color: "#8899aa" }}>
+                    Recipient email address
+                    <span className="ml-1.5" style={{ color: "#3d4f60" }}>(confirm or edit before sending)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={emailTo}
+                    onChange={(e) => setEmailTo(e.target.value)}
+                    placeholder="client@company.com"
+                    className="w-full rounded-lg px-3 py-2 text-sm"
+                    style={{ background: "#111d2e", border: "1px solid rgba(45,156,219,0.25)", color: "#e8f4ff", outline: "none" }}
+                  />
+                </div>
+                <p className="text-xs" style={{ color: "#3d4f60", lineHeight: 1.6 }}>
+                  Sends branded LexSutra email with grade summary, report details, and 7-day PDF download link.
+                </p>
+                {emailErr && <p className="text-xs" style={{ color: "#e05252" }}>{emailErr}</p>}
+                <button
+                  onClick={handleSendEmail}
+                  disabled={emailSending || !emailTo.trim()}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 transition-colors"
+                  style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.3)", color: "#c8a84b" }}>
+                  {emailSending ? "Sending…" : "Send Email to Client →"}
+                </button>
+              </>
+            )}
+            {emailSent && (
+              <button onClick={() => { setEmailSent(false); setEmailErr(""); }}
+                className="text-xs underline" style={{ color: "#3d4f60" }}>
+                Send to a different address
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // ── Done ─────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4">
-      {/* Success banner */}
-      <div className="rounded-lg px-4 py-3"
-        style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.25)" }}>
-        <p className="text-sm font-semibold mb-0.5" style={{ color: "#2ecc71" }}>
-          ✓ Snapshot approved — Rev {version}
-        </p>
-        <p className="text-xs" style={{ color: "#3d4f60" }}>
-          Status updated to Snapshot Approved. PDF generated and saved to storage.
-        </p>
-      </div>
-
-      {/* Partial warning */}
-      {errMsg && (
-        <div className="rounded px-3 py-2 text-xs"
-          style={{ background: "rgba(224,168,50,0.08)", border: "1px solid rgba(224,168,50,0.2)", color: "#e0a832" }}>
-          {errMsg}
-        </div>
-      )}
-
-      {/* Download + Email side by side */}
-      <div className="grid grid-cols-1 gap-4">
-
-        {/* Download */}
-        <div className="rounded-lg px-4 py-4 space-y-2"
-          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
-            Download PDF
-          </p>
-          {pdfUrl ? (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              style={{ background: "#2d9cdb", color: "#fff", textDecoration: "none" }}
-            >
-              ↓ Download Report PDF
-            </a>
-          ) : (
-            <button
-              onClick={async () => {
-                const res = await fetch(`/api/admin/demo-pdf?demoId=${demoId}`);
-                const d   = await res.json();
-                if (d.url) setPdfUrl(d.url);
-              }}
-              className="text-sm px-4 py-2 rounded-lg"
-              style={{ background: "rgba(45,156,219,0.1)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.25)" }}
-            >
-              Get Download Link
-            </button>
-          )}
-          <p className="text-xs" style={{ color: "#3d4f60" }}>
-            Download link valid for 24 hours. Click again to refresh.
-          </p>
-        </div>
-
-        {/* Send to client */}
-        <div className="rounded-lg px-4 py-4 space-y-3"
-          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
-            Send to Client
-          </p>
-
-          {emailSent ? (
-            <div className="rounded px-3 py-2.5 text-xs font-semibold"
-              style={{ background: "rgba(46,204,113,0.08)", border: "1px solid rgba(46,204,113,0.2)", color: "#2ecc71" }}>
-              ✓ Email sent successfully to {emailTo}
-            </div>
-          ) : (
-            <>
-              <div>
-                <label className="block text-xs mb-1.5" style={{ color: "#8899aa" }}>
-                  Recipient email address
-                  <span className="ml-1.5" style={{ color: "#3d4f60" }}>(confirm or edit before sending)</span>
-                </label>
-                <input
-                  type="email"
-                  value={emailTo}
-                  onChange={(e) => setEmailTo(e.target.value)}
-                  placeholder="client@company.com"
-                  className="w-full rounded-lg px-3 py-2 text-sm"
-                  style={{
-                    background: "#111d2e",
-                    border: "1px solid rgba(45,156,219,0.25)",
-                    color: "#e8f4ff", outline: "none",
-                  }}
-                />
-              </div>
-              <p className="text-xs" style={{ color: "#3d4f60", lineHeight: 1.6 }}>
-                Sends branded LexSutra email with grade summary, report details, and 7-day PDF download link.
-              </p>
-              {emailErr && (
-                <p className="text-xs" style={{ color: "#e05252" }}>{emailErr}</p>
-              )}
-              <button
-                onClick={handleSendEmail}
-                disabled={emailSending || !emailTo.trim()}
-                className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 transition-colors"
-                style={{
-                  background: "rgba(200,168,75,0.12)",
-                  border: "1px solid rgba(200,168,75,0.3)",
-                  color: "#c8a84b",
-                }}
-              >
-                {emailSending ? "Sending…" : "Send Email to Client →"}
-              </button>
-            </>
-          )}
-
-          {emailSent && (
-            <button
-              onClick={() => { setEmailSent(false); setEmailErr(""); }}
-              className="text-xs underline"
-              style={{ color: "#3d4f60" }}
-            >
-              Send to a different address
-            </button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-3">
+      {stageContent}
+      {savedPdfToggle}
     </div>
   );
 }
@@ -754,6 +830,7 @@ function ApproveSection({
 
 export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, initialSnapshot }: Props) {
   const [versions, setVersions]       = useState<InsightVersion[]>(initialSnapshot?.versions ?? []);
+  const approvedPdfPath = initialSnapshot?.approved_pdf_path;
   const [viewingV, setViewingV]       = useState<number>(versions.length > 0 ? versions.length : 0);
   const [feedback, setFeedback]       = useState("");
   const [loading, setLoading]         = useState(false);
@@ -966,7 +1043,7 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, i
           {/* ── Approve button — latest version only ─────────────── */}
           {isLatest && parsedReport && (
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
-              <ApproveSection demoId={demoId} version={latestV} contactEmail={contactEmail} />
+              <ApproveSection demoId={demoId} version={latestV} contactEmail={contactEmail} approvedPdfPath={approvedPdfPath} />
             </div>
           )}
         </>
