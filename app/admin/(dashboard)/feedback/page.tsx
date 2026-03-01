@@ -21,9 +21,9 @@ export default async function FeedbackPage() {
     .select("id, feedback_text, rating_experience, rating_usefulness, rating_value_for_money, can_use_as_testimonial, testimonial_approved, display_name, display_role, display_company, created_at, companies(name)")
     .order("created_at", { ascending: false });
 
-  const pending  = (rows ?? []).filter((r) => r.can_use_as_testimonial && !r.testimonial_approved);
-  const approved = (rows ?? []).filter((r) => r.testimonial_approved);
-  const rest     = (rows ?? []).filter((r) => !r.can_use_as_testimonial);
+  const pending  = (rows ?? []).filter((r: any) => r.can_use_as_testimonial && !r.testimonial_approved);
+  const approved = (rows ?? []).filter((r: any) => r.testimonial_approved);
+  const rest     = (rows ?? []).filter((r: any) => !r.can_use_as_testimonial);
 
   return (
     <div className="space-y-8">
