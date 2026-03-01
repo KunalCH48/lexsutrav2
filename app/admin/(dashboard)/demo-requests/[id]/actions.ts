@@ -71,7 +71,8 @@ export async function createClientAccount(
         },
         body: JSON.stringify({
           from:    "LexSutra <onboarding@resend.dev>",
-          to:      ["kunal.lexutra@gmail.com"], // TODO: restore to demo.contact_email once domain is verified
+          to:      [demo.contact_email],
+          cc:      ["kunal.lexutra@gmail.com"],
           subject: `Your LexSutra compliance portal is ready — ${demo.company_name}`,
           html: `
             <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
@@ -140,7 +141,8 @@ export async function resendWelcomeEmail(
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from:    "LexSutra <onboarding@resend.dev>",
-        to:      ["kunal.lexutra@gmail.com"], // TODO: restore to email once domain is verified
+        to:      [email],
+        cc:      ["kunal.lexutra@gmail.com"],
         subject: `Your LexSutra compliance portal — ${companyName}`,
         html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
