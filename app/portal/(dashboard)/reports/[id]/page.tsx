@@ -31,7 +31,7 @@ export default async function ReportPage({
   const { data: diagnostic } = await adminClient
     .from("diagnostics")
     .select(`
-      id, status, created_at, report_ref,
+      id, status, created_at,
       policy_versions ( version_code, display_name, effective_date ),
       ai_systems (
         name, risk_category, description,
@@ -109,8 +109,7 @@ export default async function ReportPage({
     pct >= 0.25 ? "C"  :
     pct >= 0.10 ? "D"  : "F";
 
-  const reportRef = (diagnostic as { report_ref?: string | null }).report_ref
-    ?? `LSR-${new Date(diagnostic.created_at).getFullYear()}-${diagnosticId.replace(/-/g, "").slice(0, 4).toUpperCase()}`;
+  const reportRef = `LSR-${new Date(diagnostic.created_at).getFullYear()}-${diagnosticId.replace(/-/g, "").slice(0, 4).toUpperCase()}`;
 
   const companyForViewer = company as { id: string; name: string; contact_email: string } | null;
 
