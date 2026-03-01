@@ -11,12 +11,23 @@ export default async function ReportPage({
 }) {
   const { id: diagnosticId } = await params;
 
-  // TODO: re-enable auth before production
+  const supabase    = await (await import("@/lib/supabase-server")).createSupabaseServerClient();
   const adminClient = createSupabaseAdminClient();
 
-  const companyId = "11111111-1111-1111-1111-111111111111";
+  // Get logged-in user's company
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
 
-  // Fetch diagnostic with all related data (include report_ref)
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single();
+
+  const companyId = profile?.company_id ?? null;
+  if (!companyId) notFound();
+
+  // Fetch diagnostic
   const { data: diagnostic } = await adminClient
     .from("diagnostics")
     .select(`
@@ -24,7 +35,7 @@ export default async function ReportPage({
       policy_versions ( version_code, display_name, effective_date ),
       ai_systems (
         name, risk_category, description,
-        companies ( id, name, email )
+        companies ( id, name, contact_email )
       )
     `)
     .eq("id", diagnosticId)
@@ -42,10 +53,10 @@ export default async function ReportPage({
     ? diagnostic.policy_versions[0]
     : diagnostic.policy_versions;
 
-  // Verify access: diagnostic must belong to this company
+  // Verify this diagnostic belongs to the logged-in user's company
   if (!company || (company as { id: string }).id !== companyId) notFound();
 
-  // Fetch obligations + findings in parallel (include effort + deadline)
+  // Fetch obligations + findings with actual DB column names
   const [{ data: obligations }, { data: findings }] = await Promise.all([
     adminClient
       .from("obligations")
@@ -53,37 +64,45 @@ export default async function ReportPage({
       .order("eu_article_ref", { ascending: true }),
     adminClient
       .from("diagnostic_findings")
-      .select("obligation_id, score, finding_text, citation, remediation, effort, deadline")
+      .select("obligation_id, score, rag_status, grade, summary, details, gaps_identified, recommendations, eu_article_refs, priority")
       .eq("diagnostic_id", diagnosticId),
   ]);
 
   type RawFinding = {
-    obligation_id: string;
-    score: string;
-    finding_text: string | null;
-    citation: string | null;
-    remediation: string | null;
-    effort: string | null;
-    deadline: string | null;
+    obligation_id:  string;
+    score:          number | null;
+    rag_status:     string | null;
+    grade:          string | null;
+    summary:        string | null;
+    details:        string | null;
+    gaps_identified: string | null;
+    recommendations: string | null;
+    eu_article_refs: string[] | null;
+    priority:       string | null;
   };
+
+  // Map rag_status → display score used by ReportViewer
+  function ragToScore(rag: string | null, numScore: number | null): string {
+    if (rag === "green")  return "compliant";
+    if (rag === "amber")  return "partial";
+    if (rag === "red")    return numScore === 0 ? "critical_gap" : "not_started";
+    return "not_started";
+  }
 
   const findingMap: Record<string, RawFinding> = {};
   for (const f of (findings ?? []) as RawFinding[]) {
     findingMap[f.obligation_id] = f;
   }
 
-  // Grade calculation — spec Part 5 (with hard overrides)
-  function scorePoints(score: string): number {
-    return score === "compliant" ? 3 : score === "partial" ? 1 : 0;
-  }
-
-  const activeObligations = (obligations ?? []).filter((ob: { id: string }) => {
-    const score = findingMap[ob.id]?.score;
-    return score !== "not_applicable";
-  });
+  // Grade calculation from numeric scores
+  const activeObligations = (obligations ?? []).filter((ob: { id: string }) =>
+    findingMap[ob.id]?.rag_status !== null
+  );
 
   const totalPoints = activeObligations.reduce((acc: number, ob: { id: string }) => {
-    return acc + scorePoints(findingMap[ob.id]?.score ?? "not_started");
+    const f = findingMap[ob.id];
+    const s = ragToScore(f?.rag_status ?? null, f?.score ?? null);
+    return acc + (s === "compliant" ? 3 : s === "partial" ? 1 : 0);
   }, 0);
   const maxPoints = activeObligations.length * 3;
   const pct = maxPoints > 0 ? totalPoints / maxPoints : 0;
@@ -97,9 +116,10 @@ export default async function ReportPage({
     pct >= 0.25 ? "C"  :
     pct >= 0.10 ? "D"  : "F";
 
-  // Report reference: use DB value (LSR-YYYY-XXXX) if present, else derive from UUID
   const reportRef = (diagnostic as { report_ref?: string | null }).report_ref
     ?? `LSR-${new Date(diagnostic.created_at).getFullYear()}-${diagnosticId.replace(/-/g, "").slice(0, 4).toUpperCase()}`;
+
+  const companyForViewer = company as { id: string; name: string; contact_email: string } | null;
 
   return (
     <ReportViewer
@@ -110,7 +130,7 @@ export default async function ReportPage({
         status: diagnostic.status,
         created_at: diagnostic.created_at,
       }}
-      company={company as { id: string; name: string; email: string } | null}
+      company={companyForViewer ? { id: companyForViewer.id, name: companyForViewer.name, email: companyForViewer.contact_email } : null}
       aiSystem={sys as { name: string; risk_category: string; description: string } | null}
       policyVersion={pv as { version_code: string; display_name: string; effective_date: string } | null}
       obligations={(obligations ?? []).map((ob: {
@@ -120,15 +140,16 @@ export default async function ReportPage({
         description: string;
       }) => {
         const f = findingMap[ob.id];
+        const displayScore = f ? ragToScore(f.rag_status, f.score) : "not_started";
         return {
           ...ob,
           finding: f ? {
-            score:        f.score,
-            finding_text: f.finding_text ?? "",
-            citation:     f.citation ?? "",
-            remediation:  f.remediation ?? "",
-            effort:       f.effort ?? null,
-            deadline:     f.deadline ?? null,
+            score:        displayScore,
+            finding_text: f.summary ?? "",
+            citation:     (f.eu_article_refs ?? []).join(" · ") ?? "",
+            remediation:  f.recommendations ?? "",
+            effort:       f.priority ?? null,
+            deadline:     null,
           } : null,
         };
       })}
