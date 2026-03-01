@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 
 type FindingScore = "compliant" | "partial" | "critical_gap" | "not_started" | "not_applicable";
@@ -17,7 +17,7 @@ export type FindingPayload = {
 };
 
 async function getAdminUser() {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthenticated");
 

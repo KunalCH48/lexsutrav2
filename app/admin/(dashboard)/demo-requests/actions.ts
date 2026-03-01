@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 
 type DemoStatus = "pending" | "contacted" | "converted" | "rejected";
@@ -9,13 +9,14 @@ type DemoStatus = "pending" | "contacted" | "converted" | "rejected";
 export async function updateDemoStatus(id: string, status: DemoStatus) {
   let userId: string | null = null;
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) throw new Error("Unauthenticated");
     userId = user.id;
 
-    const { data: profile } = await supabase
+    const adminClient = createSupabaseAdminClient();
+    const { data: profile } = await adminClient
       .from("profiles")
       .select("role")
       .eq("id", user.id)
@@ -23,7 +24,7 @@ export async function updateDemoStatus(id: string, status: DemoStatus) {
 
     if (!profile || profile.role !== "admin") throw new Error("Forbidden");
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminClient
       .from("demo_requests")
       .update({ status })
       .eq("id", id);
@@ -33,7 +34,7 @@ export async function updateDemoStatus(id: string, status: DemoStatus) {
       throw new Error(updateError.message);
     }
 
-    await supabase.from("activity_log").insert({
+    await adminClient.from("activity_log").insert({
       actor_id: user.id,
       action: "update_demo_status",
       entity_type: "demo_requests",
