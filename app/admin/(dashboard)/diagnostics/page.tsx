@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
 export const metadata = { title: "Diagnostics — LexSutra Admin" };
 
 export default async function DiagnosticsPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
 
   const { data: diagnostics } = await supabase
     .from("diagnostics")
@@ -63,7 +63,7 @@ export default async function DiagnosticsPage() {
             </td>
           </tr>
         ) : (
-          rows.map((d) => {
+          rows.map((d: any) => {
             const sys = Array.isArray(d.ai_systems) ? d.ai_systems[0] : d.ai_systems;
             const company = sys?.companies
               ? Array.isArray(sys.companies)

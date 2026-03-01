@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 
 type DemoStatus = "pending" | "contacted" | "converted" | "rejected";
@@ -9,7 +9,7 @@ type DemoStatus = "pending" | "contacted" | "converted" | "rejected";
 export async function updateDemoStatus(id: string, status: DemoStatus) {
   let userId: string | null = null;
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) throw new Error("Unauthenticated");

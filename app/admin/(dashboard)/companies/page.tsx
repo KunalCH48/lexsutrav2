@@ -1,10 +1,10 @@
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 
 export const metadata = { title: "Companies — LexSutra Admin" };
 
 export default async function CompaniesPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
 
   const { data: companies } = await supabase
     .from("companies")
@@ -52,7 +52,7 @@ export default async function CompaniesPage() {
             </td>
           </tr>
         ) : (
-          rows.map((c) => {
+          rows.map((c: any) => {
             const aiCount = Array.isArray(c.ai_systems)
               ? c.ai_systems.length > 0
                 ? (c.ai_systems[0] as { count: number }).count

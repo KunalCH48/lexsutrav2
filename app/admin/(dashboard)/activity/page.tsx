@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { PaginationControls } from "@/components/admin/PaginationControls";
 
@@ -17,7 +17,7 @@ export default async function ActivityPage({
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
 
   const { data: entries, count } = await supabase
     .from("activity_log")
@@ -56,7 +56,7 @@ export default async function ActivityPage({
             </td>
           </tr>
         ) : (
-          rows.map((e) => (
+          rows.map((e: any) => (
             <TableRow key={e.id}>
               <TableCell muted>{fmtDateTime(e.created_at)}</TableCell>
               <TableCell>
