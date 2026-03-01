@@ -269,7 +269,20 @@ lexsutrav2/
 
 ### 🔨 PHASE 5 — Polish & Launch (NEXT)
 
-**Goal:** Make the existing admin fully operational so we can actually run the first diagnostic end-to-end.
+**Goal:** Production-ready for first real paying client.
+
+#### Critical pending items:
+- Run `supabase/migrations/002_diagnostic_findings_effort_deadline.sql` — but ONLY the `report_ref` parts (skip the score CHECK constraint — score column is NUMERIC, not text)
+- Re-enable gmail.com block in `components/DemoForm.tsx` (currently disabled for testing)
+- Rate limiting on `POST /api/demo-request`
+- Mobile responsive sidebars (hamburger menu)
+- Error boundaries + loading skeletons
+- Sentry error monitoring
+
+#### Key DB schema fact — `diagnostic_findings` actual columns:
+`score` (NUMERIC), `rag_status` (green/amber/red), `summary`, `recommendations`, `eu_article_refs` (TEXT[]), `priority`
+NOT: `finding_text`, `citation`, `remediation`, `effort`, `deadline`
+Translation: admin editor ↔ DB is done in `actions.ts` and `generate/route.ts`
 
 #### 1A. Demo Queue — Review Flow
 **Route:** `/admin/demo-requests/[id]`
