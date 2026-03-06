@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
       const { data: company } = await adminClient
         .from("companies")
         .select("onboarding")
-        .eq("email", demo.contact_email)
+        .eq("contact_email", demo.contact_email)
         .maybeSingle();
 
       const answers = (company?.onboarding as { answers?: Record<string, unknown> } | null)?.answers;
@@ -216,10 +216,10 @@ export async function POST(req: NextRequest) {
       userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}\n\nAssessment date: ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
     }
 
-    // Call Claude — higher token limit for full report
+    // Call Claude — high token limit needed for full 8-obligation report
     const message = await anthropic.messages.create({
       model:       "claude-sonnet-4-6",
-      max_tokens:  4096,
+      max_tokens:  8192,
       temperature: 0,
       system:      systemPrompt,
       messages:    [{ role: "user", content: userMessage }],
