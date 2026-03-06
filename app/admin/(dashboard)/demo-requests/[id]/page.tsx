@@ -88,7 +88,7 @@ export default async function DemoReviewPage({
   const { data: existingCompany } = await adminClient
     .from("companies")
     .select("id, name")
-    .eq("email", demo.contact_email)
+    .eq("contact_email", demo.contact_email)
     .maybeSingle();
 
   return (

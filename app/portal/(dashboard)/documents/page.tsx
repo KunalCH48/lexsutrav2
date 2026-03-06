@@ -1,23 +1,32 @@
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { notFound } from "next/navigation";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DocumentRepository } from "@/components/portal/DocumentRepository";
 
 export const metadata = { title: "Documents — LexSutra Portal" };
 
 export default async function DocumentsPage() {
-  // TODO: re-enable auth before production
+  const supabase    = await createSupabaseServerClient();
   const adminClient = createSupabaseAdminClient();
 
-  const companyId = "11111111-1111-1111-1111-111111111111";
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
+
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.company_id) notFound();
 
   const { data: docs } = await adminClient
     .from("documents")
     .select("id, created_at, file_name, file_size, file_type, confirmed_at")
-    .eq("company_id", companyId)
+    .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
   return (
     <div className="max-w-4xl space-y-6">
-      {/* Header */}
       <div>
         <h2
           className="text-2xl font-semibold"
@@ -32,7 +41,7 @@ export default async function DocumentsPage() {
 
       <DocumentRepository
         initialDocs={docs ?? []}
-        userEmail="test@lexsutra.nl"
+        userEmail={user.email ?? ""}
       />
     </div>
   );

@@ -26,11 +26,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { diagnosticId } = await req.json() as { diagnosticId: string };
+    const body = await req.json() as { diagnosticId: string; feedback?: string };
+    const { diagnosticId, feedback } = body;
     if (!diagnosticId) return NextResponse.json({ error: "Missing diagnosticId" }, { status: 400 });
 
-    // Fetch diagnostic + obligations + questions + responses in parallel
-    const [{ data: diagnostic }, { data: obligations }, { data: responses }] = await Promise.all([
+    // Fetch diagnostic + obligations + questions + responses (+ existing findings if refining)
+    const [{ data: diagnostic }, { data: obligations }, { data: responses }, { data: existingFindings }] = await Promise.all([
       adminClient
         .from("diagnostics")
         .select(`id, status, policy_versions ( version_code, display_name, notes ), ai_systems ( name, risk_category, description )`)
@@ -44,9 +45,13 @@ export async function POST(req: NextRequest) {
         .from("diagnostic_responses")
         .select(`
           response_text,
+          file_name,
           diagnostic_questions ( question_text, question_type, obligation_id )
         `)
         .eq("diagnostic_id", diagnosticId),
+      feedback
+        ? adminClient.from("diagnostic_findings").select("obligation_id, rag_status, summary, recommendations, eu_article_refs").eq("diagnostic_id", diagnosticId)
+        : Promise.resolve({ data: null }),
     ]);
 
     if (!diagnostic) return NextResponse.json({ error: "Diagnostic not found" }, { status: 404 });
@@ -74,9 +79,12 @@ export async function POST(req: NextRequest) {
       const q    = Array.isArray(r.diagnostic_questions) ? r.diagnostic_questions[0] : r.diagnostic_questions;
       const obId = (q as { obligation_id: string } | null)?.obligation_id;
       if (obId && obligationQA[obId]) {
-        obligationQA[obId].qa.push(
-          `Q: ${(q as { question_text: string }).question_text}\nA: ${r.response_text}`
-        );
+        const row = r as { response_text: string | null; file_name: string | null; diagnostic_questions: unknown };
+        let entry = `Q: ${(q as { question_text: string }).question_text}\nA: ${row.response_text ?? "(No answer provided)"}`;
+        if (row.file_name) {
+          entry += `\n📎 Uploaded supporting document: ${row.file_name}`;
+        }
+        obligationQA[obId].qa.push(entry);
       }
     }
 
@@ -85,7 +93,28 @@ export async function POST(req: NextRequest) {
       .map((ob) => `## ${ob.name} (${ob.article})\n${ob.description}\n\nClient responses:\n${ob.qa.join("\n\n") || "(No responses provided)"}`)
       .join("\n\n---\n\n");
 
-    const systemPrompt = `You are an EU AI Act compliance expert working for LexSutra, a compliance diagnostics firm. You are generating draft compliance findings for a client assessment report based on the client's own questionnaire responses.
+    const isRefinement = !!(feedback && existingFindings && existingFindings.length > 0);
+
+    const systemPrompt = isRefinement
+      ? `You are an EU AI Act compliance expert working for LexSutra. You are REFINING existing draft compliance findings based on reviewer feedback. Keep all findings not mentioned in the feedback unchanged. Apply the feedback precisely to the relevant obligations.
+
+Scoring criteria:
+- "compliant": Strong evidence of meeting the obligation with documented procedures
+- "partial": Some measures in place but gaps or missing documentation remain
+- "critical": Significant gaps that pose regulatory or operational risk
+- "not_started": No evidence of addressing this obligation
+
+Output ONLY valid JSON — no markdown code blocks, no extra text. Use this exact structure:
+[
+  {
+    "obligation_id": "<uuid>",
+    "score": "compliant|partial|critical|not_started",
+    "finding_text": "...",
+    "citation": "EU AI Act — Art. X | Regulation (EU) 2024/1689",
+    "remediation": "..."
+  }
+]`
+      : `You are an EU AI Act compliance expert working for LexSutra, a compliance diagnostics firm. You are generating draft compliance findings for a client assessment report based on the client's own questionnaire responses.
 
 Your role:
 - Analyse each of the 8 EU AI Act obligation areas independently
@@ -111,7 +140,7 @@ Output ONLY valid JSON — no markdown code blocks, no extra text. Use this exac
   }
 ]`;
 
-    const userMessage = `AI System: ${sys?.name ?? "Unknown"}
+    const baseContext = `AI System: ${sys?.name ?? "Unknown"}
 Risk Category: ${sys?.risk_category ?? "Unknown"}
 Description: ${sys?.description ?? "—"}
 Regulation Version: ${pv?.display_name ?? "EU AI Act — Regulation (EU) 2024/1689"}
@@ -122,6 +151,28 @@ ${Object.entries(obligationQA).map(([id, ob]) => `- ${ob.name}: "${id}"`).join("
 ---
 
 ${obligationSummaries}`;
+
+    const userMessage = isRefinement
+      ? `${baseContext}
+
+---
+
+## EXISTING DRAFT FINDINGS (to refine):
+${(existingFindings ?? []).map((f: { obligation_id: string; rag_status: string | null; summary: string | null; recommendations: string | null; eu_article_refs: string[] | null }) => {
+  const ragToScore = (r: string | null) => r === "green" ? "compliant" : r === "amber" ? "partial" : r === "red" ? "critical" : "not_started";
+  const ob = obligationQA[f.obligation_id];
+  return `Obligation: ${ob?.name ?? f.obligation_id}
+Score: ${ragToScore(f.rag_status)}
+Finding: ${f.summary ?? ""}
+Citation: ${(f.eu_article_refs ?? []).join(", ")}
+Remediation: ${f.recommendations ?? ""}`;
+}).join("\n\n")}
+
+---
+
+## REVIEWER FEEDBACK (apply these changes):
+${feedback}`
+      : baseContext;
 
     // Call Claude
     const message = await client.messages.create({

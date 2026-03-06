@@ -24,7 +24,7 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
 
     const { data: company } = await adminClient
       .from("companies")
-      .select("name, email")
+      .select("name, contact_email")
       .eq("id", profile.company_id)
       .single();
 
@@ -53,7 +53,7 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
             <p><strong>${company?.name ?? "A client"}</strong> has requested a new diagnostic assessment.</p>
             <ul>
               <li><strong>Company:</strong> ${company?.name ?? "—"}</li>
-              <li><strong>Contact email:</strong> ${company?.email ?? user.email ?? "—"}</li>
+              <li><strong>Contact email:</strong> ${company?.contact_email ?? user.email ?? "—"}</li>
               <li><strong>Requested by:</strong> ${user.email}</li>
             </ul>
             <p>Log in to the <a href="https://lexsutra.nl/admin">admin dashboard</a> to create the diagnostic.</p>

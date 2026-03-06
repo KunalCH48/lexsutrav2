@@ -8,7 +8,7 @@ export default async function CompaniesPage() {
 
   const { data: companies } = await supabase
     .from("companies")
-    .select("id, name, email, created_at, ai_systems(count)")
+    .select("id, name, contact_email, created_at, ai_systems(count)")
     .order("created_at", { ascending: false });
 
   const rows = companies ?? [];
@@ -61,7 +61,7 @@ export default async function CompaniesPage() {
             return (
               <TableRow key={c.id}>
                 <TableCell>{c.name}</TableCell>
-                <TableCell muted>{c.email}</TableCell>
+                <TableCell muted>{c.contact_email}</TableCell>
                 <TableCell>
                   <span
                     className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold"

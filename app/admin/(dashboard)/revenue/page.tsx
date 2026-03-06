@@ -45,7 +45,7 @@ export default async function RevenuePage() {
   const { data: diagnostics } = await adminClient
     .from("diagnostics")
     .select(`
-      id, status, created_at, tier,
+      id, status, created_at,
       ai_systems (
         name,
         companies ( name, contact_email )
@@ -57,7 +57,7 @@ export default async function RevenuePage() {
   // Also fetch all diagnostics for pipeline view
   const { data: allDiagnostics } = await adminClient
     .from("diagnostics")
-    .select("id, status, created_at, tier")
+    .select("id, status, created_at")
     .order("created_at", { ascending: false });
 
   const delivered = diagnostics ?? [];

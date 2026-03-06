@@ -122,10 +122,10 @@ export default async function DiagnosticReviewPage({
         />
       </div>
 
-      {/* AI generation — only show when diagnostic is in_review (responses submitted) */}
-      {["in_review", "pending"].includes(diagnostic.status) && (
+      {/* AI generation — show for in_review, pending, and draft (allows re-generation / refinement) */}
+      {["in_review", "pending", "draft"].includes(diagnostic.status) && (
         <div className="mb-6">
-          <GenerateFindingsButton diagnosticId={id} />
+          <GenerateFindingsButton diagnosticId={id} hasFindings={findings.length > 0} />
         </div>
       )}
 

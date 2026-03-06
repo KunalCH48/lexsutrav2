@@ -11,6 +11,7 @@ import {
   DollarSign,
   MessageSquare,
   FileText,
+  Radar,
 } from "lucide-react";
 import { SidebarLink } from "./SidebarLink";
 import { SignOutButton } from "./SignOutButton";
@@ -25,10 +26,11 @@ const OPERATIONS = [
 ];
 
 const PLATFORM = [
-  { href: "/admin/policy-versions", label: "Policy Versions", icon: BookOpen,       exact: false },
-  { href: "/admin/errors",          label: "Error Logs",      icon: AlertTriangle,  exact: false },
-  { href: "/admin/activity",        label: "Activity Logs",   icon: ScrollText,     exact: false },
-  { href: "/admin/revenue",         label: "Revenue",         icon: DollarSign,     exact: false },
+  { href: "/admin/regulatory-intel", label: "Regulatory Intel", icon: Radar,         exact: false },
+  { href: "/admin/policy-versions",  label: "Policy Versions",  icon: BookOpen,      exact: false },
+  { href: "/admin/errors",           label: "Error Logs",       icon: AlertTriangle, exact: false },
+  { href: "/admin/activity",         label: "Activity Logs",    icon: ScrollText,    exact: false },
+  { href: "/admin/revenue",          label: "Revenue",          icon: DollarSign,    exact: false },
 ];
 
 export function AdminSidebar() {
