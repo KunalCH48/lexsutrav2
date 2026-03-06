@@ -11,6 +11,12 @@ type InsightVersion = {
   internal_feedback: string | null;
 };
 
+type IdentifiedSystem = {
+  name: string;
+  description: string;
+  likely_risk_tier: string;
+};
+
 type ObligationItem = {
   number: string;
   name: string;
@@ -20,9 +26,13 @@ type ObligationItem = {
   required_action: string;
   effort: string;
   deadline: string;
+  confidence?: "high" | "medium" | "low";
+  confidence_reason?: string;
 };
 
 type StructuredReport = {
+  identified_systems?: IdentifiedSystem[];
+  primary_system_assessed?: string;
   risk_classification: string;
   risk_tier: string;
   annex_section: string;
@@ -68,6 +78,15 @@ function priorityFor(status: string): { short: string; lines: string[]; color: s
 
 function abbreviateArticle(article: string) {
   return article.split("|")[0].trim().replace("Article", "Art.").trim();
+}
+
+const CONFIDENCE_CFG: Record<string, { label: string; color: string; bg: string }> = {
+  high:   { label: "HIGH",   color: "#2ecc71", bg: "rgba(46,204,113,0.1)"  },
+  medium: { label: "MEDIUM", color: "#e0a832", bg: "rgba(224,168,50,0.1)"  },
+  low:    { label: "LOW",    color: "#8899aa", bg: "rgba(136,153,170,0.1)" },
+};
+function ccfg(c?: string) {
+  return CONFIDENCE_CFG[c ?? "low"] ?? CONFIDENCE_CFG["low"];
 }
 
 // ── Structured report view ─────────────────────────────────────────
@@ -189,6 +208,57 @@ function StructuredReportView({
         ))}
       </div>
 
+      {/* ══ IDENTIFIED AI SYSTEMS ════════════════════════════════════ */}
+      {report.identified_systems && report.identified_systems.length > 0 && (
+        <div>
+          <h2 style={{
+            fontSize: 13, fontWeight: 700, color: "#e8f4ff",
+            fontFamily: "Georgia, serif",
+            borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 8, marginBottom: 12,
+          }}>
+            AI Systems Identified
+          </h2>
+          <p style={{ color: "#8899aa", marginBottom: 12, lineHeight: 1.6 }}>
+            Based on publicly available information, the following AI systems were identified.
+            {report.primary_system_assessed && (
+              <> This assessment focuses on <strong style={{ color: "#e8f4ff" }}>{report.primary_system_assessed}</strong> as the highest-risk system identified.</>
+            )}
+          </p>
+          <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, overflow: "hidden" }}>
+            <div className="grid" style={{
+              gridTemplateColumns: "1fr 180px 100px",
+              background: "rgba(255,255,255,0.07)",
+              padding: "8px 12px",
+              fontWeight: 600, color: "#8899aa", textTransform: "uppercase", letterSpacing: "0.08em",
+            }}>
+              <span>AI System</span>
+              <span>Description</span>
+              <span>Risk Tier</span>
+            </div>
+            {report.identified_systems.map((sys, i) => {
+              const isPrimary  = sys.name === report.primary_system_assessed;
+              const tierColor  = sys.likely_risk_tier === "high_risk" ? "#e05252" : sys.likely_risk_tier === "limited_risk" ? "#e0a832" : "#2ecc71";
+              const tierLabel  = sys.likely_risk_tier === "high_risk" ? "HIGH-RISK" : sys.likely_risk_tier === "limited_risk" ? "LIMITED" : "MINIMAL";
+              return (
+                <div key={i} className="grid items-start" style={{
+                  gridTemplateColumns: "1fr 180px 100px",
+                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                  background: i % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent",
+                  padding: "9px 12px",
+                  color: "#c0ccd8",
+                }}>
+                  <span style={{ fontWeight: isPrimary ? 700 : 400, color: isPrimary ? "#e8f4ff" : "#c0ccd8" }}>
+                    {sys.name}{isPrimary && <span style={{ marginLeft: 6, fontSize: 10, color: "#2d9cdb", fontWeight: 600 }}>ASSESSED</span>}
+                  </span>
+                  <span style={{ color: "#8899aa", fontSize: 11 }}>{sys.description}</span>
+                  <span style={{ fontWeight: 700, color: tierColor }}>{tierLabel}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
 
       {/* ══ EXECUTIVE SUMMARY ════════════════════════════════════════ */}
@@ -227,7 +297,7 @@ function StructuredReportView({
           <div
             className="grid"
             style={{
-              gridTemplateColumns: "1fr 120px 60px 110px",
+              gridTemplateColumns: "1fr 120px 50px 80px 100px",
               background: "rgba(255,255,255,0.07)",
               padding: "8px 12px",
               fontWeight: 600, color: "#8899aa", textTransform: "uppercase", letterSpacing: "0.08em",
@@ -235,18 +305,20 @@ function StructuredReportView({
           >
             <span>Obligation</span>
             <span>Status</span>
-            <span>Priority</span>
+            <span>P</span>
+            <span>Confidence</span>
             <span>Article</span>
           </div>
           {report.obligations.map((ob, i) => {
             const cfg  = scfg(ob.status);
             const prio = priorityFor(ob.status);
+            const conf = ccfg(ob.confidence);
             return (
               <div
                 key={ob.number}
                 className="grid items-center"
                 style={{
-                  gridTemplateColumns: "1fr 120px 60px 110px",
+                  gridTemplateColumns: "1fr 120px 50px 80px 100px",
                   padding: "8px 12px",
                   background: i % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent",
                   borderTop: "1px solid rgba(255,255,255,0.05)",
@@ -256,6 +328,14 @@ function StructuredReportView({
                 <span>{ob.number}. {ob.name}</span>
                 <span style={{ fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
                 <span style={{ fontWeight: 600, color: prio.color }}>{prio.short}</span>
+                <span style={{
+                  fontWeight: 600, color: conf.color,
+                  background: conf.bg, borderRadius: 4,
+                  padding: "2px 6px", fontSize: 10, letterSpacing: "0.06em",
+                  display: "inline-block",
+                }}>
+                  {conf.label}
+                </span>
                 <span style={{ color: "#3d4f60" }}>{abbreviateArticle(ob.article)}</span>
               </div>
             );
@@ -299,7 +379,32 @@ function StructuredReportView({
                   </span>
                 </div>
 
-                {/* Table rows — Legal Basis / Finding / Required Action / Effort */}
+                {/* Confidence row */}
+                {ob.confidence && (
+                  <div className="grid" style={{ gridTemplateColumns: "110px 1fr", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div style={{
+                      padding: "8px 14px", fontWeight: 600, color: "#3d4f60",
+                      background: "rgba(255,255,255,0.02)", borderRight: "1px solid rgba(255,255,255,0.05)",
+                    }}>
+                      Confidence
+                    </div>
+                    <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        fontWeight: 700, fontSize: 10, letterSpacing: "0.08em",
+                        color: ccfg(ob.confidence).color,
+                        background: ccfg(ob.confidence).bg,
+                        borderRadius: 4, padding: "2px 7px",
+                      }}>
+                        {ccfg(ob.confidence).label}
+                      </span>
+                      {ob.confidence_reason && (
+                        <span style={{ color: "#8899aa", fontSize: 11 }}>{ob.confidence_reason}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Table rows — Legal Basis / Finding / Required Action */}
                 {([
                   ["Legal Basis",      ob.article,          "blue"],
                   ["Finding",          ob.finding,          "normal"],
