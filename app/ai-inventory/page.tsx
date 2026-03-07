@@ -223,6 +223,28 @@ export default function AIInventoryPage() {
           <p className="text-xs mt-4 animate-fade-up delay-400" style={{ color: "#3d4f60" }}>
             Free to use. No sign-up required. CSV format — open in Excel, Google Sheets, or Notion.
           </p>
+
+          {/* Quote nudge */}
+          <div
+            className="mt-10 max-w-xl mx-auto rounded-xl px-6 py-4 flex flex-col sm:flex-row items-center gap-4 animate-fade-up delay-400"
+            style={{ background: "#0d1520", border: "1px solid rgba(201,168,76,0.2)" }}
+          >
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold mb-0.5" style={{ color: "#e8f4ff" }}>
+                Already know what AI systems you have?
+              </p>
+              <p className="text-xs" style={{ color: "#8899aa" }}>
+                Tell us your context — we&apos;ll come back with a tailored quote. No commitment.
+              </p>
+            </div>
+            <a
+              href="/#request"
+              className="btn-gold px-5 py-2.5 text-sm font-semibold rounded-lg whitespace-nowrap shrink-0"
+            >
+              Request a Quote →
+            </a>
+          </div>
+
         </section>
 
         {/* ── 3 Common Mistakes ── */}
@@ -499,7 +521,7 @@ export default function AIInventoryPage() {
                     href="/#request"
                     className="inline-flex items-center gap-2 btn-gold px-5 py-2.5 text-sm font-semibold rounded-lg"
                   >
-                    Request a diagnostic
+                    Request a quote — tell us your context
                     <ArrowRight size={14} />
                   </Link>
                 </div>

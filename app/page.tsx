@@ -621,37 +621,35 @@ function Pricing() {
   const plans = [
     {
       name: "Starter",
-      price: "€300",
-      desc: "Public footprint assessment for AI systems in early compliance stages.",
+      badge: null,
+      desc: "Public footprint assessment — your AI system's first compliance snapshot.",
       features: [
         "Public Footprint Pre-Scan",
-        "AI system risk profile",
+        "AI system risk classification",
         "Initial obligation gap summary",
         "PDF snapshot report",
       ],
-      cta: "Get Started",
       featured: false,
     },
     {
       name: "Core",
-      price: "€2,200",
-      desc: "The full diagnostic — our core product for high-risk AI compliance.",
+      badge: "MOST POPULAR",
+      desc: "The full diagnostic — the definitive EU AI Act assessment for high-risk systems.",
       features: [
         "Everything in Starter",
         "Full 80+ question diagnostic",
-        "All 8 obligations assessed",
+        "All 8 EU AI Act obligations assessed",
         "Graded PDF report with legal citations",
         "Compliance scorecard",
         "Prioritised remediation roadmap",
-        "Human expert review",
+        "Human expert review before delivery",
         "Policy version stamp",
       ],
-      cta: "Request Diagnostic",
       featured: true,
     },
     {
       name: "Premium",
-      price: "€3,500",
+      badge: null,
       desc: "For teams preparing for investment, audit, or market launch.",
       features: [
         "Everything in Core",
@@ -659,7 +657,6 @@ function Pricing() {
         "Investor-grade compliance certificate",
         "30-day regulatory Q&A support",
       ],
-      cta: "Get Premium",
       featured: false,
     },
   ];
@@ -679,15 +676,16 @@ function Pricing() {
             Pricing
           </p>
           <h2 className="text-3xl md:text-4xl font-serif font-semibold text-white mb-4">
-            Transparent pricing. No retainer.
+            Priced to your context.
           </h2>
           <p className="max-w-xl mx-auto" style={{ color: "#8899aa" }}>
-            One-time project fee. No monthly subscriptions. No hidden costs.
+            Every AI system is different. So is every quote. Tell us what you have
+            and we&apos;ll come back with a number that makes sense for your situation.
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 items-start">
-          {plans.map(({ name, price, desc, features, cta, featured }) => (
+          {plans.map(({ name, badge, desc, features, featured }) => (
             <div
               key={name}
               className="relative rounded-2xl p-8"
@@ -696,35 +694,26 @@ function Pricing() {
                 border: featured
                   ? "2px solid rgba(201,168,76,0.4)"
                   : "1px solid rgba(255,255,255,0.05)",
-                boxShadow: featured
-                  ? "0 0 60px rgba(201,168,76,0.07)"
-                  : "none",
+                boxShadow: featured ? "0 0 60px rgba(201,168,76,0.07)" : "none",
               }}
             >
-              {featured && (
+              {badge && (
                 <div
                   className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold tracking-wider"
                   style={{ background: "#c9a84c", color: "#060a14" }}
                 >
-                  MOST POPULAR
+                  {badge}
                 </div>
               )}
 
               <div className="mb-6">
                 <h3
-                  className="text-lg font-semibold mb-1"
+                  className="text-lg font-semibold mb-3"
                   style={{ color: featured ? "#dbbf6a" : "#e2e8f0" }}
                 >
                   {name}
                 </h3>
-                <div className="flex items-baseline gap-1 mb-3">
-                  <span className="text-4xl font-serif font-bold text-white">
-                    {price}
-                  </span>
-                </div>
-                <p className="text-sm" style={{ color: "#8899aa" }}>
-                  {desc}
-                </p>
+                <p className="text-sm" style={{ color: "#8899aa" }}>{desc}</p>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -734,41 +723,43 @@ function Pricing() {
                       className="w-4 h-4 mt-0.5 shrink-0"
                       style={{ color: featured ? "#c9a84c" : "#4caf7c" }}
                     />
-                    <span className="text-sm" style={{ color: "#8899aa" }}>
-                      {f}
-                    </span>
+                    <span className="text-sm" style={{ color: "#8899aa" }}>{f}</span>
                   </li>
                 ))}
               </ul>
 
               <a
-                href="#request"
+                href="/ai-inventory"
                 className={`block text-center py-3 px-6 rounded-lg font-semibold text-sm ${
                   featured ? "btn-gold" : "btn-pricing-secondary"
                 }`}
               >
-                {cta}
+                Request a Quote →
               </a>
             </div>
           ))}
         </div>
 
-        {/* Founding client note */}
+        {/* Context note */}
         <div
-          className="mt-10 text-center py-4 px-6 rounded-xl"
+          className="mt-10 text-center py-5 px-6 rounded-xl"
           style={{
             background: "rgba(201,168,76,0.05)",
             border: "1px solid rgba(201,168,76,0.12)",
           }}
         >
-          <p className="text-sm" style={{ color: "#dbbf6a" }}>
-            <strong>Founding client offer:</strong> First 3 clients receive 50% off any
-            plan in exchange for a testimonial and case study.{" "}
+          <p className="text-sm mb-1" style={{ color: "#dbbf6a" }}>
+            <strong>Not sure which tier fits?</strong>
+          </p>
+          <p className="text-sm" style={{ color: "#8899aa" }}>
+            Start by building your AI system inventory — it&apos;s free, and it&apos;s the first thing
+            we&apos;ll need to give you an accurate quote.{" "}
             <a
-              href="#request"
+              href="/ai-inventory"
               className="underline underline-offset-2 hover:opacity-80 transition-opacity"
+              style={{ color: "#dbbf6a" }}
             >
-              Apply now →
+              Get the free template →
             </a>
           </p>
         </div>
