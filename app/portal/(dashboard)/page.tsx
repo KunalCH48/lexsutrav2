@@ -376,7 +376,7 @@ function NoCompanyState() {
         </p>
         <p className="text-sm" style={{ color: "#8899aa" }}>
           Your account is being configured. This usually takes a few minutes.
-          Contact <a href="mailto:hello@lexsutra.nl" className="gold-link">hello@lexsutra.nl</a> if this persists.
+          Contact <a href="mailto:hello@lexsutra.eu" className="gold-link">hello@lexsutra.eu</a> if this persists.
         </p>
       </div>
     </div>

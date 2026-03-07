@@ -169,6 +169,28 @@ export function ReportViewer({
 
   return (
     <>
+      {/* ── Print watermark — appears on every printed page via position:fixed ── */}
+      <style>{`
+        @media print {
+          .draft-print-watermark {
+            display: block !important;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 72pt;
+            font-weight: 900;
+            color: rgba(160, 0, 0, 0.055);
+            z-index: 9999;
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 0.15em;
+            font-family: Georgia, serif;
+          }
+        }
+      `}</style>
+      <div className="draft-print-watermark hidden" aria-hidden="true">DRAFT — TESTING ONLY</div>
+
       {/* ── Fixed screen top bar ──────────────────────────── */}
       <div
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-12 print:hidden"
@@ -193,8 +215,19 @@ export function ReportViewer({
         </button>
       </div>
 
+      {/* ── DRAFT screen banner (hidden in print) ─────────── */}
+      <div
+        className="fixed top-12 left-0 right-0 z-40 flex items-center justify-center gap-3 px-6 py-2 print:hidden"
+        style={{ background: "#7a1a1a", borderBottom: "1px solid #a02020" }}
+      >
+        <span className="text-xs font-bold tracking-widest uppercase text-white">⚠ Draft — Testing Purposes Only</span>
+        <span className="text-xs text-red-200 opacity-80">
+          This document has no legal standing and may not be relied upon for any regulatory or compliance purpose.
+        </span>
+      </div>
+
       {/* ── Report body ───────────────────────────────────── */}
-      <div className="pt-12 min-h-screen print:pt-0" style={{ background: "#f4f0e8", color: "#1a1a2e" }}>
+      <div className="pt-20 min-h-screen print:pt-0" style={{ background: "#f4f0e8", color: "#1a1a2e" }}>
         <div className="max-w-4xl mx-auto px-8 py-10 print:px-10 print:py-0">
 
           {/* ═══════════════════════════════════════════════
@@ -205,7 +238,7 @@ export function ReportViewer({
             style={{ borderBottom: "1px solid #c8c0b0", color: "#8b6914" }}
           >
             <span style={{ fontFamily: "Georgia, serif", fontWeight: 700 }}>LexSutra</span>
-            <span>CONFIDENTIAL &nbsp;|&nbsp; {reportRef} &nbsp;|&nbsp; {company?.name ?? "—"}</span>
+            <span style={{ color: "#a02020", fontWeight: 700 }}>DRAFT — TESTING ONLY &nbsp;|&nbsp; NO LEGAL STANDING</span>
             <span>LexSutra EU AI Act Diagnostic Report &nbsp;|&nbsp; {fmtDateShort(diagnostic.created_at)}</span>
           </div>
 
@@ -221,9 +254,32 @@ export function ReportViewer({
             </div>
 
             {/* Report type label */}
-            <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-6" style={{ color: "#8b6914" }}>
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8b6914" }}>
               EU AI Act Compliance Diagnostic Report
             </p>
+
+            {/* DRAFT stamp */}
+            <div
+              className="inline-block rounded border-2 px-4 py-1.5 mb-6"
+              style={{ borderColor: "#a02020", borderStyle: "solid" }}
+            >
+              <p className="text-xs font-bold tracking-[0.25em] uppercase" style={{ color: "#a02020" }}>
+                Draft — Testing Purposes Only
+              </p>
+            </div>
+
+            {/* Legal notice box */}
+            <div
+              className="rounded-lg px-4 py-3 mb-8 text-xs leading-relaxed"
+              style={{ background: "rgba(160,32,32,0.06)", border: "1px solid rgba(160,32,32,0.2)", color: "#7a3030" }}
+            >
+              <strong>This document has been produced for evaluation and testing purposes only.</strong>{" "}
+              It does not constitute a formal LexSutra compliance diagnostic report. The findings,
+              classifications, and any information contained herein carry no legal standing and may not
+              be relied upon for any regulatory, legal, commercial, or compliance purpose. This document
+              is not a certifiable compliance statement and creates no legal relationship between
+              LexSutra and any party. A formally issued report will be clearly marked as such.
+            </div>
 
             {/* Company name (primary) */}
             <h1
@@ -656,11 +712,20 @@ export function ReportViewer({
               footprint scan of company website, Terms of Service, privacy policy, and public AI-related
               disclosures, and (3) LexSutra expert review and interpretation.
             </p>
-            <p className="text-sm leading-relaxed mb-8" style={{ color: "#3a3a5c" }}>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: "#3a3a5c" }}>
               <strong>Human-in-the-Loop:</strong> Every LexSutra diagnostic report is reviewed and approved by a
               human expert before delivery. This is not merely a quality control measure — it reflects LexSutra&apos;s
               core philosophy that compliance assessments affecting businesses and their stakeholders require human
               judgement. We practise the same principles we help our clients implement under the EU AI Act.
+            </p>
+            <p className="text-sm leading-relaxed mb-8" style={{ color: "#3a3a5c" }}>
+              <strong>AI-Assisted Analysis:</strong> Initial findings drafts for this report were generated
+              with the assistance of Claude (Anthropic), a large language model, based on the client&apos;s
+              questionnaire responses and uploaded documentation. AI-generated drafts were reviewed, edited,
+              and approved by a LexSutra human expert before inclusion in this report. No AI-generated finding
+              was published without human review. Client data submitted via the LexSutra platform is processed
+              by Anthropic under a Data Processing Agreement and Standard Contractual Clauses in accordance
+              with GDPR requirements for third-country transfers.
             </p>
 
             {/* Authenticity stamp box */}
@@ -681,6 +746,7 @@ export function ReportViewer({
                   { label: "Policy Version Assessed Against", value: policyVersion ? `${policyVersion.display_name} — Regulation (EU) 2024/1689` : "EU AI Act v1.0 — Regulation (EU) 2024/1689" },
                   { label: "Policy Active From",           value: policyVersion ? new Date(policyVersion.effective_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "August 2024" },
                   { label: "Reviewed and Approved By",     value: "LexSutra Expert Review Team" },
+                  { label: "AI Processing Disclosure",     value: "Findings drafted with Claude (Anthropic) · Human-reviewed before delivery · Covered under Anthropic Commercial Terms of Service (DPA effective 24 Feb 2025)" },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex gap-4">
                     <span className="text-xs font-semibold w-52 shrink-0 pt-0.5" style={{ color: "#8b6914" }}>{label}:</span>
@@ -701,7 +767,7 @@ export function ReportViewer({
                 Disclaimer
               </p>
               <p className="text-xs leading-relaxed" style={{ color: "#9a9aaa" }}>
-                This report is produced by LexSutra B.V. as a compliance infrastructure and diagnostic tool.
+                This report is produced by LexSutra as a compliance infrastructure and diagnostic tool.
                 It does not constitute legal advice and LexSutra is not a law firm. The findings, classifications,
                 and recommendations in this report reflect LexSutra&apos;s methodology and regulatory interpretation
                 current at the date of assessment. Regulatory interpretation may evolve as guidance from national
@@ -714,7 +780,7 @@ export function ReportViewer({
                 the fee paid for this diagnostic service.
               </p>
               <p className="text-xs mt-4" style={{ color: "#c8c0b0" }}>
-                LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.nl · Netherlands · Founded February 2026
+                LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.eu · Netherlands · Founded February 2026
               </p>
             </div>
           </Section>

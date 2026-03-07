@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  not_client: "This account doesn't have client access. Contact us at hello@lexsutra.nl.",
-  auth_failed: "Authentication failed. Please try again.",
+type ErrorDef = { message: string; tone: "red" | "amber" };
+
+const ERROR_MESSAGES: Record<string, ErrorDef> = {
+  not_client:      { tone: "red",   message: "This account doesn't have client access. Contact us at hello@lexsutra.eu." },
+  auth_failed:     { tone: "red",   message: "Authentication failed. Please try again." },
+  invite_invalid:  { tone: "red",   message: "This access link is not valid. Please contact your LexSutra account manager for a new one." },
+  invite_expired:  { tone: "amber", message: "This access link has expired. Please contact your LexSutra account manager for a fresh link." },
+  invite_used:     { tone: "amber", message: "This access link has already been used the maximum number of times. Please contact your LexSutra account manager for a new one." },
 };
 
 export function ClientLoginForm({ error }: { error?: string }) {
@@ -52,18 +57,22 @@ export function ClientLoginForm({ error }: { error?: string }) {
 
   return (
     <div className="space-y-5">
-      {error && ERROR_MESSAGES[error] && (
-        <div
-          className="rounded-lg px-4 py-3 text-sm"
-          style={{
-            background: "rgba(224,82,82,0.08)",
-            border:     "1px solid rgba(224,82,82,0.2)",
-            color:      "#e05252",
-          }}
-        >
-          {ERROR_MESSAGES[error]}
-        </div>
-      )}
+      {error && ERROR_MESSAGES[error] && (() => {
+        const { message, tone } = ERROR_MESSAGES[error];
+        const isAmber = tone === "amber";
+        return (
+          <div
+            className="rounded-lg px-4 py-3 text-sm"
+            style={{
+              background: isAmber ? "rgba(224,168,50,0.08)"  : "rgba(224,82,82,0.08)",
+              border:     isAmber ? "1px solid rgba(224,168,50,0.25)" : "1px solid rgba(224,82,82,0.2)",
+              color:      isAmber ? "#e0a832" : "#e05252",
+            }}
+          >
+            {message}
+          </div>
+        );
+      })()}
 
       {/* Google SSO */}
       <button

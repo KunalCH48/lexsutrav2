@@ -137,6 +137,6 @@ export async function completeOnboarding(
 
   } catch (err) {
     await logError({ error: err, source: "portal/onboarding/actions", action: "completeOnboarding", userId, metadata: { path } });
-    return { error: "Something went wrong. Please try again or contact hello@lexsutra.nl." };
+    return { error: "Something went wrong. Please try again or contact hello@lexsutra.eu." };
   }
 }

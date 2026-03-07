@@ -46,8 +46,8 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from:    "LexSutra <notifications@lexsutra.nl>",
-          to:      ["hello@lexsutra.nl"],
+          from:    "LexSutra <notifications@lexsutra.eu>",
+          to:      ["hello@lexsutra.eu"],
           subject: `Diagnostic requested — ${company?.name ?? "Unknown company"}`,
           html: `
             <p><strong>${company?.name ?? "A client"}</strong> has requested a new diagnostic assessment.</p>
@@ -56,7 +56,7 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
               <li><strong>Contact email:</strong> ${company?.contact_email ?? user.email ?? "—"}</li>
               <li><strong>Requested by:</strong> ${user.email}</li>
             </ul>
-            <p>Log in to the <a href="https://lexsutra.nl/admin">admin dashboard</a> to create the diagnostic.</p>
+            <p>Log in to the <a href="https://lexsutra.eu/admin">admin dashboard</a> to create the diagnostic.</p>
           `,
         }),
       });
@@ -72,6 +72,6 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
       userId: userId ?? undefined,
       metadata: {},
     });
-    return { error: "Something went wrong. Please try again or contact hello@lexsutra.nl." };
+    return { error: "Something went wrong. Please try again or contact hello@lexsutra.eu." };
   }
 }

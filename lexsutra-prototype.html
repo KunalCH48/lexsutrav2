@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LexSutra — Interactive Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #080c14;
+  --navy2: #0d1520;
+  --navy3: #111d2e;
+  --blue: #2d9cdb;
+  --blue-light: #5bb8f0;
+  --blue-dim: rgba(45,156,219,0.12);
+  --gold: #c8a84b;
+  --gold-dim: rgba(200,168,75,0.1);
+  --white: #e8f4ff;
+  --white-dim: rgba(232,244,255,0.6);
+  --white-faint: rgba(232,244,255,0.08);
+  --red: #e05252;
+  --amber: #e0a832;
+  --green: #2ecc71;
+  --border: rgba(45,156,219,0.15);
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'DM Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===================== SCREEN SWITCHER ===================== */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ===================== NAV BAR ===================== */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px; height: 68px;
+  background: rgba(8,12,20,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--font-serif);
+  font-size: 26px; font-weight: 600;
+  letter-spacing: 0.5px; cursor: pointer;
+  text-decoration: none; color: var(--white);
+}
+.nav-logo .lex { color: var(--blue); }
+
+.nav-links { display: flex; gap: 32px; align-items: center; }
+.nav-links a {
+  font-size: 13px; font-weight: 400; letter-spacing: 0.5px;
+  color: var(--white-dim); cursor: pointer; text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  display: flex; gap: 12px; align-items: center;
+}
+
+.btn {
+  padding: 10px 22px; border-radius: 4px; font-family: var(--font-sans);
+  font-size: 13px; font-weight: 500; cursor: pointer; border: none;
+  transition: all 0.2s; letter-spacing: 0.3px;
+}
+.btn-ghost {
+  background: transparent; color: var(--white-dim);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--blue); color: var(--white); }
+.btn-primary {
+  background: var(--blue); color: #fff;
+}
+.btn-primary:hover { background: var(--blue-light); }
+.btn-gold {
+  background: var(--gold); color: var(--navy);
+}
+.btn-gold:hover { opacity: 0.9; }
+
+/* ===================== SCREEN NAV (prototype) ===================== */
+.proto-nav {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 200; display: flex; gap: 8px; align-items: center;
+  background: rgba(13,21,32,0.95); backdrop-filter: blur(12px);
+  padding: 10px 16px; border-radius: 50px;
+  border: 1px solid var(--border);
+}
+.proto-btn {
+  padding: 6px 14px; border-radius: 30px; font-size: 11px;
+  font-family: var(--font-sans); font-weight: 500;
+  letter-spacing: 0.5px; cursor: pointer; border: none;
+  background: transparent; color: var(--white-dim);
+  transition: all 0.2s; white-space: nowrap;
+}
+.proto-btn:hover { color: var(--white); background: var(--white-faint); }
+.proto-btn.active { background: var(--blue); color: #fff; }
+
+/* ===================== HERO — LANDING PAGE ===================== */
+#landing { background: var(--navy); }
+
+.hero {
+  padding-top: 160px; padding-bottom: 100px;
+  padding-left: 48px; padding-right: 48px;
+  max-width: 1200px; margin: 0 auto;
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 30px;
+  border: 1px solid rgba(200,168,75,0.3);
+  background: var(--gold-dim);
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 32px;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-family: var(--font-serif);
+  font-size: 72px; font-weight: 300; line-height: 1.1;
+  letter-spacing: -1px; margin-bottom: 24px; max-width: 780px;
+}
+.hero h1 em { font-style: italic; color: var(--blue); }
+.hero h1 strong { font-weight: 700; }
+
+.hero-sub {
+  font-size: 17px; line-height: 1.7; color: var(--white-dim);
+  max-width: 560px; margin-bottom: 48px; font-weight: 300;
+}
+
+.hero-actions { display: flex; gap: 16px; align-items: center; margin-bottom: 80px; }
+
+.hero-actions .btn { padding: 14px 32px; font-size: 14px; }
+
+.hero-proof {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--white-dim); letter-spacing: 0.5px;
+}
+.hero-proof span { color: var(--gold); font-weight: 500; }
+
+/* Stats row */
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; max-width: 700px;
+}
+.stat {
+  background: var(--navy2); padding: 28px 32px;
+}
+.stat-num {
+  font-family: var(--font-serif); font-size: 42px;
+  font-weight: 700; color: var(--blue); line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--white-dim); }
+
+/* How it works */
+.section {
+  padding: 100px 48px; max-width: 1200px; margin: 0 auto;
+}
+.section-label {
+  font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--blue); margin-bottom: 20px;
+}
+.section-title {
+  font-family: var(--font-serif); font-size: 48px; font-weight: 300;
+  line-height: 1.2; margin-bottom: 60px; max-width: 600px;
+}
+.section-title em { font-style: italic; color: var(--blue); }
+
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.step { background: var(--navy2); padding: 36px 28px; }
+.step-num {
+  font-family: var(--font-serif); font-size: 48px; font-weight: 700;
+  color: var(--border); line-height: 1; margin-bottom: 16px;
+}
+.step-title {
+  font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--white);
+}
+.step-desc { font-size: 13px; line-height: 1.6; color: var(--white-dim); }
+.step-tag {
+  margin-top: 16px; display: inline-block;
+  padding: 3px 10px; border-radius: 3px;
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+}
+.tag-auto { background: var(--blue-dim); color: var(--blue); }
+.tag-human { background: var(--gold-dim); color: var(--gold); }
+
+/* USP Banner */
+.usp-banner {
+  margin: 0 48px; padding: 40px 48px;
+  border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 8px; background: var(--gold-dim);
+  display: flex; align-items: center; gap: 32px;
+}
+.usp-icon { font-size: 36px; flex-shrink: 0; }
+.usp-text h3 {
+  font-family: var(--font-serif); font-size: 24px; font-weight: 600;
+  color: var(--gold); margin-bottom: 8px;
+}
+.usp-text p { font-size: 14px; line-height: 1.6; color: var(--white-dim); }
+
+
+/* ===================== DEMO TOOL SCREEN ===================== */
+#demo {
+  background: var(--navy);
+  display: none;
+}
+#demo.active { display: block; }
+
+.demo-wrap {
+  max-width: 600px; margin: 0 auto;
+  padding: 140px 24px 60px;
+}
+.demo-header { text-align: center; margin-bottom: 48px; }
+.demo-header .section-label { justify-content: center; display: flex; }
+.demo-header h2 {
+  font-family: var(--font-serif); font-size: 48px; font-weight: 300;
+  line-height: 1.2; margin-bottom: 16px;
+}
+.demo-header p { font-size: 15px; color: var(--white-dim); line-height: 1.6; }
+
+.demo-card {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 40px;
+}
+
+.form-group { margin-bottom: 24px; }
+.form-label {
+  display: block; font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--white-dim);
+  margin-bottom: 8px; font-weight: 500;
+}
+.form-input {
+  width: 100%; padding: 14px 16px;
+  background: var(--navy3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--white);
+  font-family: var(--font-sans); font-size: 14px;
+  transition: border-color 0.2s; outline: none;
+}
+.form-input:focus { border-color: var(--blue); }
+.form-input::placeholder { color: rgba(232,244,255,0.25); }
+
+.form-note {
+  font-size: 11px; color: var(--white-dim); margin-top: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.form-note .icon { color: var(--blue); }
+
+.form-check {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 16px; background: var(--white-faint);
+  border-radius: 6px; margin-bottom: 24px;
+  border: 1px solid var(--border);
+}
+.form-check input { margin-top: 2px; accent-color: var(--blue); cursor: pointer; }
+.form-check label { font-size: 13px; color: var(--white-dim); line-height: 1.5; cursor: pointer; }
+
+.btn-full { width: 100%; padding: 16px; font-size: 15px; border-radius: 6px; }
+
+.demo-what {
+  margin-top: 32px; padding: 20px;
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.demo-what h4 {
+  font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--blue); margin-bottom: 12px;
+}
+.demo-what ul { list-style: none; }
+.demo-what li {
+  font-size: 13px; color: var(--white-dim); padding: 6px 0;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.demo-what li:last-child { border-bottom: none; }
+.demo-what li::before { content: '→'; color: var(--blue); font-size: 12px; }
+
+/* ===================== CLIENT DASHBOARD ===================== */
+#dashboard { background: var(--navy); display: none; }
+#dashboard.active { display: flex; }
+
+.sidebar {
+  width: 240px; min-height: 100vh; flex-shrink: 0;
+  background: var(--navy2); border-right: 1px solid var(--border);
+  padding: 80px 0 24px; position: fixed; top: 0; bottom: 0; left: 0;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 0 24px 32px;
+  font-family: var(--font-serif); font-size: 22px;
+  border-bottom: 1px solid var(--border); margin-bottom: 24px;
+}
+.sidebar-logo .lex { color: var(--blue); }
+
+.sidebar-section {
+  padding: 0 16px; margin-bottom: 8px;
+}
+.sidebar-label {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--white-dim); opacity: 0.4; padding: 0 8px;
+  margin-bottom: 4px; margin-top: 20px; display: block;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; color: var(--white-dim); transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.sidebar-item:hover { background: var(--white-faint); color: var(--white); }
+.sidebar-item.active { background: var(--blue-dim); color: var(--blue); }
+.sidebar-item .icon { font-size: 15px; width: 20px; text-align: center; }
+
+.sidebar-company {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 16px 20px; border-top: 1px solid var(--border);
+  background: var(--navy2);
+}
+.company-tag {
+  font-size: 12px; font-weight: 500; color: var(--white);
+  display: block; margin-bottom: 2px;
+}
+.company-sub { font-size: 11px; color: var(--white-dim); }
+
+.main-content {
+  margin-left: 240px; flex: 1; padding: 88px 40px 40px;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 36px;
+}
+.page-title {
+  font-family: var(--font-serif); font-size: 32px; font-weight: 300;
+}
+.page-title span { color: var(--blue); font-style: italic; }
+
+/* Dashboard cards */
+.cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.dash-card {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 24px;
+}
+.dash-card-label {
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--white-dim); margin-bottom: 12px;
+}
+.dash-card-value {
+  font-family: var(--font-serif); font-size: 36px;
+  font-weight: 700; line-height: 1; margin-bottom: 6px;
+}
+.dash-card-sub { font-size: 12px; color: var(--white-dim); }
+
+/* Compliance overview */
+.compliance-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  margin-bottom: 28px;
+}
+.compliance-card {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 24px;
+}
+.compliance-card h3 {
+  font-size: 13px; font-weight: 500; margin-bottom: 20px;
+  color: var(--white);
+}
+
+.obligation-list { display: flex; flex-direction: column; gap: 10px; }
+.obligation-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--white-faint);
+  border-radius: 6px; font-size: 12px;
+}
+.ob-name { color: var(--white-dim); }
+.ob-status {
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500;
+}
+.status-red { background: rgba(224,82,82,0.15); color: var(--red); }
+.status-amber { background: rgba(224,168,50,0.15); color: var(--amber); }
+.status-green { background: rgba(46,204,113,0.15); color: var(--green); }
+.status-gray { background: var(--white-faint); color: var(--white-dim); }
+
+/* Recent activity */
+.activity-list { display: flex; flex-direction: column; gap: 8px; }
+.activity-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; background: var(--white-faint); border-radius: 6px;
+}
+.activity-icon {
+  width: 32px; height: 32px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.activity-icon.blue { background: var(--blue-dim); }
+.activity-icon.gold { background: var(--gold-dim); }
+.activity-icon.green { background: rgba(46,204,113,0.1); }
+.activity-text { flex: 1; }
+.activity-title { font-size: 13px; margin-bottom: 2px; }
+.activity-time { font-size: 11px; color: var(--white-dim); }
+
+/* ===================== DOCUMENT REPOSITORY ===================== */
+#repository { background: var(--navy); display: none; }
+#repository.active { display: flex; }
+
+.repo-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.repo-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  margin-bottom: 28px;
+}
+.repo-card {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 20px; cursor: pointer;
+  transition: border-color 0.2s;
+}
+.repo-card:hover { border-color: var(--blue); }
+.repo-icon {
+  width: 40px; height: 40px; border-radius: 8px;
+  background: var(--blue-dim); display: flex; align-items: center;
+  justify-content: center; font-size: 18px; margin-bottom: 14px;
+}
+.repo-name { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.repo-meta { font-size: 11px; color: var(--white-dim); margin-bottom: 12px; }
+.repo-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.repo-tag {
+  padding: 2px 8px; border-radius: 3px; font-size: 10px;
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.tag-confirmed { background: rgba(46,204,113,0.1); color: var(--green); }
+.tag-pending { background: rgba(224,168,50,0.1); color: var(--amber); }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: 8px;
+  padding: 48px; text-align: center; cursor: pointer;
+  transition: border-color 0.2s; margin-bottom: 28px;
+}
+.upload-zone:hover { border-color: var(--blue); }
+.upload-icon { font-size: 32px; margin-bottom: 16px; color: var(--blue); }
+.upload-title { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+.upload-sub { font-size: 13px; color: var(--white-dim); }
+.upload-otp-note {
+  margin-top: 16px; padding: 12px 20px;
+  background: var(--gold-dim); border: 1px solid rgba(200,168,75,0.2);
+  border-radius: 6px; font-size: 12px; color: var(--gold);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+
+/* ===================== ADMIN DASHBOARD ===================== */
+#admin { background: var(--navy); display: none; }
+#admin.active { display: flex; }
+
+.admin-sidebar {
+  width: 240px; background: #060810; border-right: 1px solid var(--border);
+  min-height: 100vh; padding: 80px 0 24px; position: fixed; top: 0; bottom: 0; left: 0;
+}
+.admin-badge {
+  margin: 0 16px 24px; padding: 6px 12px;
+  background: rgba(224,82,82,0.1); border: 1px solid rgba(224,82,82,0.2);
+  border-radius: 4px; font-size: 10px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--red); text-align: center;
+}
+
+.admin-metric-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 28px;
+}
+
+.queue-table {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 28px;
+}
+.queue-table-header {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.queue-table-header h3 { font-size: 13px; font-weight: 500; }
+
+.table-row {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 120px;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  font-size: 12px; align-items: center;
+  transition: background 0.15s;
+}
+.table-row:hover { background: var(--white-faint); }
+.table-row:last-child { border-bottom: none; }
+.table-header {
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--white-dim); background: var(--white-faint);
+}
+.table-header:hover { background: var(--white-faint); }
+
+.action-btn {
+  padding: 5px 12px; border-radius: 4px; font-size: 11px;
+  cursor: pointer; border: none; font-family: var(--font-sans);
+  font-weight: 500;
+}
+.action-review { background: var(--blue); color: #fff; }
+.action-send { background: rgba(46,204,113,0.15); color: var(--green); border: 1px solid rgba(46,204,113,0.3); }
+
+/* ===================== REPORT PREVIEW ===================== */
+#report { background: #f4f0e8; color: #1a1a2e; display: none; }
+#report.active { display: block; }
+
+.report-page {
+  max-width: 800px; margin: 0 auto;
+  padding: 80px 40px 60px; background: #f4f0e8;
+}
+.report-cover {
+  text-align: center; padding: 60px 0 40px;
+  border-bottom: 2px solid #1a1a2e; margin-bottom: 40px;
+}
+.report-logo {
+  font-family: var(--font-serif); font-size: 28px;
+  color: #1a1a2e; margin-bottom: 40px;
+}
+.report-logo .lex { color: #2d9cdb; }
+
+.report-company {
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: #888; margin-bottom: 12px;
+}
+.report-title {
+  font-family: var(--font-serif); font-size: 48px; font-weight: 700;
+  color: #1a1a2e; margin-bottom: 8px; line-height: 1.1;
+}
+.report-subtitle {
+  font-family: var(--font-serif); font-size: 22px;
+  font-weight: 300; color: #444; margin-bottom: 32px; font-style: italic;
+}
+.report-meta {
+  display: flex; justify-content: center; gap: 32px;
+  font-size: 11px; letter-spacing: 1px; color: #888;
+}
+
+.grade-badge {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: #1a1a2e; margin: 32px auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.grade-letter {
+  font-family: var(--font-serif); font-size: 48px;
+  font-weight: 700; color: var(--amber); line-height: 1;
+}
+.grade-label { font-size: 9px; letter-spacing: 2px; color: #888; text-transform: uppercase; }
+
+.report-section { margin-bottom: 40px; }
+.report-section-title {
+  font-family: var(--font-serif); font-size: 22px;
+  font-weight: 600; color: #1a1a2e; margin-bottom: 16px;
+  padding-bottom: 8px; border-bottom: 1px solid #ddd;
+}
+
+.obligation-report-item {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px; margin-bottom: 8px; border-radius: 6px;
+}
+.obl-red { background: rgba(224,82,82,0.08); border-left: 3px solid var(--red); }
+.obl-amber { background: rgba(224,168,50,0.08); border-left: 3px solid var(--amber); }
+.obl-green { background: rgba(46,204,113,0.08); border-left: 3px solid var(--green); }
+
+.obl-indicator {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+}
+.ind-red { background: var(--red); }
+.ind-amber { background: var(--amber); }
+.ind-green { background: var(--green); }
+
+.obl-content { flex: 1; }
+.obl-name { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+.obl-finding { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 6px; }
+.obl-citation { font-size: 11px; color: #2d9cdb; text-decoration: underline; cursor: pointer; }
+
+.remediation-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.remediation-table th {
+  text-align: left; padding: 10px 12px; background: #1a1a2e;
+  color: #e8f4ff; font-weight: 500; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.remediation-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; color: #444; }
+.remediation-table tr:last-child td { border-bottom: none; }
+
+.priority-badge {
+  padding: 2px 8px; border-radius: 3px;
+  font-size: 10px; font-weight: 600;
+}
+.p1 { background: rgba(224,82,82,0.1); color: var(--red); }
+.p2 { background: rgba(224,168,50,0.1); color: var(--amber); }
+.p3 { background: rgba(46,204,113,0.1); color: var(--green); }
+
+.report-stamp {
+  margin-top: 60px; padding: 24px;
+  border: 1px solid #ccc; border-radius: 6px;
+  background: #fff; font-size: 11px; color: #888; text-align: center; line-height: 2;
+}
+.report-stamp strong { color: #1a1a2e; }
+
+.download-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: #1a1a2e; padding: 12px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 100;
+}
+.download-bar-logo {
+  font-family: var(--font-serif); font-size: 20px; color: var(--white);
+}
+.download-bar-logo .lex { color: var(--blue); }
+.download-bar-actions { display: flex; gap: 12px; }
+
+</style>
+</head>
+<body>
+
+<!-- PROTOTYPE NAVIGATION -->
+<div class="proto-nav">
+  <span style="font-size:10px; color: var(--white-dim); letter-spacing:1px; margin-right:4px">SCREENS:</span>
+  <button class="proto-btn active" onclick="showScreen('landing', this)">🏠 Landing</button>
+  <button class="proto-btn" onclick="showScreen('demo', this)">⚡ Demo Tool</button>
+  <button class="proto-btn" onclick="showScreen('dashboard', this)">📊 Dashboard</button>
+  <button class="proto-btn" onclick="showScreen('repository', this)">📁 Documents</button>
+  <button class="proto-btn" onclick="showScreen('admin', this)">🔐 Admin</button>
+  <button class="proto-btn" onclick="showScreen('report', this)">📄 Report</button>
+</div>
+
+<!-- ==================== LANDING PAGE ==================== -->
+<div id="landing" class="screen active">
+  <nav class="navbar">
+    <a class="nav-logo" onclick="showScreen('landing', document.querySelector('.proto-btn'))"><span class="lex">Lex</span>Sutra</a>
+    <div class="nav-links">
+      <a>How It Works</a>
+      <a>EU AI Act</a>
+      <a>Pricing</a>
+      <a>About</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn btn-ghost" onclick="showScreen('dashboard', document.querySelectorAll('.proto-btn')[2])">Log In</button>
+      <button class="btn btn-primary" onclick="showScreen('demo', document.querySelectorAll('.proto-btn')[1])">Free Snapshot →</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-badge"><span class="dot"></span>EU AI Act deadline: August 2026</div>
+    <h1>Your AI system,<br><em>diagnosed.</em><br><strong>Before regulators do it.</strong></h1>
+    <p class="hero-sub">LexSutra delivers structured compliance diagnostics for AI companies — professionally graded reports with legal citations, remediation roadmaps, and a human expert review on every assessment.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="showScreen('demo', document.querySelectorAll('.proto-btn')[1])">Get Your Free Snapshot →</button>
+      <button class="btn btn-ghost">See Sample Report</button>
+    </div>
+    <div class="hero-proof">⚠️ <span>August 2026</span> — High-risk AI systems must be fully compliant. Are you ready?</div>
+  </div>
+
+  <div style="max-width:1200px; margin: 0 auto; padding: 0 48px 60px;">
+    <div class="stats-row">
+      <div class="stat"><div class="stat-num">€30M</div><div class="stat-label">Maximum fine for non-compliance</div></div>
+      <div class="stat"><div class="stat-num">8</div><div class="stat-label">Mandatory obligations per AI system</div></div>
+      <div class="stat"><div class="stat-num">6mo</div><div class="stat-label">Until August 2026 deadline</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">How LexSutra Works</div>
+    <div class="section-title">Four steps from <em>unknown risk</em> to full clarity</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Public Footprint Scan</div>
+        <div class="step-desc">We analyse your website, T&Cs, privacy policy, and public AI claims to pre-classify your risk level before we speak.</div>
+        <span class="step-tag tag-auto">Automated</span>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Document Upload</div>
+        <div class="step-desc">You securely upload internal documentation — technical specs, data governance policies, risk assessments. OTP-confirmed and encrypted.</div>
+        <span class="step-tag tag-auto">Self-serve</span>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Diagnostic Assessment</div>
+        <div class="step-desc">Our platform maps your AI system against all 8 EU AI Act obligations, generating a structured draft with legal citations.</div>
+        <span class="step-tag tag-auto">80% Automated</span>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-title">Expert Review & Report</div>
+        <div class="step-desc">A human expert reviews every diagnostic before delivery. Your graded PDF report arrives within 48-72 hours.</div>
+        <span class="step-tag tag-human">Human Reviewed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="usp-banner">
+    <div class="usp-icon">👁️</div>
+    <div class="usp-text">
+      <h3>Human-in-the-Loop by Design</h3>
+      <p>Unlike fully automated compliance tools, every LexSutra diagnostic includes a human expert review before delivery. The EU AI Act mandates human oversight in high-risk AI decisions. We practice what we preach. The 48-hour turnaround is a feature — it signals quality over automation.</p>
+    </div>
+  </div>
+
+  <div style="height: 100px;"></div>
+</div>
+
+<!-- ==================== DEMO TOOL ==================== -->
+<div id="demo" class="screen">
+  <nav class="navbar">
+    <a class="nav-logo"><span class="lex">Lex</span>Sutra</a>
+    <div class="nav-links">
+      <a onclick="showScreen('landing', document.querySelectorAll('.proto-btn')[0])">← Back to website</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn btn-ghost" onclick="showScreen('dashboard', document.querySelectorAll('.proto-btn')[2])">Log In</button>
+    </div>
+  </nav>
+
+  <div class="demo-wrap">
+    <div class="demo-header">
+      <div class="section-label">Free AI Compliance Snapshot</div>
+      <h2>Find out where your AI system stands — <em>today</em></h2>
+      <p>Enter your company details below. Our system will scan your public information and generate a personalised 5-insight compliance snapshot, reviewed by a human expert and delivered to your inbox within 24 hours.</p>
+    </div>
+
+    <div class="demo-card">
+      <div class="form-group">
+        <label class="form-label">Official Company Email *</label>
+        <input type="email" class="form-input" placeholder="you@yourcompany.com" />
+        <div class="form-note"><span class="icon">ℹ</span> Personal email addresses (Gmail, Outlook etc.) are not accepted</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company Website *</label>
+        <input type="url" class="form-input" placeholder="https://yourcompany.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company Name *</label>
+        <input type="text" class="form-input" placeholder="Your Company B.V." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Primary AI Use Case</label>
+        <input type="text" class="form-input" placeholder="e.g. CV screening, credit scoring, customer service..." />
+      </div>
+
+      <div class="form-check">
+        <input type="checkbox" id="consent" />
+        <label for="consent">I consent to LexSutra storing my company information and using it to generate a compliance snapshot. I understand this is not legal advice. I agree to the <span style="color:var(--blue); cursor:pointer">Privacy Policy</span> and <span style="color:var(--blue); cursor:pointer">Terms of Service</span>.</label>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="showScreen('dashboard', document.querySelectorAll('.proto-btn')[2])">Generate My Free Snapshot →</button>
+
+      <div class="demo-what" style="margin-top:24px">
+        <h4>What you'll receive</h4>
+        <ul>
+          <li>EU AI Act risk tier classification (Prohibited / High-Risk / Transparency / Minimal)</li>
+          <li>5 specific compliance findings from your public information</li>
+          <li>Your top 3 most urgent obligations</li>
+          <li>Estimated compliance gap severity</li>
+          <li>Invitation to book a full diagnostic</li>
+        </ul>
+      </div>
+
+      <div style="text-align:center; margin-top:20px; font-size:12px; color:var(--white-dim)">
+        🔒 Reviewed by a human expert before delivery &nbsp;·&nbsp; Delivered within 24 hours &nbsp;·&nbsp; No spam, ever
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CLIENT DASHBOARD ==================== -->
+<div id="dashboard" class="screen" style="display:none">
+  <nav class="navbar" style="left:240px">
+    <div style="font-size:13px; color:var(--white-dim)">Welcome back, <strong style="color:var(--white)">Arjun</strong></div>
+    <div style="display:flex; gap:12px; align-items:center">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+      <span style="font-size:12px; color:var(--white-dim)">TalentAI B.V.</span>
+    </div>
+  </nav>
+
+  <div class="sidebar">
+    <div class="sidebar-logo"><span class="lex">Lex</span>Sutra</div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Overview</span>
+      <div class="sidebar-item active"><span class="icon">📊</span>Dashboard</div>
+      <div class="sidebar-item" onclick="showScreen('repository', document.querySelectorAll('.proto-btn')[3])"><span class="icon">📁</span>Documents</div>
+      <div class="sidebar-item"><span class="icon">🔍</span>Diagnostics</div>
+      <div class="sidebar-item" onclick="showScreen('report', document.querySelectorAll('.proto-btn')[5])"><span class="icon">📄</span>Reports</div>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Account</span>
+      <div class="sidebar-item"><span class="icon">🏢</span>Company Profile</div>
+      <div class="sidebar-item"><span class="icon">👥</span>Users</div>
+      <div class="sidebar-item"><span class="icon">⚙️</span>Settings</div>
+    </div>
+    <div class="sidebar-company">
+      <span class="company-tag">TalentAI B.V.</span>
+      <span class="company-sub">HR Tech · Amsterdam</span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="page-header">
+      <div class="page-title">Compliance <em>Overview</em></div>
+      <button class="btn btn-primary" onclick="showScreen('demo', document.querySelectorAll('.proto-btn')[1])">+ Request Diagnostic</button>
+    </div>
+
+    <div class="cards-row">
+      <div class="dash-card">
+        <div class="dash-card-label">Overall Score</div>
+        <div class="dash-card-value" style="color:var(--amber)">C+</div>
+        <div class="dash-card-sub">Needs improvement — 4 critical gaps</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Last Assessment</div>
+        <div class="dash-card-value" style="font-size:24px; color:var(--white)">14 Feb 2026</div>
+        <div class="dash-card-sub">Policy version: EU AI Act v1.0</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Days to Deadline</div>
+        <div class="dash-card-value" style="color:var(--red)">183</div>
+        <div class="dash-card-sub">August 2026 high-risk deadline</div>
+      </div>
+    </div>
+
+    <div class="compliance-grid">
+      <div class="compliance-card">
+        <h3>Obligation Status — TalentAI Screening System</h3>
+        <div class="obligation-list">
+          <div class="obligation-item"><span class="ob-name">Risk Management System</span><span class="ob-status status-red">Critical</span></div>
+          <div class="obligation-item"><span class="ob-name">Data Governance</span><span class="ob-status status-amber">Partial</span></div>
+          <div class="obligation-item"><span class="ob-name">Technical Documentation</span><span class="ob-status status-red">Missing</span></div>
+          <div class="obligation-item"><span class="ob-name">Logging & Records</span><span class="ob-status status-amber">Partial</span></div>
+          <div class="obligation-item"><span class="ob-name">Transparency</span><span class="ob-status status-green">Compliant</span></div>
+          <div class="obligation-item"><span class="ob-name">Human Oversight</span><span class="ob-status status-red">Critical</span></div>
+          <div class="obligation-item"><span class="ob-name">Accuracy & Robustness</span><span class="ob-status status-amber">Partial</span></div>
+          <div class="obligation-item"><span class="ob-name">Conformity Assessment</span><span class="ob-status status-gray">Not Started</span></div>
+        </div>
+      </div>
+
+      <div class="compliance-card">
+        <h3>Recent Activity</h3>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-icon blue">📄</div>
+            <div class="activity-text">
+              <div class="activity-title">Diagnostic Report delivered</div>
+              <div class="activity-time">14 Feb 2026 · Reviewed by LexSutra</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon gold">📁</div>
+            <div class="activity-text">
+              <div class="activity-title">Technical doc uploaded & confirmed</div>
+              <div class="activity-time">10 Feb 2026 · OTP verified</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon blue">🔍</div>
+            <div class="activity-text">
+              <div class="activity-title">Public footprint scan completed</div>
+              <div class="activity-time">8 Feb 2026 · Automated</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon green">✅</div>
+            <div class="activity-text">
+              <div class="activity-title">Account created & profile completed</div>
+              <div class="activity-time">7 Feb 2026</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px; padding:16px; background:rgba(200,168,75,0.08); border:1px solid rgba(200,168,75,0.2); border-radius:6px">
+          <div style="font-size:12px; color:var(--gold); font-weight:500; margin-bottom:6px">⚠️ Policy Update Available</div>
+          <div style="font-size:12px; color:var(--white-dim); line-height:1.5">EU AI Act guidelines updated January 2026. Your report may need refreshing.</div>
+          <button class="btn btn-gold" style="margin-top:12px; padding:8px 16px; font-size:12px">Request Refresh →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DOCUMENT REPOSITORY ==================== -->
+<div id="repository" class="screen" style="display:none">
+  <nav class="navbar" style="left:240px">
+    <div style="font-size:13px; color:var(--white-dim)">Document Repository</div>
+    <div style="font-size:12px; color:var(--white-dim)">TalentAI B.V.</div>
+  </nav>
+
+  <div class="sidebar">
+    <div class="sidebar-logo"><span class="lex">Lex</span>Sutra</div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Overview</span>
+      <div class="sidebar-item" onclick="showScreen('dashboard', document.querySelectorAll('.proto-btn')[2])"><span class="icon">📊</span>Dashboard</div>
+      <div class="sidebar-item active"><span class="icon">📁</span>Documents</div>
+      <div class="sidebar-item"><span class="icon">🔍</span>Diagnostics</div>
+      <div class="sidebar-item" onclick="showScreen('report', document.querySelectorAll('.proto-btn')[5])"><span class="icon">📄</span>Reports</div>
+    </div>
+    <div class="sidebar-company">
+      <span class="company-tag">TalentAI B.V.</span>
+      <span class="company-sub">HR Tech · Amsterdam</span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="page-header">
+      <div class="page-title">Document <em>Repository</em></div>
+      <button class="btn btn-primary">+ Upload Document</button>
+    </div>
+
+    <div class="upload-zone">
+      <div class="upload-icon">📎</div>
+      <div class="upload-title">Drop files here or click to browse</div>
+      <div class="upload-sub">PDF, DOCX, XLSX supported · Max 25MB per file</div>
+      <div class="upload-otp-note">🔐 OTP confirmation required — confirms authenticity and your consent to store and use for diagnostics</div>
+    </div>
+
+    <div style="font-size:13px; color:var(--white-dim); margin-bottom:16px">4 documents stored · All encrypted · Retained for 18 months minimum</div>
+
+    <div class="repo-grid">
+      <div class="repo-card">
+        <div class="repo-icon">📋</div>
+        <div class="repo-name">Technical System Documentation</div>
+        <div class="repo-meta">Uploaded 10 Feb 2026 · 2.4 MB · PDF</div>
+        <div class="repo-tags">
+          <span class="repo-tag tag-confirmed">OTP Confirmed</span>
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-icon">🔒</div>
+        <div class="repo-name">Data Governance Policy v2.1</div>
+        <div class="repo-meta">Uploaded 9 Feb 2026 · 1.1 MB · DOCX</div>
+        <div class="repo-tags">
+          <span class="repo-tag tag-confirmed">OTP Confirmed</span>
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-icon">⚠️</div>
+        <div class="repo-name">Risk Assessment Draft</div>
+        <div class="repo-meta">Uploaded 8 Feb 2026 · 890 KB · PDF</div>
+        <div class="repo-tags">
+          <span class="repo-tag tag-confirmed">OTP Confirmed</span>
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-icon">📊</div>
+        <div class="repo-name">Training Dataset Description</div>
+        <div class="repo-meta">Uploaded 7 Feb 2026 · 3.2 MB · XLSX</div>
+        <div class="repo-tags">
+          <span class="repo-tag tag-pending">Pending Confirmation</span>
+        </div>
+      </div>
+      <div class="repo-card" style="border-style:dashed; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:140px">
+        <div style="font-size:28px; color:var(--border)">+</div>
+        <div style="font-size:13px; color:var(--white-dim)">Add Document</div>
+      </div>
+    </div>
+
+    <div style="background:var(--navy2); border:1px solid var(--border); border-radius:8px; padding:20px; font-size:12px; color:var(--white-dim); line-height:1.8">
+      <strong style="color:var(--white); display:block; margin-bottom:8px">🔐 Data Security & Retention</strong>
+      All documents are encrypted at rest and in transit. Stored on EU-region servers (GDPR compliant). 
+      OTP confirmation creates a legally defensible consent and authenticity trail for each upload. 
+      Documents retained for a minimum of 18 months. You may request deletion after this period.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN DASHBOARD ==================== -->
+<div id="admin" class="screen" style="display:none">
+  <nav class="navbar" style="left:240px; background:#060810; border-bottom-color: rgba(224,82,82,0.2)">
+    <div style="font-size:13px; color:var(--red); font-weight:500; letter-spacing:1px">⚡ ADMIN MODE</div>
+    <div style="font-size:12px; color:var(--white-dim)">LexSutra Internal · Founder</div>
+  </nav>
+
+  <div class="admin-sidebar">
+    <div class="sidebar-logo" style="padding:0 24px 16px"><span class="lex">Lex</span>Sutra</div>
+    <div class="admin-badge">Admin Access</div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Operations</span>
+      <div class="sidebar-item active"><span class="icon">📊</span>Overview</div>
+      <div class="sidebar-item"><span class="icon">⏳</span>Demo Queue</div>
+      <div class="sidebar-item"><span class="icon">🔍</span>Diagnostic Queue</div>
+      <div class="sidebar-item"><span class="icon">👥</span>All Clients</div>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-label">Platform</span>
+      <div class="sidebar-item"><span class="icon">📜</span>Policy Versions</div>
+      <div class="sidebar-item"><span class="icon">📧</span>Marketing DB</div>
+      <div class="sidebar-item"><span class="icon">👁️</span>Activity Logs</div>
+      <div class="sidebar-item"><span class="icon">💰</span>Revenue</div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="page-header">
+      <div class="page-title">Admin <em>Overview</em></div>
+      <div style="font-size:12px; color:var(--white-dim)">Thu 26 Feb 2026 · All systems operational</div>
+    </div>
+
+    <div class="admin-metric-row">
+      <div class="dash-card">
+        <div class="dash-card-label">Demo Queue</div>
+        <div class="dash-card-value" style="color:var(--amber)">7</div>
+        <div class="dash-card-sub">Awaiting review</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Active Diagnostics</div>
+        <div class="dash-card-value" style="color:var(--blue)">3</div>
+        <div class="dash-card-sub">In progress</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Total Clients</div>
+        <div class="dash-card-value" style="color:var(--green)">12</div>
+        <div class="dash-card-sub">2 added this week</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">Revenue (Feb)</div>
+        <div class="dash-card-value" style="color:var(--gold)">€8.4k</div>
+        <div class="dash-card-sub">4 diagnostics delivered</div>
+      </div>
+    </div>
+
+    <div class="queue-table">
+      <div class="queue-table-header">
+        <h3>Demo Snapshot Queue — Awaiting Review</h3>
+        <span style="font-size:11px; color:var(--white-dim)">7 pending · Target: review within 12hrs</span>
+      </div>
+      <div class="table-row table-header">
+        <div>Company</div>
+        <div>Risk Indicator</div>
+        <div>Submitted</div>
+        <div>Scan Status</div>
+        <div>Action</div>
+      </div>
+      <div class="table-row">
+        <div><div style="font-weight:500">HireFlow AI B.V.</div><div style="font-size:11px;color:var(--white-dim)">hireflow.ai · HR Tech</div></div>
+        <div><span class="ob-status status-red" style="display:inline-block">Likely High-Risk</span></div>
+        <div style="color:var(--white-dim)">2h ago</div>
+        <div><span class="ob-status status-green" style="display:inline-block">Complete</span></div>
+        <div><button class="action-btn action-review">Review →</button></div>
+      </div>
+      <div class="table-row">
+        <div><div style="font-weight:500">CreditSense Ltd</div><div style="font-size:11px;color:var(--white-dim)">creditsense.io · Fintech</div></div>
+        <div><span class="ob-status status-red" style="display:inline-block">Likely High-Risk</span></div>
+        <div style="color:var(--white-dim)">5h ago</div>
+        <div><span class="ob-status status-green" style="display:inline-block">Complete</span></div>
+        <div><button class="action-btn action-review">Review →</button></div>
+      </div>
+      <div class="table-row">
+        <div><div style="font-weight:500">EduPath GmbH</div><div style="font-size:11px;color:var(--white-dim)">edupath.de · EdTech</div></div>
+        <div><span class="ob-status status-amber" style="display:inline-block">Needs Assessment</span></div>
+        <div style="color:var(--white-dim)">8h ago</div>
+        <div><span class="ob-status status-green" style="display:inline-block">Complete</span></div>
+        <div><button class="action-btn action-review">Review →</button></div>
+      </div>
+    </div>
+
+    <div class="queue-table">
+      <div class="queue-table-header">
+        <h3>Diagnostic Queue — In Progress</h3>
+        <span style="font-size:11px; color:var(--white-dim)">3 active · Target: 48-72hrs delivery</span>
+      </div>
+      <div class="table-row table-header">
+        <div>Client</div>
+        <div>Tier</div>
+        <div>Requested</div>
+        <div>AI Progress</div>
+        <div>Action</div>
+      </div>
+      <div class="table-row">
+        <div><div style="font-weight:500">TalentAI B.V.</div><div style="font-size:11px;color:var(--white-dim)">Full Diagnostic + Strategy</div></div>
+        <div><span style="color:var(--gold)">€3,500</span></div>
+        <div style="color:var(--white-dim)">Yesterday</div>
+        <div>
+          <div style="background:var(--navy3); border-radius:20px; height:6px; width:100px">
+            <div style="background:var(--blue); height:6px; border-radius:20px; width:80%"></div>
+          </div>
+          <span style="font-size:10px; color:var(--white-dim)">80% — Awaiting review</span>
+        </div>
+        <div><button class="action-btn action-review" onclick="showScreen('report', document.querySelectorAll('.proto-btn')[5])">Review Draft →</button></div>
+      </div>
+      <div class="table-row">
+        <div><div style="font-weight:500">FinScore AI</div><div style="font-size:11px;color:var(--white-dim)">Starter Diagnostic</div></div>
+        <div><span style="color:var(--gold)">€2,200</span></div>
+        <div style="color:var(--white-dim)">2 days ago</div>
+        <div>
+          <div style="background:var(--navy3); border-radius:20px; height:6px; width:100px">
+            <div style="background:var(--blue); height:6px; border-radius:20px; width:40%"></div>
+          </div>
+          <span style="font-size:10px; color:var(--white-dim)">40% — Processing docs</span>
+        </div>
+        <div><button class="action-btn action-send" disabled style="opacity:0.4; cursor:not-allowed">In Progress</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== SAMPLE REPORT ==================== -->
+<div id="report" class="screen" style="display:none; background:#f4f0e8">
+  <div class="download-bar">
+    <div class="download-bar-logo"><span class="lex">Lex</span>Sutra</div>
+    <div style="font-size:12px; color:var(--white-dim)">TalentAI B.V. — Diagnostic Report · Feb 14, 2026</div>
+    <div class="download-bar-actions">
+      <button class="btn btn-ghost" style="font-size:12px" onclick="showScreen('dashboard', document.querySelectorAll('.proto-btn')[2])">← Back to Portal</button>
+      <button class="btn btn-primary" style="font-size:12px">⬇ Download PDF</button>
+    </div>
+  </div>
+
+  <div class="report-page">
+    <div class="report-cover">
+      <div class="report-logo"><span class="lex">Lex</span>Sutra</div>
+      <div class="report-company">Prepared for</div>
+      <div class="report-title">TalentAI B.V.</div>
+      <div class="report-subtitle">EU AI Act Compliance Diagnostic Report</div>
+      <div class="grade-badge">
+        <div class="grade-letter">C+</div>
+        <div class="grade-label">Score</div>
+      </div>
+      <div class="report-meta">
+        <span>📅 14 February 2026</span>
+        <span>📜 EU AI Act v1.0 (Reg. 2024/1689)</span>
+        <span>🔖 LSR-2026-0042</span>
+        <span>👁️ Reviewed by LexSutra</span>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Executive Summary</div>
+      <p style="font-size:14px; line-height:1.8; color:#444; margin-bottom:16px">
+        TalentAI B.V. operates an AI-powered candidate screening and ranking system. Based on our assessment, this system is classified as a <strong>High-Risk AI System under EU AI Act Annex III, Section 4(a)</strong> — employment, workers management and access to self-employment.
+      </p>
+      <p style="font-size:14px; line-height:1.8; color:#444">
+        Of the 8 mandatory obligations, <strong style="color:var(--red)">2 are critical gaps</strong>, <strong style="color:var(--amber)">3 are partially addressed</strong>, <strong style="color:var(--green)">1 is compliant</strong>, and <strong>2 have not been started</strong>. Immediate action is required on Risk Management and Human Oversight obligations before the August 2026 deadline.
+      </p>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Obligation Assessment</div>
+      <div class="obligation-report-item obl-red">
+        <div class="obl-indicator ind-red"></div>
+        <div class="obl-content">
+          <div class="obl-name">1. Risk Management System — CRITICAL GAP</div>
+          <div class="obl-finding">No documented ongoing risk management process identified. EU AI Act Article 9 requires a continuous risk management system covering the entire lifecycle of the AI system. No evidence of this in uploaded documentation or public information.</div>
+          <div class="obl-citation">→ EU AI Act Article 9 | <span>EUR-Lex Regulation 2024/1689</span></div>
+        </div>
+      </div>
+      <div class="obligation-report-item obl-amber">
+        <div class="obl-indicator ind-amber"></div>
+        <div class="obl-content">
+          <div class="obl-name">2. Data Governance — PARTIAL</div>
+          <div class="obl-finding">Data governance policy exists (v2.1 uploaded) but does not address training data representativeness or bias testing as required by Article 10. Dataset documentation is incomplete.</div>
+          <div class="obl-citation">→ EU AI Act Article 10 | <span>EUR-Lex Regulation 2024/1689</span></div>
+        </div>
+      </div>
+      <div class="obligation-report-item obl-red">
+        <div class="obl-indicator ind-red"></div>
+        <div class="obl-content">
+          <div class="obl-name">6. Human Oversight — CRITICAL GAP</div>
+          <div class="obl-finding">No human oversight mechanism documented. Article 14 requires that high-risk AI systems enable human monitors to understand, intervene, and override system decisions. Current product flow shows fully automated ranking with no override capability.</div>
+          <div class="obl-citation">→ EU AI Act Article 14 | <span>EUR-Lex Regulation 2024/1689</span></div>
+        </div>
+      </div>
+      <div class="obligation-report-item obl-green">
+        <div class="obl-indicator ind-green"></div>
+        <div class="obl-content">
+          <div class="obl-name">5. Transparency — COMPLIANT</div>
+          <div class="obl-finding">Website and product clearly discloses AI-powered candidate screening to users. Instructions for use provided. This obligation is met.</div>
+          <div class="obl-citation">→ EU AI Act Article 13 | <span>EUR-Lex Regulation 2024/1689</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Prioritised Remediation Roadmap</div>
+      <table class="remediation-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Action Required</th>
+            <th>Obligation</th>
+            <th>Effort</th>
+            <th>Deadline</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="priority-badge p1">P1</span></td>
+            <td>Implement human override mechanism in product</td>
+            <td>Human Oversight</td>
+            <td>2-3 weeks dev</td>
+            <td>ASAP</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p1">P1</span></td>
+            <td>Create and document Risk Management System</td>
+            <td>Risk Management</td>
+            <td>1-2 weeks</td>
+            <td>April 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p2">P2</span></td>
+            <td>Complete training data bias assessment</td>
+            <td>Data Governance</td>
+            <td>2-4 weeks</td>
+            <td>May 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p2">P2</span></td>
+            <td>Produce Annex IV technical documentation</td>
+            <td>Technical Documentation</td>
+            <td>1 week</td>
+            <td>May 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p3">P3</span></td>
+            <td>Implement automated activity logging</td>
+            <td>Logging & Records</td>
+            <td>1 week dev</td>
+            <td>June 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p3">P3</span></td>
+            <td>Complete conformity self-assessment</td>
+            <td>Conformity Assessment</td>
+            <td>2 weeks</td>
+            <td>July 2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="report-stamp">
+      <strong>LexSutra Diagnostic Report · LSR-2026-0042</strong><br>
+      Assessed against: Regulation (EU) 2024/1689 (EU AI Act) · Version 1.0 · Active from August 2024<br>
+      Assessment date: 14 February 2026 · Reviewed and approved by: LexSutra Expert Review<br>
+      <br>
+      <em>This report is produced by LexSutra as a compliance infrastructure tool and does not constitute legal advice. LexSutra is not a law firm. The findings in this report reflect the methodology and regulatory interpretation current at the date of assessment. The client is responsible for their own regulatory compliance. LexSutra's liability is limited to the fee paid for this diagnostic.</em>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const target = document.getElementById(id);
+  target.style.display = (id === 'dashboard' || id === 'repository' || id === 'admin') ? 'flex' : 'block';
+  target.classList.add('active');
+
+  document.querySelectorAll('.proto-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>

@@ -103,18 +103,29 @@ export async function submitForReview(
     const { user, adminClient, diagnostic } = await getClientUser(diagnosticId);
     userId = user.id;
 
-    if (diagnostic.status !== "pending") {
-      return { error: "This diagnostic has already been submitted." };
+    if (diagnostic.status === "delivered") {
+      return { error: "This diagnostic has been delivered and cannot be re-submitted." };
     }
 
-    const { error } = await adminClient
-      .from("diagnostics")
-      .update({ status: "in_review" })
-      .eq("id", diagnosticId);
+    // Fetch all current responses to snapshot
+    const [{ error: updateError }, { data: allResponses }, { count: existingSnapshots }] = await Promise.all([
+      adminClient
+        .from("diagnostics")
+        .update({ status: "in_review" })
+        .eq("id", diagnosticId),
+      adminClient
+        .from("diagnostic_responses")
+        .select("question_id, response_text")
+        .eq("diagnostic_id", diagnosticId),
+      adminClient
+        .from("diagnostic_submission_snapshots")
+        .select("id", { count: "exact", head: true })
+        .eq("diagnostic_id", diagnosticId),
+    ]);
 
-    if (error) {
+    if (updateError) {
       await logError({
-        error,
+        error: updateError,
         source: "portal/diagnostics/[id]/actions",
         action: "submitForReview",
         userId,
@@ -123,13 +134,29 @@ export async function submitForReview(
       return { error: "Failed to submit. Please try again." };
     }
 
+    // Build answers map and insert snapshot
+    const answers: Record<string, string> = {};
+    for (const r of allResponses ?? []) {
+      const row = r as { question_id: string; response_text: string | null };
+      if (row.response_text) answers[row.question_id] = row.response_text;
+    }
+    const submissionNumber = (existingSnapshots ?? 0) + 1;
+
+    await adminClient.from("diagnostic_submission_snapshots").insert({
+      diagnostic_id:     diagnosticId,
+      submitted_by:      user.id,
+      submission_number: submissionNumber,
+      answers,
+      answer_count:      Object.keys(answers).length,
+    });
+
     // Activity log
     await adminClient.from("activity_log").insert({
       actor_id:    user.id,
       action:      "submit_questionnaire",
       entity_type: "diagnostics",
       entity_id:   diagnosticId,
-      metadata:    { diagnostic_id: diagnosticId },
+      metadata:    { diagnostic_id: diagnosticId, submission_number: submissionNumber },
     });
 
     // Notify admin via Resend
@@ -149,15 +176,16 @@ export async function submitForReview(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <notifications@lexsutra.nl>",
+          from: "LexSutra <notifications@lexsutra.eu>",
           to:   ["kunal.lexutra@gmail.com"],
-          subject: `Questionnaire submitted — ${company?.name ?? "Client"}`,
+          subject: `Questionnaire ${submissionNumber > 1 ? `re-submitted (v${submissionNumber})` : "submitted"} — ${company?.name ?? "Client"}`,
           html: `
-            <h2>Questionnaire Submitted for Review</h2>
+            <h2>Questionnaire ${submissionNumber > 1 ? `Re-submitted (Version ${submissionNumber})` : "Submitted for Review"}</h2>
             <p><strong>Company:</strong> ${company?.name ?? "—"}</p>
             <p><strong>Diagnostic ID:</strong> ${diagnosticId}</p>
+            <p><strong>Submission:</strong> Version ${submissionNumber}${submissionNumber > 1 ? " — client has updated their answers" : ""}</p>
             <p>The client has completed and submitted their questionnaire. Please review in the admin panel.</p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.nl"}/admin/diagnostics/${diagnosticId}"
+            <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.eu"}/admin/diagnostics/${diagnosticId}"
                style="display:inline-block;background:#2d9cdb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
               Review in Admin →
             </a>

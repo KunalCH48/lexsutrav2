@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <hello@lexsutra.nl>",
+          from: "LexSutra <hello@lexsutra.eu>",
           to:   [NOTIFY_EMAIL],
           subject: `New demo request — ${company_name}`,
           html: `
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
               <tr><td><strong>Website</strong></td><td><a href="${website_url}">${website_url}</a></td></tr>
             </table>
             <p style="color:#888;font-size:12px;margin-top:24px;">
-              Submitted via lexsutra.nl
+              Submitted via lexsutra.eu
             </p>
           `,
         }),
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       metadata: { company_name, email },
     });
     return NextResponse.json(
-      { error: "Something went wrong. Please try again or email us at hello@lexsutra.nl." },
+      { error: "Something went wrong. Please try again or email us at hello@lexsutra.eu." },
       { status: 500 }
     );
   }

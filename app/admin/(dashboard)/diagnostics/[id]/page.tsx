@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import FindingsEditor from "@/components/admin/FindingsEditor";
 import { GenerateFindingsButton } from "@/components/admin/GenerateFindingsButton";
+import SubmissionHistory from "@/components/admin/SubmissionHistory";
 
 export const metadata = { title: "Review Diagnostic — LexSutra Admin" };
 
@@ -23,7 +24,7 @@ export default async function DiagnosticReviewPage({
   const { id } = await params;
   const adminClient = createSupabaseAdminClient();
 
-  const [diagnosticRes, obligationsRes, findingsRes, responsesRes] = await Promise.all([
+  const [diagnosticRes, obligationsRes, findingsRes, responsesRes, questionsRes, snapshotsRes] = await Promise.all([
     adminClient
       .from("diagnostics")
       .select(`
@@ -51,6 +52,17 @@ export default async function DiagnosticReviewPage({
       .from("diagnostic_responses")
       .select("id", { count: "exact", head: true })
       .eq("diagnostic_id", id),
+
+    adminClient
+      .from("diagnostic_questions")
+      .select("id, obligation_id, order_index, question_text")
+      .order("order_index"),
+
+    adminClient
+      .from("diagnostic_submission_snapshots")
+      .select("id, submission_number, submitted_at, answer_count, answers")
+      .eq("diagnostic_id", id)
+      .order("submission_number"),
   ]);
 
   if (diagnosticRes.error || !diagnosticRes.data) notFound();
@@ -59,6 +71,8 @@ export default async function DiagnosticReviewPage({
   const obligations  = obligationsRes.data ?? [];
   const findings     = findingsRes.data ?? [];
   const responseCount = responsesRes.count ?? 0;
+  const questions    = questionsRes.data ?? [];
+  const snapshots    = snapshotsRes.data ?? [];
 
   const sys = Array.isArray(diagnostic.ai_systems)
     ? diagnostic.ai_systems[0]
@@ -69,6 +83,18 @@ export default async function DiagnosticReviewPage({
   const policyVersion = Array.isArray(diagnostic.policy_versions)
     ? diagnostic.policy_versions[0]
     : diagnostic.policy_versions;
+
+  // Build obligations-with-questions for SubmissionHistory
+  const obligationsWithQuestions = obligations.map((ob: { id: string; name: string }) => ({
+    id:        ob.id,
+    name:      ob.name,
+    questions: questions
+      .filter((q: { obligation_id: string }) => q.obligation_id === ob.id)
+      .map((q: { id: string; question_text: string }) => ({
+        id:            q.id,
+        question_text: q.question_text,
+      })),
+  }));
 
   // Calculate response completion %
   const totalQuestions = obligations.length * 10; // rough estimate
@@ -129,7 +155,19 @@ export default async function DiagnosticReviewPage({
         </div>
       )}
 
+      {/* Submission history */}
+      <div className="mt-10 mb-2">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ fontFamily: "var(--font-serif, serif)", color: "#e8f4ff" }}
+        >
+          Submission History
+        </h3>
+        <SubmissionHistory snapshots={snapshots} obligations={obligationsWithQuestions} />
+      </div>
+
       {/* Findings editor */}
+      <div className="mt-10">
       <FindingsEditor
         diagnosticId={id}
         diagnosticStatus={diagnostic.status}
@@ -161,6 +199,7 @@ export default async function DiagnosticReviewPage({
           };
         })}
       />
+      </div>
     </div>
   );
 }

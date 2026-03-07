@@ -970,8 +970,12 @@ function DemoCTASection() {
         <p className="text-center text-xs mt-6" style={{ color: "#3d4f60" }}>
           LexSutra provides compliance infrastructure tools, not legal advice.
           By submitting you agree to our{" "}
-          <a href="#" className="underline hover:opacity-80">
-            privacy policy
+          <a href="/privacy" className="underline hover:opacity-80">
+            Privacy Policy
+          </a>
+          {" "}and{" "}
+          <a href="/terms" className="underline hover:opacity-80">
+            Terms & Conditions
           </a>
           .
         </p>
@@ -1015,10 +1019,10 @@ function Footer() {
               </a>
               <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
               <a
-                href="mailto:hello@lexsutra.nl"
+                href="mailto:hello@lexsutra.eu"
                 className="footer-link text-sm"
               >
-                hello@lexsutra.nl
+                hello@lexsutra.eu
               </a>
             </div>
           </div>
@@ -1046,15 +1050,18 @@ function Footer() {
           <div>
             <h4 className="text-white text-sm font-semibold mb-4">Legal</h4>
             <ul className="space-y-2.5">
-              {["Privacy Policy", "Terms of Service", "Cookie Policy", "Data Processing Agreement"].map(
-                (label) => (
-                  <li key={label}>
-                    <a href="#" className="footer-link text-sm">
-                      {label}
-                    </a>
-                  </li>
-                )
-              )}
+              {[
+                { label: "Privacy Policy",  href: "/privacy" },
+                { label: "Terms & Conditions", href: "/terms" },
+                { label: "AI Inventory Template", href: "/ai-inventory" },
+                { label: "Data Processing Agreement", href: "https://anthropic.com/legal/data-processing-addendum" },
+              ].map(({ label, href }) => (
+                <li key={label}>
+                  <a href={href} className="footer-link text-sm" target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined}>
+                    {label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -1065,7 +1072,7 @@ function Footer() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
         >
           <p className="text-xs" style={{ color: "#3d4f60" }}>
-            © 2026 LexSutra B.V. · lexsutra.nl · All rights reserved.
+            © 2026 LexSutra · lexsutra.eu · All rights reserved.
           </p>
           <p className="text-xs text-center md:text-right max-w-md" style={{ color: "#3d4f60" }}>
             LexSutra provides compliance infrastructure tools only. Nothing on this

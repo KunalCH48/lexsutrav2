@@ -125,3 +125,13 @@ body::before {
   transition: color 0.2s ease;
 }
 .gold-link:hover { color: #dbbf6a; }
+
+.btn-outline-blue {
+  border: 1px solid rgba(45, 156, 219, 0.4);
+  color: #5bb8f0;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.btn-outline-blue:hover {
+  border-color: rgba(45, 156, 219, 0.7);
+  background-color: rgba(45, 156, 219, 0.06);
+}

@@ -10,7 +10,7 @@ export default async function PortalLayout({
   children: React.ReactNode;
 }) {
   let companyName       = "Test Company";
-  let userEmail         = "test@lexsutra.nl";
+  let userEmail         = "test@lexsutra.eu";
   let onboardingPending = false;
 
   try {

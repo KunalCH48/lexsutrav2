@@ -581,6 +581,26 @@ export function QuestionnaireForm({
               </p>
             )}
 
+            {/* AI processing disclosure */}
+            {submitFeedback !== "success" && (
+              <div
+                className="rounded-lg px-3 py-2.5 text-xs leading-relaxed"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "#3d4f60" }}
+              >
+                By submitting, you acknowledge that your responses will be processed using AI assistance
+                (Claude by Anthropic) to generate an initial findings draft, which will then be reviewed
+                and approved by a LexSutra human expert before delivery.{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#2d9cdb" }}
+                >
+                  Privacy Policy
+                </a>
+              </div>
+            )}
+
             {/* Confirm step when critical questions are unanswered */}
             {unansweredCritical.length > 0 && !submitConfirm && !alreadySubmitted && submitFeedback !== "success" ? (
               <button
