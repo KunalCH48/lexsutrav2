@@ -55,7 +55,7 @@ function Navbar() {
 
         {/* CTA */}
         <a href="#request" className="btn-gold px-4 py-2 text-sm font-semibold rounded-md">
-          Request Diagnostic
+          Free Snapshot
         </a>
       </div>
     </nav>
@@ -225,7 +225,7 @@ function Hero() {
               href="#request"
               className="btn-gold inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg font-semibold text-sm"
             >
-              Request Diagnostic
+              Get Free Snapshot
               <ArrowRight className="w-4 h-4" />
             </a>
             <a
@@ -308,7 +308,7 @@ function UrgencyBanner() {
           className="text-sm font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap"
           style={{ color: "#c9a84c" }}
         >
-          Start your diagnostic <ArrowRight className="w-3.5 h-3.5" />
+          Get your free snapshot <ArrowRight className="w-3.5 h-3.5" />
         </a>
       </div>
     </section>
@@ -937,14 +937,15 @@ function DemoCTASection() {
             className="text-xs font-semibold tracking-widest uppercase mb-4"
             style={{ color: "#c9a84c" }}
           >
-            Get started
+            Free first step
           </p>
           <h2 className="text-3xl md:text-4xl font-serif font-semibold text-white mb-4">
-            Request your diagnostic
+            See where you stand — free
           </h2>
           <p style={{ color: "#8899aa" }}>
-            Submit your company details and we&apos;ll send you a free 5-insight
-            compliance snapshot within 24 hours.
+            Share your company details. We&apos;ll analyse your AI system&apos;s
+            public footprint and send you 5 concrete EU AI Act compliance
+            insights within 24&nbsp;hours. No questionnaire. No commitment.
           </p>
         </div>
 
@@ -1026,7 +1027,7 @@ function Footer() {
                 { label: "How It Works", href: "#how-it-works" },
                 { label: "Obligations",  href: "#obligations" },
                 { label: "Pricing",      href: "#pricing" },
-                { label: "Request Diagnostic", href: "#request" },
+                { label: "Free Snapshot",      href: "#request" },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <a href={href} className="footer-link text-sm">
