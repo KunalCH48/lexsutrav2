@@ -329,12 +329,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Save to DB
-    const { error: dbError } = await supabase
+    // 1. Save to DB — capture id for assessment update
+    const { data: insertData, error: dbError } = await supabase
       .from("demo_requests")
       .insert([
         { company_name, contact_email: email, website_url, status: "pending" },
-      ]);
+      ])
+      .select("id")
+      .single();
 
     if (dbError) {
       await logError({
@@ -356,6 +358,14 @@ export async function POST(req: NextRequest) {
       website_url,
       websiteContent
     );
+
+    // 3. Persist assessment data against the lead row
+    if (assessment && insertData?.id) {
+      await supabase
+        .from("demo_requests")
+        .update({ assessment_data: assessment })
+        .eq("id", insertData.id);
+    }
 
     // 3. Fire both emails in parallel (don't block on failure)
     if (process.env.RESEND_API_KEY) {
