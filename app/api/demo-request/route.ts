@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { logError } from "@/lib/log-error";
 import Anthropic from "@anthropic-ai/sdk";
+import { fetchWebsite } from "@/lib/fetch-website";
 
 const NOTIFY_EMAIL = "kunal.lexutra@gmail.com";
 
@@ -40,46 +41,28 @@ export type Assessment = {
   confidence: string;
 };
 
-// ── Website content fetcher ───────────────────────────────────────────────────
-
-async function fetchWebsiteContent(url: string): Promise<string> {
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; LexSutra-Assessment/1.0; +https://lexsutra.eu)",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-    });
-    clearTimeout(t);
-    const html = await res.text();
-    return html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&[a-z#0-9]+;/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 4000);
-  } catch {
-    return "";
-  }
-}
-
 // ── Claude assessment ─────────────────────────────────────────────────────────
 
 async function generateAssessment(
   company_name: string,
   website_url: string,
-  website_content: string
+  website_content: string,
+  scan_quality: "good" | "partial" | "failed"
 ): Promise<Assessment | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
     const anthropic = new Anthropic();
+
+    let contentSection: string;
+    if (scan_quality === "failed") {
+      contentSection =
+        "Website scan failed — content could not be extracted. DO NOT infer the business type from the company name alone. Return overall_risk: 'Needs Assessment' and confidence: 'Low'.";
+    } else if (scan_quality === "partial") {
+      contentSection = `Public website content (partial — meta tags only; treat with lower confidence):\n${website_content}`;
+    } else {
+      contentSection = `Public website content:\n${website_content}`;
+    }
+
     const msg = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,
@@ -90,11 +73,7 @@ async function generateAssessment(
 
 Company: ${company_name}
 Website: ${website_url}
-${
-  website_content
-    ? `Public website content:\n${website_content}`
-    : "Website content unavailable — assess from company name and domain only."
-}
+${contentSection}
 
 EU AI Act Annex III HIGH-RISK categories (these require full compliance):
 - Employment & HR (recruitment, CV screening, performance evaluation, task allocation)
@@ -352,18 +331,23 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fetch website + run assessment (sequential — assessment needs content)
-    const websiteContent = await fetchWebsiteContent(website_url);
+    const { content: websiteContent, quality: scanQuality } =
+      await fetchWebsite(website_url);
     const assessment = await generateAssessment(
       company_name,
       website_url,
-      websiteContent
+      websiteContent,
+      scanQuality
     );
 
-    // 3. Persist assessment data against the lead row
-    if (assessment && insertData?.id) {
+    // 3. Persist assessment data + scan quality against the lead row
+    if (insertData?.id) {
       await supabase
         .from("demo_requests")
-        .update({ assessment_data: assessment })
+        .update({
+          ...(assessment ? { assessment_data: assessment } : {}),
+          scan_quality: scanQuality,
+        })
         .eq("id", insertData.id);
     }
 

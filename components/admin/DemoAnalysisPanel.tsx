@@ -9,6 +9,7 @@ type InsightVersion = {
   content: string;
   generated_at: string;
   internal_feedback: string | null;
+  website_scan_quality?: string;
 };
 
 type IdentifiedSystem = {
@@ -45,6 +46,7 @@ type Props = {
   demoId:            string;
   companyName:       string;
   contactEmail?:     string;
+  scanQuality?:      "good" | "partial" | "failed" | null;
   initialSnapshot:   { versions: InsightVersion[]; approved_pdf_path?: string } | null;
 };
 
@@ -933,7 +935,7 @@ function ApproveSection({
 
 // ── Main component ─────────────────────────────────────────────────
 
-export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, initialSnapshot }: Props) {
+export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, scanQuality, initialSnapshot }: Props) {
   const [versions, setVersions]       = useState<InsightVersion[]>(initialSnapshot?.versions ?? []);
   const approvedPdfPath = initialSnapshot?.approved_pdf_path;
   const [viewingV, setViewingV]       = useState<number>(versions.length > 0 ? versions.length : 0);
@@ -1025,6 +1027,40 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, i
         </div>
       </div>
 
+      {/* ── Scan quality warning ─────────────────────────────────── */}
+      {scanQuality === "failed" && (
+        <div
+          className="rounded-lg px-4 py-3 text-sm"
+          style={{
+            background: "rgba(224,82,82,0.08)",
+            border: "1px solid rgba(224,82,82,0.3)",
+            color: "#e05252",
+          }}
+        >
+          <p className="font-semibold mb-0.5">⚠ Website scan failed — no public content was available</p>
+          <p className="text-xs" style={{ color: "#c07070", lineHeight: 1.6 }}>
+            If you generate analysis for this lead, Claude will be instructed not to infer anything from the company name.
+            The report will classify this as <strong>Needs Assessment</strong> with all obligations marked <strong>Not Started / Low confidence</strong>.
+            This is correct behaviour — do not override it manually.
+          </p>
+        </div>
+      )}
+      {scanQuality === "partial" && (
+        <div
+          className="rounded-lg px-4 py-3 text-sm"
+          style={{
+            background: "rgba(224,168,50,0.06)",
+            border: "1px solid rgba(224,168,50,0.2)",
+            color: "#e0a832",
+          }}
+        >
+          <p className="font-semibold mb-0.5">⚡ Partial scan — meta tags only</p>
+          <p className="text-xs" style={{ color: "#a08020", lineHeight: 1.6 }}>
+            Only limited content was extracted from this website. Analysis will be generated with lower confidence than a full scan.
+          </p>
+        </div>
+      )}
+
       {/* ── Error ────────────────────────────────────────────────── */}
       {error && (
         <div className="rounded-lg px-4 py-3 text-sm"
@@ -1050,6 +1086,16 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, i
               }}>
               <span className="font-semibold">Rev {ver.v}</span>
               <span className="ml-2" style={{ color: "#3d4f60" }}>{fmtDateTime(ver.generated_at)}</span>
+              {ver.website_scan_quality === "failed" && (
+                <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(224,82,82,0.15)", color: "#e05252" }}>
+                  scan failed
+                </span>
+              )}
+              {ver.website_scan_quality === "partial" && (
+                <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(224,168,50,0.12)", color: "#e0a832" }}>
+                  partial scan
+                </span>
+              )}
               {ver.internal_feedback && (
                 <span className="ml-2 truncate block max-w-sm" style={{ color: "#3d4f60" }}>
                   ↳ {ver.internal_feedback}

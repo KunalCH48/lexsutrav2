@@ -78,7 +78,7 @@ export default async function DemoReviewPage({
 
   const { data: demo } = await adminClient
     .from("demo_requests")
-    .select("id, company_name, contact_email, website_url, status, created_at, insights_snapshot")
+    .select("id, company_name, contact_email, website_url, status, created_at, insights_snapshot, scan_quality")
     .eq("id", id)
     .single();
 
@@ -135,6 +135,41 @@ export default async function DemoReviewPage({
             <DetailField label="Submitted" value={fmtDate(demo.created_at)} />
           </div>
 
+          {/* Scan quality indicator */}
+          {demo.scan_quality === "failed" && (
+            <div
+              className="rounded-lg px-4 py-3 text-sm"
+              style={{
+                background: "rgba(224,82,82,0.08)",
+                border: "1px solid rgba(224,82,82,0.3)",
+                color: "#e05252",
+              }}
+            >
+              <p className="font-semibold mb-0.5">⚠ Website could not be scanned</p>
+              <p className="text-xs" style={{ color: "#c07070", lineHeight: 1.6 }}>
+                The public website was inaccessible at the time of submission. Any AI analysis generated
+                for this lead is based solely on the absence of public information — not on actual website content.
+                Review the report carefully before sending.
+              </p>
+            </div>
+          )}
+          {demo.scan_quality === "partial" && (
+            <div
+              className="rounded-lg px-4 py-3 text-sm"
+              style={{
+                background: "rgba(224,168,50,0.07)",
+                border: "1px solid rgba(224,168,50,0.25)",
+                color: "#e0a832",
+              }}
+            >
+              <p className="font-semibold mb-0.5">⚡ Partial scan — meta tags only</p>
+              <p className="text-xs" style={{ color: "#a08020", lineHeight: 1.6 }}>
+                Only limited content was extracted from the website (page title and meta description).
+                Analysis confidence will be lower than for a full scan.
+              </p>
+            </div>
+          )}
+
           {/* Existing client warning */}
           {existingCompany && demo.status !== "converted" && (
             <div
@@ -171,7 +206,8 @@ export default async function DemoReviewPage({
           demoId={demo.id}
           companyName={demo.company_name}
           contactEmail={demo.contact_email}
-          initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null }[]; approved_pdf_path?: string } | null}
+          scanQuality={demo.scan_quality as "good" | "partial" | "failed" | null}
+          initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null; website_scan_quality?: string }[]; approved_pdf_path?: string } | null}
         />
       </div>
     </div>
