@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type ResearchFile = {
   path: string;
@@ -48,19 +49,44 @@ export default function DemoResearchPanel({ demoId, initialFiles, initialBrief }
     setError(null);
     setSuccessMsg(null);
 
-    for (const file of Array.from(selected)) {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("demoId", demoId);
+    const supabase = createSupabaseBrowserClient();
 
+    for (const file of Array.from(selected)) {
       try {
-        const res  = await fetch("/api/admin/demo-research", { method: "POST", body: form });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          setError(data.error ?? "Upload failed.");
-        } else {
-          setFiles((prev) => [...prev, { path: data.path, name: data.name, size: data.size }]);
+        // 1. Get presigned upload URL from server
+        const presignRes  = await fetch("/api/admin/demo-research/presign", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ demoId, filename: file.name, size: file.size }),
+        });
+        const presignData = await presignRes.json();
+        if (!presignRes.ok || presignData.error) {
+          setError(presignData.error ?? "Upload failed.");
+          continue;
         }
+
+        // 2. Upload directly from browser to Supabase Storage (bypasses Vercel size limit)
+        const { error: uploadError } = await supabase.storage
+          .from("documents")
+          .uploadToSignedUrl(presignData.path, presignData.token, file, { contentType: "application/pdf" });
+        if (uploadError) {
+          setError(`Upload failed: ${uploadError.message}`);
+          continue;
+        }
+
+        // 3. Register file in DB
+        const registerRes  = await fetch("/api/admin/demo-research", {
+          method:  "PUT",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ demoId, path: presignData.path, name: file.name, size: file.size }),
+        });
+        const registerData = await registerRes.json();
+        if (!registerRes.ok || registerData.error) {
+          setError(registerData.error ?? "Registration failed.");
+          continue;
+        }
+
+        setFiles((prev) => [...prev, { path: presignData.path, name: file.name, size: file.size }]);
       } catch {
         setError("Network error. Please try again.");
       }
@@ -204,7 +230,7 @@ export default function DemoResearchPanel({ demoId, initialFiles, initialBrief }
               Drop PDFs here or <span style={{ color: "#2d9cdb" }}>click to browse</span>
             </p>
             <p className="text-xs mt-1" style={{ color: "#3d4f60" }}>
-              PDF only · Max 4 MB per file · Up to 20 files
+              PDF only · Max 20 MB per file · Up to 20 files
             </p>
           </div>
         )}
