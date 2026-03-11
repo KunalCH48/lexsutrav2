@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import DemoActionPanel from "@/components/admin/DemoActionPanel";
 import DemoAnalysisPanel from "@/components/admin/DemoAnalysisPanel";
+import DemoResearchPanel from "@/components/admin/DemoResearchPanel";
 
 export const metadata = { title: "Review Demo Request — LexSutra Admin" };
 
@@ -78,7 +79,7 @@ export default async function DemoReviewPage({
 
   const { data: demo } = await adminClient
     .from("demo_requests")
-    .select("id, company_name, contact_email, website_url, status, created_at, insights_snapshot, scan_quality")
+    .select("id, company_name, contact_email, website_url, status, created_at, insights_snapshot, scan_quality, research_files, research_brief")
     .eq("id", id)
     .single();
 
@@ -197,6 +198,15 @@ export default async function DemoReviewPage({
           status={demo.status}
           companyName={demo.company_name}
           email={demo.contact_email}
+        />
+      </div>
+
+      {/* Research Files Panel */}
+      <div className="mt-6">
+        <DemoResearchPanel
+          demoId={demo.id}
+          initialFiles={(demo.research_files as { path: string; name: string; size: number }[]) ?? []}
+          initialBrief={(demo.research_brief as string | null) ?? null}
         />
       </div>
 

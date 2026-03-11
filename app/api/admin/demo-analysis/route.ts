@@ -263,7 +263,7 @@ export async function POST(req: NextRequest) {
     // Load demo
     const { data: demo, error: demoError } = await adminClient
       .from("demo_requests")
-      .select("id, company_name, website_url, contact_email, insights_snapshot")
+      .select("id, company_name, website_url, contact_email, insights_snapshot, research_brief")
       .eq("id", demoId)
       .single();
 
@@ -314,10 +314,12 @@ export async function POST(req: NextRequest) {
       }
       usedScanQuality = scanQuality;
 
-      if (scanQuality === "failed") {
-        // ── No website content — return deterministic template, skip Claude ──
-        // Claude hallucinate from the company name (e.g. "Fin" → fintech).
-        // When we have zero public information there is nothing for Claude to analyse.
+      const researchBrief = (demo.research_brief as string | null) ?? null;
+
+      if (scanQuality === "failed" && !researchBrief) {
+        // ── No website content AND no research brief — return deterministic template ──
+        // Claude hallucinates from the company name (e.g. "Fin" → fintech).
+        // Only skip Claude when we have truly zero information to analyse.
         parsed = buildFailedScanReport(demo.company_name, demo.website_url, assessmentDate);
 
       } else {
@@ -345,11 +347,17 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const websiteSection = scanQuality === "partial"
+        const websiteSection = scanQuality === "failed"
+          ? `\n\nPublic website content: Website was inaccessible — use the admin research brief below as the primary information source.`
+          : scanQuality === "partial"
           ? `\n\nPublic website content (partial — meta tags only; treat with lower confidence):\n${websiteContent}`
           : `\n\nPublic website content:\n${websiteContent}`;
 
-        const userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}${websiteSection}\n\nAssessment date: ${assessmentDate}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
+        const briefSection = researchBrief
+          ? `\n\n──────────────────────────────────────────\nADMIN RESEARCH BRIEF (manually gathered by LexSutra analyst — treat as primary evidence, higher reliability than website scan):\n${researchBrief}\n──────────────────────────────────────────`
+          : "";
+
+        const userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}${websiteSection}${briefSection}\n\nAssessment date: ${assessmentDate}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
 
         const message = await anthropic.messages.create({
           model:       "claude-sonnet-4-6",
