@@ -192,7 +192,7 @@ function StructuredReportView({
         {([
           ["Assessment Date",   new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }), false],
           ["Regulation",        "EU AI Act — Reg. (EU) 2024/1689", false],
-          ["Risk Classification", report.risk_classification, true],
+          ["Annex III Section",   report.annex_section ?? "—", false],
           ["Snapshot Type",     "Pre-Diagnostic Public Footprint Assessment", false],
         ] as [string, string, boolean][]).map(([label, value, highlight], i, arr) => (
           <div

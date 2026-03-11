@@ -286,7 +286,6 @@ function CoverPage({
             ["Report Reference",   reportRef,      false],
             ["Regulation",         "EU AI Act — Regulation (EU) 2024/1689", false],
             ["Policy Version",     "v1.0 (Active August 2024)", false],
-            ["Risk Classification",report.risk_classification, true],
             ["Annex Reference",    report.annex_section || "Annex III", false],
             ["Reviewed By",        "LexSutra Expert Review", false],
             ["Confidentiality",    "Confidential", false],
