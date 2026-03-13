@@ -24,10 +24,11 @@ export async function PUT(req: NextRequest) {
     }
 
     const current = await getFiles(adminClient, demoId);
-    await adminClient
+    const { error: dbErr } = await adminClient
       .from("demo_requests")
       .update({ research_files: [...current, { path, name, size }] })
       .eq("id", demoId);
+    if (dbErr) return NextResponse.json({ error: "Failed to register file." }, { status: 500 });
 
     return NextResponse.json({ success: true, path, name, size });
   } catch (err) {
@@ -67,7 +68,8 @@ export async function PATCH(req: NextRequest) {
     const { demoId, research_brief } = await req.json() as { demoId: string; research_brief: string };
     if (!demoId) return NextResponse.json({ error: "Missing demoId." }, { status: 400 });
 
-    await adminClient.from("demo_requests").update({ research_brief }).eq("id", demoId);
+    const { error: dbErr } = await adminClient.from("demo_requests").update({ research_brief }).eq("id", demoId);
+    if (dbErr) return NextResponse.json({ error: "Failed to save brief." }, { status: 500 });
     return NextResponse.json({ success: true });
   } catch (err) {
     await logError({ error: err, source: "api/admin/demo-research", action: "PATCH", metadata: {} });

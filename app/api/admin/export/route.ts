@@ -45,15 +45,15 @@ export async function GET(req: NextRequest) {
   } else if (table === "companies") {
     const { data } = await adminClient
       .from("companies")
-      .select("id, created_at, name, email, website_url, risk_tier")
+      .select("id, created_at, name, contact_email, website_url, risk_tier")
       .order("created_at", { ascending: false });
 
     csv = toCSV(
       ["ID", "Created", "Company", "Email", "Website", "Risk Tier"],
       (data ?? []).map((r: {
         id: string; created_at: string; name: string;
-        email: string; website_url: string; risk_tier: string;
-      }) => [r.id, r.created_at, r.name, r.email, r.website_url ?? "", r.risk_tier ?? ""])
+        contact_email: string; website_url: string; risk_tier: string;
+      }) => [r.id, r.created_at, r.name, r.contact_email, r.website_url ?? "", r.risk_tier ?? ""])
     );
     filename = "companies.csv";
 
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
       ["ID", "Created", "Status", "Tier", "AI System", "Company", "Email", "Policy Version"],
       (data ?? []).map((r: {
         id: string; created_at: string; status: string; tier: string;
-        ai_systems: { name: string; companies: { name: string; email: string } | { name: string; email: string }[] | null } | { name: string; companies: { name: string; email: string } | { name: string; email: string }[] | null }[] | null;
+        ai_systems: { name: string; companies: { name: string; contact_email: string } | { name: string; contact_email: string }[] | null } | { name: string; companies: { name: string; contact_email: string } | { name: string; contact_email: string }[] | null }[] | null;
         policy_versions: { version_code: string; display_name: string } | { version_code: string; display_name: string }[] | null;
       }) => {
         const sys     = Array.isArray(r.ai_systems) ? r.ai_systems[0] : r.ai_systems;
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
         const pv      = Array.isArray(r.policy_versions) ? r.policy_versions[0] : r.policy_versions;
         return [
           r.id, r.created_at, r.status, r.tier ?? "core",
-          sys?.name ?? "", company?.name ?? "", company?.email ?? "",
+          sys?.name ?? "", company?.name ?? "", company?.contact_email ?? "",
           pv?.version_code ?? "",
         ];
       })

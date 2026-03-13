@@ -27,7 +27,7 @@ async function getStats() {
         .limit(8),
       supabase
         .from("diagnostics")
-        .select("id, status, created_at, companies(name), ai_systems(name)")
+        .select("id, status, created_at, ai_systems(name, companies(name))")
         .in("status", ["draft", "in_review"])
         .order("created_at", { ascending: false })
         .limit(5),
@@ -234,7 +234,7 @@ export default async function AdminOverviewPage() {
               >
                 <div>
                   <div className="font-medium text-white">
-                    {(d.companies as any)?.name ?? "Unknown"}
+                    {(d.ai_systems as any)?.companies?.name ?? "Unknown"}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: "rgba(232,244,255,0.4)" }}>
                     {s.label}

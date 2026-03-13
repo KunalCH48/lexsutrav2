@@ -251,7 +251,6 @@ function buildFailedScanReport(companyName: string, websiteUrl: string | null, d
 // ── Route handler ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // TODO: re-enable auth before production
   const adminClient = createSupabaseAdminClient();
 
   try {

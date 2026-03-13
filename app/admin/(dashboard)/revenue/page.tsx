@@ -46,7 +46,7 @@ export default async function RevenuePage() {
   const { data: diagnostics } = await adminClient
     .from("diagnostics")
     .select(`
-      id, status, created_at,
+      id, status, created_at, tier,
       ai_systems (
         name,
         companies ( name, contact_email )

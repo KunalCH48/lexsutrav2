@@ -18,7 +18,7 @@ type OnboardingAnswers = {
 type CompanyRow = {
   id: string;
   name: string;
-  email: string | null;
+  contact_email: string | null;
   onboarding: {
     path?: string;
     completed_at?: string;
@@ -47,7 +47,7 @@ export async function getMyCompany(): Promise<{ data: CompanyRow | null; error: 
 
     const { data: company, error: companyError } = await adminClient
       .from("companies")
-      .select("id, name, email, onboarding")
+      .select("id, name, contact_email, onboarding")
       .eq("id", profile.company_id)
       .single();
 
