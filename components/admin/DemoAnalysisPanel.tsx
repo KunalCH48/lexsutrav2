@@ -299,7 +299,7 @@ function StructuredReportView({
           <div
             className="grid"
             style={{
-              gridTemplateColumns: "1fr 120px 50px 80px 100px",
+              gridTemplateColumns: "1fr 120px 44px 110px 130px",
               background: "rgba(255,255,255,0.07)",
               padding: "8px 12px",
               fontWeight: 600, color: "#8899aa", textTransform: "uppercase", letterSpacing: "0.08em",
@@ -320,7 +320,7 @@ function StructuredReportView({
                 key={ob.number}
                 className="grid items-center"
                 style={{
-                  gridTemplateColumns: "1fr 120px 50px 80px 100px",
+                  gridTemplateColumns: "1fr 120px 44px 110px 130px",
                   padding: "8px 12px",
                   background: i % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent",
                   borderTop: "1px solid rgba(255,255,255,0.05)",
