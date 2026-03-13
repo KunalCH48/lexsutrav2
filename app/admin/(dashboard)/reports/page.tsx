@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import ReportsManager from "@/components/admin/ReportsManager";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Snapshot Reports — LexSutra Admin" };
 
 export default async function ReportsPage() {

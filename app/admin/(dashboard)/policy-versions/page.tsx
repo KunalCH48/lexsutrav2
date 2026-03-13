@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { AddPolicyVersionForm, SetCurrentButton } from "@/components/admin/PolicyVersionControls";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Policy Versions — LexSutra Admin" };
 
 function fmtDate(iso: string | null) {

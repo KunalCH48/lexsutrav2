@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Overview — LexSutra Admin" };
 
 async function getStats() {

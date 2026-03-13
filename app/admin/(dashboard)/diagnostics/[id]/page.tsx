@@ -6,6 +6,7 @@ import FindingsEditor from "@/components/admin/FindingsEditor";
 import { GenerateFindingsButton } from "@/components/admin/GenerateFindingsButton";
 import SubmissionHistory from "@/components/admin/SubmissionHistory";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Review Diagnostic — LexSutra Admin" };
 
 function fmtDate(iso: string) {

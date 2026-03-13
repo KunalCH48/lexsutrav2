@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Demo Requests — LexSutra Admin" };
 
 export default async function DemoRequestsPage() {

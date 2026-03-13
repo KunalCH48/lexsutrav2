@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { FetchIntelButton } from "@/components/admin/FetchIntelButton";
 import { ExternalLink, AlertTriangle, Info, TrendingUp } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Regulatory Intel — LexSutra Admin" };
 
 const IMPACT_STYLES: Record<string, { bg: string; color: string; border: string; label: string }> = {

@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { setTestimonialApproved } from "./actions";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Client Feedback — LexSutra Admin" };
 
 const LABELS = ["", "Poor", "Below avg", "Average", "Good", "Excellent"];

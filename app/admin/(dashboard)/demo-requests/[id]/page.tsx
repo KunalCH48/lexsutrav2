@@ -6,6 +6,7 @@ import DemoActionPanel from "@/components/admin/DemoActionPanel";
 import DemoAnalysisPanel from "@/components/admin/DemoAnalysisPanel";
 import DemoResearchPanel from "@/components/admin/DemoResearchPanel";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Review Demo Request — LexSutra Admin" };
 
 function fmtDate(iso: string) {

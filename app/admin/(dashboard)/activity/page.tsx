@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { PaginationControls } from "@/components/admin/PaginationControls";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Activity Log — LexSutra Admin" };
 
 const PAGE_SIZE = 25;

@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { PaginationControls } from "@/components/admin/PaginationControls";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Error Logs — LexSutra Admin" };
 
 const SEVERITY_META: Record<string, { label: string; color: string; bg: string; border: string }> = {

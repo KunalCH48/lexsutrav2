@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Revenue — LexSutra Admin" };
 
 // Tier prices — update as pricing changes

@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Companies — LexSutra Admin" };
 
 export default async function CompaniesPage() {
