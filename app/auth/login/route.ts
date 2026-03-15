@@ -40,11 +40,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/admin/login?error=auth_failed`);
   }
 
-  // Redirect to Google, carrying the PKCE cookies on the response
+  // Redirect to Google, carrying the PKCE cookies with all original options
   const redirectResponse = NextResponse.redirect(data.url);
-  response.cookies.getAll().forEach(({ name, value }) => {
-    const existing = response.cookies.get(name);
-    redirectResponse.cookies.set(name, value, existing ? { path: "/" } : undefined);
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, {
+      httpOnly: cookie.httpOnly,
+      secure:   cookie.secure,
+      sameSite: cookie.sameSite as "strict" | "lax" | "none" | undefined,
+      maxAge:   cookie.maxAge,
+      path:     cookie.path ?? "/",
+      domain:   cookie.domain,
+    });
   });
 
   return redirectResponse;
