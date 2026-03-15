@@ -40,6 +40,8 @@ type StructuredReport = {
   grade: string;
   executive_summary: string;
   obligations: ObligationItem[];
+  dsa_applicability?: "likely" | "possible" | "unlikely";
+  dsa_note?: string;
 };
 
 type Props = {
@@ -262,6 +264,35 @@ function StructuredReportView({
       )}
 
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+
+      {/* ══ DSA ALERT (admin-only) ═══════════════════════════════════ */}
+
+      {report.dsa_applicability && report.dsa_applicability !== "unlikely" && (
+        <div style={{
+          borderRadius: 8,
+          padding: "12px 16px",
+          background: report.dsa_applicability === "likely"
+            ? "rgba(224,82,82,0.07)"
+            : "rgba(224,168,50,0.07)",
+          border: `1px solid ${report.dsa_applicability === "likely"
+            ? "rgba(224,82,82,0.3)"
+            : "rgba(224,168,50,0.25)"}`,
+        }}>
+          <p style={{
+            fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase",
+            color: report.dsa_applicability === "likely" ? "#e05252" : "#e0a832",
+            marginBottom: 4,
+          }}>
+            ⚠ DSA May Apply — Dig Deeper
+          </p>
+          <p style={{ fontSize: 12, color: "#c0ccd8", lineHeight: 1.6 }}>
+            {report.dsa_note ?? "This company may be subject to the Digital Services Act (Regulation (EU) 2022/2065) in addition to the EU AI Act. Verify whether they operate as an online intermediary before scoping the engagement."}
+          </p>
+          <p style={{ fontSize: 11, color: "#3d4f60", marginTop: 6 }}>
+            Internal flag — not included in client report
+          </p>
+        </div>
+      )}
 
       {/* ══ EXECUTIVE SUMMARY ════════════════════════════════════════ */}
 

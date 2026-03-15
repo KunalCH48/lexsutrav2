@@ -140,6 +140,22 @@ For each obligation, assign a confidence level based on how much public evidence
 Provide a confidence_reason (one sentence) explaining the evidence basis for that confidence level.
 
 ─────────────────────────────────────
+STEP 5 — DSA APPLICABILITY CHECK (INTERNAL — NOT SHOWN TO CLIENT)
+─────────────────────────────────────
+Assess whether the company may also be subject to the Digital Services Act (Regulation (EU) 2022/2065).
+
+DSA applies to online intermediary services operating in the EU: online marketplaces, social media platforms, search engines, content-sharing platforms, app stores, cloud/hosting providers, and similar platforms that connect users or host third-party content.
+
+DSA does NOT typically apply to: pure B2B SaaS tools (HR software, credit scoring engines, internal AI tools), medical software, or companies that do not operate a platform connecting third parties.
+
+Set dsa_applicability to:
+- "likely" — company clearly operates a marketplace, social platform, search engine, or hosting service
+- "possible" — company has platform-like features (user-generated content, third-party sellers, community) but is not a clear-cut intermediary
+- "unlikely" — company is a pure B2B tool, internal AI system, or has no platform/intermediary characteristics
+
+Provide a single concise dsa_note sentence explaining your reasoning.
+
+─────────────────────────────────────
 OUTPUT FORMAT — VALID JSON ONLY
 ─────────────────────────────────────
 Return this exact JSON structure. No text before or after the JSON.
@@ -155,6 +171,8 @@ Return this exact JSON structure. No text before or after the JSON.
   "annex_section": "Section 4(a)",
   "grade": "C+",
   "executive_summary": "2-3 paragraphs as a single string separated by \\n\\n. Paragraph 1: which AI system is assessed, what it does, and exact risk classification with full legal citation. Paragraph 2: summary stating exact numbers — X obligations with no publicly available evidence, X Partial, X Compliant. Paragraph 3: most urgent action and August 2026 deadline context. NO bullet points.",
+  "dsa_applicability": "likely|possible|unlikely",
+  "dsa_note": "One sentence — e.g. 'Company operates a hiring marketplace connecting employers and candidates — DSA obligations as an online intermediary may apply alongside EU AI Act.'",
   "obligations": [
     {
       "number": "01",
