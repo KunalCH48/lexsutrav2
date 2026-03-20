@@ -4,6 +4,8 @@ import { logError } from "@/lib/log-error";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchWebsite } from "@/lib/fetch-website";
 
+export const maxDuration = 60;
+
 const NOTIFY_EMAIL = "kunal@lexsutra.com";
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────

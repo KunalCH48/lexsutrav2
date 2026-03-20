@@ -6,10 +6,10 @@ export type WebsiteFetchResult = {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const MAX_EXTRA_PAGES   = 6;      // additional pages beyond homepage
+const MAX_EXTRA_PAGES   = 4;      // additional pages beyond homepage
 const HOME_CHARS        = 6_000;  // max chars kept from homepage
-const PAGE_CHARS        = 4_000;  // max chars kept per additional page
-const JINA_TIMEOUT_MS   = 12_000;
+const PAGE_CHARS        = 3_000;  // max chars kept per additional page
+const JINA_TIMEOUT_MS   = 8_000;
 const HTML_TIMEOUT_MS   = 8_000;
 
 // Pages most likely to contain EU AI Act compliance evidence — ordered by value
