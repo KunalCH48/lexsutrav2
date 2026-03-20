@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const origin = new URL(request.url).origin;
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin.replace("http://", "https://");
   const failUrl = `${origin}/portal/login?error=invite_invalid`;
 
   if (!token) return NextResponse.redirect(failUrl);

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function GET(request: NextRequest) {
-  const { origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? requestUrl.origin.replace("http://", "https://");
 
   const response = NextResponse.next({ request });
 
