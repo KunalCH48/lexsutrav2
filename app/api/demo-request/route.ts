@@ -353,9 +353,9 @@ export async function POST(req: NextRequest) {
         .eq("id", insertData.id);
     }
 
-    // 3. Fire both emails in parallel (don't block on failure)
+    // 3. Fire both emails in parallel
     if (process.env.RESEND_API_KEY) {
-      await Promise.allSettled([
+      const [adminResult, prospectResult] = await Promise.allSettled([
         fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -384,6 +384,18 @@ export async function POST(req: NextRequest) {
           }),
         }),
       ]);
+
+      // Log any Resend failures
+      for (const [label, result] of [["admin", adminResult], ["prospect", prospectResult]] as const) {
+        if (result.status === "rejected") {
+          await logError({ error: result.reason, source: "api/demo-request", action: `email:${label}`, metadata: { company_name } });
+        } else if (!result.value.ok) {
+          const body = await result.value.text();
+          await logError({ error: new Error(`Resend ${label} email failed: ${result.value.status} ${body}`), source: "api/demo-request", action: `email:${label}`, metadata: { company_name } });
+        }
+      }
+    } else {
+      await logError({ error: new Error("RESEND_API_KEY not set"), source: "api/demo-request", action: "email", metadata: { company_name } });
     }
 
     return NextResponse.json({ success: true, assessment });
