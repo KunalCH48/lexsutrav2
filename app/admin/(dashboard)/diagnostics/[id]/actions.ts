@@ -114,7 +114,7 @@ export async function approveAndDeliver(
         method: "POST",
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "LexSutra <reports@lexsutra.eu>",
+          from: "LexSutra <reports@lexsutra.com>",
           to: [(company as { contact_email: string }).contact_email],
           subject: `Your LexSutra Diagnostic Report is Ready — ${sys?.name ?? "AI System"}`,
           html: `
@@ -125,11 +125,11 @@ export async function approveAndDeliver(
                 Hello ${(company as { name?: string } | null)?.name ?? ""},<br><br>
                 Your EU AI Act compliance diagnostic report for <strong>${sys?.name ?? "your AI system"}</strong> has been reviewed and is now available in your client portal.
               </p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.eu"}/portal/reports/${diagnosticId}"
+              <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.com"}/portal/reports/${diagnosticId}"
                  style="display:inline-block;background:#2d9cdb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
                 View Your Report →
               </a>
-              <p style="color:rgba(232,244,255,0.4);font-size:12px;margin-top:32px;">LexSutra · EU AI Act Compliance Diagnostics · lexsutra.eu</p>
+              <p style="color:rgba(232,244,255,0.4);font-size:12px;margin-top:32px;">LexSutra · EU AI Act Compliance Diagnostics · lexsutra.com</p>
             </div>
           `,
         }),

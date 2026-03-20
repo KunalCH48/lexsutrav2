@@ -1011,10 +1011,10 @@ function Footer() {
               </a>
               <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
               <a
-                href="mailto:hello@lexsutra.eu"
+                href="mailto:hello@lexsutra.com"
                 className="footer-link text-sm"
               >
-                hello@lexsutra.eu
+                hello@lexsutra.com
               </a>
             </div>
           </div>
@@ -1064,7 +1064,7 @@ function Footer() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
         >
           <p className="text-xs" style={{ color: "#3d4f60" }}>
-            © 2026 LexSutra · lexsutra.eu · All rights reserved.
+            © 2026 LexSutra · lexsutra.com · All rights reserved.
           </p>
           <p className="text-xs text-center md:text-right max-w-md" style={{ color: "#3d4f60" }}>
             LexSutra provides compliance infrastructure tools only. Nothing on this

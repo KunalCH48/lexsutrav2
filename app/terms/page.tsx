@@ -89,7 +89,7 @@ export default function TermsPage() {
                 &ldquo;we&rdquo;, &ldquo;us&rdquo;) and you (&ldquo;Client&rdquo;, &ldquo;you&rdquo;).
                 By accessing the LexSutra platform or purchasing a diagnostic, you agree to these terms.
                 If you are unsure about anything, email{" "}
-                <a href="mailto:hello@lexsutra.eu" style={{ color: "#2d9cdb" }}>hello@lexsutra.eu</a>{" "}
+                <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>{" "}
                 before proceeding.
               </p>
             </div>
@@ -104,8 +104,8 @@ export default function TermsPage() {
             </p>
             <p>
               Contact:{" "}
-              <a href="mailto:hello@lexsutra.eu" style={{ color: "#2d9cdb" }}>hello@lexsutra.eu</a>
-              {" "}· lexsutra.eu
+              <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>
+              {" "}· lexsutra.com
             </p>
           </Section>
 

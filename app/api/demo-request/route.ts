@@ -4,7 +4,7 @@ import { logError } from "@/lib/log-error";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchWebsite } from "@/lib/fetch-website";
 
-const NOTIFY_EMAIL = "kunal.lexutra@gmail.com";
+const NOTIFY_EMAIL = "kunal@lexsutra.com";
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 
@@ -149,7 +149,7 @@ function buildAdminEmail(
              <p><strong>Top obligations:</strong> ${assessment.top_obligations.join(", ")}</p>`
           : "<p><em>Assessment generation failed — review manually.</em></p>"
       }
-      <p style="color:#888;font-size:12px;margin-top:24px;">Submitted via lexsutra.eu</p>
+      <p style="color:#888;font-size:12px;margin-top:24px;">Submitted via lexsutra.com</p>
     </div>
   `;
 }
@@ -257,7 +257,7 @@ function buildProspectEmail(
       Before a full diagnostic, you'll need to map every AI system you operate or deploy.
       We've built a free template — takes under an hour.
     </p>
-    <a href="https://lexsutra.eu/ai-inventory"
+    <a href="https://lexsutra.com/ai-inventory"
        style="display:inline-block;background:#c9a84c;color:#060a14;padding:11px 26px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;">
       Download Free AI Inventory Template &rarr;
     </a>
@@ -267,10 +267,10 @@ function buildProspectEmail(
   <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:20px;text-align:center;">
     <p style="color:#8899aa;font-size:13px;line-height:1.75;margin-bottom:10px;">
       Questions? Reply to this email or reach us at
-      <a href="mailto:hello@lexsutra.eu" style="color:#c9a84c;text-decoration:none;">hello@lexsutra.eu</a>
+      <a href="mailto:hello@lexsutra.com" style="color:#c9a84c;text-decoration:none;">hello@lexsutra.com</a>
     </p>
     <p style="color:#3d4f60;font-size:11px;margin:0;line-height:1.6;">
-      LexSutra &middot; lexsutra.eu &middot; Based in the Netherlands<br/>
+      LexSutra &middot; lexsutra.com &middot; Based in the Netherlands<br/>
       LexSutra provides compliance infrastructure tools, not legal advice.
     </p>
   </div>
@@ -361,7 +361,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "LexSutra <hello@lexsutra.eu>",
+            from: "LexSutra <hello@lexsutra.com>",
             to: [NOTIFY_EMAIL],
             subject: `New demo request — ${company_name}`,
             html: buildAdminEmail(company_name, email, website_url, assessment),
@@ -374,9 +374,9 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "LexSutra <hello@lexsutra.eu>",
+            from: "LexSutra <hello@lexsutra.com>",
             to: [email],
-            replyTo: "hello@lexsutra.eu",
+            replyTo: "hello@lexsutra.com",
             subject: `Your preliminary EU AI Act profile — ${company_name}`,
             html: buildProspectEmail(company_name, assessment),
           }),
@@ -395,7 +395,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Something went wrong. Please try again or email us at hello@lexsutra.eu.",
+          "Something went wrong. Please try again or email us at hello@lexsutra.com.",
       },
       { status: 500 }
     );

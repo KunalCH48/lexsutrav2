@@ -608,7 +608,7 @@ function MethodologyPage({
 
         {/* Footer branding */}
         <Text style={[st.small, { marginTop: 16, textAlign: "center", color: C.textGhost }]}>
-          LexSutra  ·  AI Compliance Diagnostic Infrastructure  ·  lexsutra.nl  ·  Netherlands
+          LexSutra  ·  AI Compliance Diagnostic Infrastructure  ·  lexsutra.com  ·  Netherlands
         </Text>
       </View>
 

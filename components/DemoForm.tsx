@@ -41,7 +41,7 @@ const BLOCKED_DOMAINS = new Set([
   "yahoo.co.uk", "googlemail.com", "me.com", "mac.com",
 ]);
 
-const WHITELISTED_EMAILS = new Set(["kunal.lexutra@gmail.com"]);
+const WHITELISTED_EMAILS = new Set(["kunal@lexsutra.com"]);
 
 function isPersonalEmail(email: string): boolean {
   const normalized = email.trim().toLowerCase();
@@ -563,7 +563,7 @@ function ComplianceCard({ id, data }: { id: string; data: CardData }) {
           alignItems: "center",
         }}
       >
-        <span style={{ color: "#3d4f60", fontSize: 8.5 }}>lexsutra.eu</span>
+        <span style={{ color: "#3d4f60", fontSize: 8.5 }}>lexsutra.com</span>
         <span
           style={{
             color: "#3d4f60",
@@ -692,7 +692,7 @@ export function DemoForm() {
     } catch {
       setStatus("error");
       setError(
-        "Something went wrong. Please try again or email us at hello@lexsutra.eu."
+        "Something went wrong. Please try again or email us at hello@lexsutra.com."
       );
     }
   }

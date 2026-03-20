@@ -226,7 +226,7 @@ The interactive prototype (`lexsutra-prototype.html`) is the design source of tr
 ## Supabase Admin
 
 - Project URL: `https://pmnjcumaytqxfigiuhgr.supabase.co`
-- Admin email: `kunal.lexutra@gmail.com`
+- Admin email: `kunal@lexsutra.com`
 - Auth provider: Google OAuth
 - Server clients: `lib/supabase-server.ts` (`createSupabaseServerClient`, `createSupabaseAdminClient`)
 - Browser client: `lib/supabase-browser.ts` (`createSupabaseBrowserClient`)

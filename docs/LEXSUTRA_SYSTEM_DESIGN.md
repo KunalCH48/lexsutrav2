@@ -25,7 +25,7 @@ The **LexSutra Diagnostic Report** — a legally-cited, version-stamped, graded 
 - **Positioning:** Compliance infrastructure tools — NOT legal advice. Never say we certify or approve. We assess and recommend.
 - **Primary market:** AI startups in HR tech and Fintech (high-risk domains under EU AI Act Annex III)
 - **Key deadline:** EU AI Act high-risk compliance deadline is **August 2, 2026**
-- **Domains:** lexsutra.nl (primary), lexsutra.eu, lexsutra.com
+- **Domains:** lexsutra.com (primary), lexsutra.com, lexsutra.com
 
 ---
 
@@ -710,7 +710,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...        # Safe to expose, respects RLS
 SUPABASE_SERVICE_ROLE_KEY=...            # Server-only, bypasses RLS — never expose to client
 RESEND_API_KEY=...                       # Email (OTP, notifications, invite emails)
 ANTHROPIC_API_KEY=...                    # Claude API for findings + demo analysis
-NEXT_PUBLIC_APP_URL=https://lexsutra.nl  # Used in email links
+NEXT_PUBLIC_APP_URL=https://lexsutra.com  # Used in email links
 ```
 
 ---

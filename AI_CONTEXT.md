@@ -238,6 +238,6 @@ WHO IT'S FOR:       High-risk AI companies — HR tech, Fintech, regulated domai
 THE DEADLINE:       August 2, 2026 (high-risk AI systems)
 THE DISCLAIMER:     "Compliance infrastructure tools, not legal advice"
 COMPANY STATUS:     Based in Netherlands, KVK registration March 2026
-DOMAIN:             lexsutra.eu
-CONTACT:            hello@lexsutra.eu
+DOMAIN:             lexsutra.com
+CONTACT:            hello@lexsutra.com
 ```

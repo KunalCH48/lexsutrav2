@@ -163,13 +163,13 @@ function buildEmailHtml({
           <p style="font-size:13.5px;color:#374151;line-height:1.7;margin:0 0 28px 0;">
             If you have any questions about this report or would like to begin the full diagnostic,
             please reply to this email or contact us at
-            <a href="mailto:hello@lexsutra.eu" style="color:#1d6fa4;text-decoration:none;">hello@lexsutra.eu</a>.
+            <a href="mailto:hello@lexsutra.com" style="color:#1d6fa4;text-decoration:none;">hello@lexsutra.com</a>.
           </p>
 
           <p style="font-size:13.5px;color:#374151;margin:0;">
             Kind regards,<br/>
             <strong>LexSutra Expert Review Team</strong><br/>
-            <span style="color:#9ca3af;">LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.eu</span>
+            <span style="color:#9ca3af;">LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.com</span>
           </p>
         </td>
       </tr>
@@ -178,7 +178,7 @@ function buildEmailHtml({
       <tr>
         <td style="background:#f0f2f4;border-top:1px solid #e2e6ea;padding:16px 32px;text-align:center;">
           <p style="font-size:10px;color:#9ca3af;margin:0 0 4px 0;">
-            LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.eu · Netherlands
+            LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.com · Netherlands
           </p>
           <p style="font-size:9.5px;color:#c4c9d0;margin:0;line-height:1.6;">
             This report does not constitute legal advice. LexSutra is not a law firm.
@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from:    "LexSutra <reports@lexsutra.eu>",
+        from:    "LexSutra <reports@lexsutra.com>",
         to:      [toEmail],
         subject: `LexSutra Compliance Snapshot — ${demo.company_name} [${reportRef}]`,
         html,

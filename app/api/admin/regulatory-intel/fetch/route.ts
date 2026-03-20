@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         const res = await fetch(source.url, {
           headers: {
             "Accept":     "text/html,application/xhtml+xml",
-            "User-Agent": "LexSutra-RegulatoryMonitor/1.0 (compliance@lexsutra.eu)",
+            "User-Agent": "LexSutra-RegulatoryMonitor/1.0 (compliance@lexsutra.com)",
           },
           signal: AbortSignal.timeout(15_000),
         });

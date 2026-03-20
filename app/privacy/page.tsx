@@ -118,7 +118,7 @@ export default function PrivacyPage() {
                 LexSutra is a compliance infrastructure company. We hold ourselves to the same standards
                 we help our clients meet. This policy is written in plain language — if something is unclear,
                 email us at{" "}
-                <a href="mailto:privacy@lexsutra.eu" style={{ color: "#2d9cdb" }}>privacy@lexsutra.eu</a>.
+                <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>.
               </p>
             </div>
           </div>
@@ -130,8 +130,8 @@ export default function PrivacyPage() {
             </p>
             <p>
               <strong style={{ color: "#e8f4ff" }}>Contact:</strong>{" "}
-              <a href="mailto:privacy@lexsutra.eu" style={{ color: "#2d9cdb" }}>privacy@lexsutra.eu</a>
-              {" "}· lexsutra.eu
+              <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>
+              {" "}· lexsutra.com
             </p>
             <p>
               <strong style={{ color: "#e8f4ff" }}>Supervisory Authority:</strong> Autoriteit Persoonsgegevens (AP), Netherlands —{" "}
@@ -141,7 +141,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               LexSutra provides EU AI Act compliance diagnostic services to businesses. We are not a law firm
-              and do not provide legal advice. This privacy policy applies to our website (lexsutra.eu),
+              and do not provide legal advice. This privacy policy applies to our website (lexsutra.com),
               our client portal, and our diagnostic platform.
             </p>
           </Section>
@@ -284,7 +284,7 @@ export default function PrivacyPage() {
           {/* 8. Your rights */}
           <Section id="rights" title="8. Your Rights Under GDPR">
             <p>You have the following rights. To exercise any of them, email{" "}
-              <a href="mailto:privacy@lexsutra.eu" style={{ color: "#2d9cdb" }}>privacy@lexsutra.eu</a>.
+              <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>.
               We will respond within 30 days.
             </p>
             <div className="space-y-2 mt-3">
@@ -347,10 +347,10 @@ export default function PrivacyPage() {
               <p style={{ color: "#e8f4ff" }}><strong>LexSutra</strong></p>
               <p>Netherlands</p>
               <p>
-                <a href="mailto:privacy@lexsutra.eu" style={{ color: "#2d9cdb" }}>privacy@lexsutra.eu</a>
+                <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>
               </p>
               <p>
-                <a href="https://lexsutra.eu" style={{ color: "#2d9cdb" }}>lexsutra.eu</a>
+                <a href="https://lexsutra.com" style={{ color: "#2d9cdb" }}>lexsutra.com</a>
               </p>
             </div>
           </Section>

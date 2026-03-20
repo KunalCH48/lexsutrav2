@@ -74,7 +74,7 @@ export async function POST(request: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <notifications@lexsutra.eu>",
+          from: "LexSutra <hello@lexsutra.com>",
           to:   [email],
           subject: "Your LexSutra portal access link",
           html: `
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
               </p>
               <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
               <p style="color:#999;font-size:12px;">
-                LexSutra · EU AI Act Compliance · lexsutra.eu
+                LexSutra · EU AI Act Compliance · lexsutra.com
               </p>
             </div>
           `,

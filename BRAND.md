@@ -199,9 +199,9 @@ Not cold or clinical. Not playful or startup-casual. Serious, but with warmth fr
 
 | | |
 |---|---|
-| Primary domain | `lexsutra.eu` |
-| Email | `hello@lexsutra.eu` |
-| Privacy | `privacy@lexsutra.eu` |
+| Primary domain | `lexsutra.com` |
+| Email | `hello@lexsutra.com` |
+| Privacy | `hello@lexsutra.com` |
 | Based in | The Netherlands |
 | Compliance deadline | August 2, 2026 |
 

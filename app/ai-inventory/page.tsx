@@ -537,7 +537,7 @@ export default function AIInventoryPage() {
         >
           <Link href="/" className="gold-link font-semibold">LexSutra</Link>
           {" "}· EU AI Act Compliance Infrastructure ·{" "}
-          <a href="https://lexsutra.eu" className="footer-link">lexsutra.eu</a>
+          <a href="https://lexsutra.com" className="footer-link">lexsutra.com</a>
           <br className="mt-2" />
           <span className="mt-2 block">
             LexSutra provides compliance infrastructure tools, not legal advice.

@@ -176,8 +176,8 @@ export async function submitForReview(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <notifications@lexsutra.eu>",
-          to:   ["kunal.lexutra@gmail.com"],
+          from: "LexSutra <hello@lexsutra.com>",
+          to:   ["kunal@lexsutra.com"],
           subject: `Questionnaire ${submissionNumber > 1 ? `re-submitted (v${submissionNumber})` : "submitted"} — ${company?.name ?? "Client"}`,
           html: `
             <h2>Questionnaire ${submissionNumber > 1 ? `Re-submitted (Version ${submissionNumber})` : "Submitted for Review"}</h2>
@@ -185,7 +185,7 @@ export async function submitForReview(
             <p><strong>Diagnostic ID:</strong> ${diagnosticId}</p>
             <p><strong>Submission:</strong> Version ${submissionNumber}${submissionNumber > 1 ? " — client has updated their answers" : ""}</p>
             <p>The client has completed and submitted their questionnaire. Please review in the admin panel.</p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.eu"}/admin/diagnostics/${diagnosticId}"
+            <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.com"}/admin/diagnostics/${diagnosticId}"
                style="display:inline-block;background:#2d9cdb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
               Review in Admin →
             </a>

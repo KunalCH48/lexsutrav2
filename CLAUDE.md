@@ -8,7 +8,7 @@ LexSutra is an AI Compliance Diagnostic platform — like a professional house i
 - **Core product:** The LexSutra Diagnostic Report — colour-coded, graded PDF with legal citations, compliance scores, and remediation roadmap
 - **Key differentiator:** Every diagnostic includes human expert review. "ChatGPT gives a conversation. LexSutra gives a defensible, auditable, legally cited, version-stamped document."
 - **Company name meaning:** Lex (Latin: law) + Sutra (Sanskrit: guiding thread/rule)
-- **Domains:** lexsutra.eu (primary), lexsutra.nl, lexsutra.com
+- **Domains:** lexsutra.com (primary), lexsutra.com, lexsutra.com
 - **Deadline:** EU AI Act high-risk compliance deadline is August 2, 2026
 
 ---

@@ -780,7 +780,7 @@ export function ReportViewer({
                 the fee paid for this diagnostic service.
               </p>
               <p className="text-xs mt-4" style={{ color: "#c8c0b0" }}>
-                LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.eu · Netherlands · Founded February 2026
+                LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.com · Netherlands · Founded February 2026
               </p>
             </div>
           </Section>

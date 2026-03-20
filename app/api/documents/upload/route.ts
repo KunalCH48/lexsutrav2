@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <documents@lexsutra.eu>",
+          from: "LexSutra <hello@lexsutra.com>",
           to:   [email],
           subject: "LexSutra — Document Upload Confirmation Code",
           html: `
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
                 By confirming, you consent to LexSutra securely storing this document for EU AI Act compliance purposes.
               </p>
               <p style="color:rgba(232,244,255,0.2);font-size:11px;margin-top:24px;">
-                LexSutra · lexsutra.eu · EU data storage only
+                LexSutra · lexsutra.com · EU data storage only
               </p>
             </div>
           `,
