@@ -6,7 +6,7 @@ import { logError } from "@/lib/log-error";
 // Body: { email, company_id, expires_hours?, max_uses? }
 // Returns: { invite_url, expires_at, max_uses }
 export async function POST(request: Request) {
-  const origin = new URL(request.url).origin;
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin.replace("http://", "https://");
 
   // Verify caller is an admin
   const supabase = await createSupabaseServerClient();
@@ -77,25 +77,52 @@ export async function POST(request: Request) {
           from: "LexSutra <hello@send.lexsutra.com>",
           to:   [email],
           subject: "Your LexSutra portal access link",
-          html: `
-            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-              <h2 style="color:#1a1a2e;">Your LexSutra portal access is ready</h2>
-              <p>Click the button below to access your compliance portal.</p>
-              <a href="${inviteUrl}"
-                 style="display:inline-block;background:#c9a84c;color:#060a14;padding:12px 24px;
-                        border-radius:6px;text-decoration:none;font-weight:600;margin:16px 0;">
-                Access Portal →
-              </a>
-              <p style="color:#666;font-size:13px;">
-                This link expires in ${expires_hours} hours and can be used up to ${max_uses} times.
-                If you did not request this, please ignore this email.
-              </p>
-              <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
-              <p style="color:#999;font-size:12px;">
-                LexSutra · EU AI Act Compliance · lexsutra.com
-              </p>
-            </div>
-          `,
+          html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#060a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div style="max-width:540px;margin:0 auto;padding:40px 24px;">
+
+  <!-- Logo -->
+  <div style="text-align:center;margin-bottom:36px;">
+    <div style="font-size:22px;font-weight:700;letter-spacing:0.01em;">
+      <span style="color:#c9a84c;">Lex</span><span style="color:#e8f4ff;">Sutra</span>
+    </div>
+    <div style="color:#3d4f60;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;">
+      EU AI Act · Compliance Diagnostic
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div style="background:#0d1520;border:1px solid rgba(45,156,219,0.15);border-radius:12px;padding:32px;">
+    <p style="color:#e8f4ff;font-size:15px;font-weight:600;margin:0 0 8px;">Your compliance portal is ready</p>
+    <p style="color:#8899aa;font-size:13px;line-height:1.7;margin:0 0 28px;">
+      You have been granted access to your LexSutra EU AI Act compliance portal.
+      Use the button below to log in and view your diagnostic status, documents, and reports.
+    </p>
+    <div style="text-align:center;">
+      <a href="${inviteUrl}"
+         style="display:inline-block;background:#c9a84c;color:#060a14;padding:13px 32px;
+                border-radius:7px;text-decoration:none;font-weight:700;font-size:14px;">
+        Access Your Portal →
+      </a>
+    </div>
+    <p style="color:#3d4f60;font-size:11px;text-align:center;margin:20px 0 0;line-height:1.6;">
+      This link expires in ${expires_hours} hours · If you did not expect this email, please ignore it.
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;margin-top:28px;">
+    <p style="color:#3d4f60;font-size:11px;margin:0;line-height:1.6;">
+      LexSutra · lexsutra.com · EU AI Act Compliance Diagnostic<br/>
+      LexSutra provides compliance infrastructure tools, not legal advice.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>`,
         }),
       });
     } catch (emailErr) {
