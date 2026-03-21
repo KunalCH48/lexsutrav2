@@ -43,11 +43,10 @@ export async function POST(req: NextRequest) {
 
     const targetRole = targetProfile?.role ?? "client";
 
-    // Pick the right callback based on role
+    // Both roles use the client-side magic handler — it reads the hash token and
+    // redirects to /admin or /portal based on the user's role.
     const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
-    const redirectTo = targetRole === "reviewer"
-      ? `${origin}/auth/callback`        // → admin dashboard
-      : `${origin}/portal/auth/callback`; // → client portal
+    const redirectTo = `${origin}/auth/magic`;
 
     const { data, error } = await adminClient.auth.admin.generateLink({
       type:    "magiclink",
