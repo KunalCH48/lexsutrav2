@@ -10,19 +10,14 @@ type Props = {
 
 export function LoginAsButton({ userId, label = "Login As" }: Props) {
   const [loading, setLoading] = useState(false);
+  const [url,     setUrl]     = useState("");
   const [error,   setError]   = useState("");
+  const [copied,  setCopied]  = useState(false);
 
   async function handleClick() {
-    // Warn: using the link signs admin out in all tabs (shared localStorage)
-    const ok = window.confirm(
-      `This will open a session as this user.\n\n` +
-      `⚠️ It will sign YOU OUT as admin in this browser tab — you'll need to sign back in after.\n\n` +
-      `Tip: copy the link into a different browser/incognito window to avoid this.\n\nProceed?`
-    );
-    if (!ok) return;
-
     setLoading(true);
     setError("");
+    setUrl("");
     try {
       const res  = await fetch("/api/admin/impersonate", {
         method:  "POST",
@@ -30,14 +25,44 @@ export function LoginAsButton({ userId, label = "Login As" }: Props) {
         body:    JSON.stringify({ userId }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Failed"); setLoading(false); return; }
-      // Open in new tab
-      window.open(data.url, "_blank", "noopener,noreferrer");
+      if (!res.ok) { setError(data.error ?? "Failed"); return; }
+      setUrl(data.url);
     } catch {
       setError("Network error");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (url) {
+    return (
+      <div className="flex items-center gap-2">
+        <button
+          onClick={copyLink}
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+          style={{
+            background: copied ? "rgba(46,204,113,0.1)" : "rgba(200,168,75,0.1)",
+            color:      copied ? "#2ecc71" : "#c8a84b",
+            border:     `1px solid ${copied ? "rgba(46,204,113,0.25)" : "rgba(200,168,75,0.2)"}`,
+          }}
+        >
+          {copied ? "✓ Copied!" : "Copy link → paste in incognito"}
+        </button>
+        <button
+          onClick={() => setUrl("")}
+          className="text-xs"
+          style={{ color: "rgba(232,244,255,0.25)" }}
+        >
+          ✕
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -53,7 +78,6 @@ export function LoginAsButton({ userId, label = "Login As" }: Props) {
           opacity:    loading ? 0.6 : 1,
           cursor:     loading ? "default" : "pointer",
         }}
-        title="Open their session in a new tab"
       >
         {loading
           ? <Loader2 size={11} className="animate-spin" />
