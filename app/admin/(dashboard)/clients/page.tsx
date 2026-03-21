@@ -30,9 +30,9 @@ export default async function ClientsPage() {
   }
 
   // Build companies query — reviewers only see assigned companies
-  const companiesQuery = supabase.from("companies").select("id, name, contact_email, created_at").order("created_at", { ascending: false });
+  let companiesQuery = supabase.from("companies").select("id, name, contact_email, created_at").order("created_at", { ascending: false });
   if (allowedCompanyIds !== null) {
-    companiesQuery.in("id", allowedCompanyIds.length > 0 ? allowedCompanyIds : ["00000000-0000-0000-0000-000000000000"]);
+    companiesQuery = companiesQuery.in("id", allowedCompanyIds.length > 0 ? allowedCompanyIds : ["00000000-0000-0000-0000-000000000000"]);
   }
 
   const [
