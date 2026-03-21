@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import FindingsEditor from "@/components/admin/FindingsEditor";
 import { GenerateFindingsButton } from "@/components/admin/GenerateFindingsButton";
 import SubmissionHistory from "@/components/admin/SubmissionHistory";
+import { ReviewerSignButton } from "@/components/admin/ReviewerSignButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Review Diagnostic — LexSutra Admin" };
@@ -23,9 +24,20 @@ export default async function DiagnosticReviewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Get current user's role
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   const adminClient = createSupabaseAdminClient();
 
-  const [diagnosticRes, obligationsRes, findingsRes, responsesRes, questionsRes, snapshotsRes] = await Promise.all([
+  const { data: currentProfile } = user
+    ? await adminClient.from("profiles").select("role, display_name, credential").eq("id", user.id).single()
+    : { data: null };
+
+  const isReviewer = currentProfile?.role === "reviewer";
+
+  const [diagnosticRes, obligationsRes, findingsRes, responsesRes, questionsRes, snapshotsRes, approvalRes] = await Promise.all([
     adminClient
       .from("diagnostics")
       .select(`
@@ -64,6 +76,13 @@ export default async function DiagnosticReviewPage({
       .select("id, submission_number, submitted_at, answer_count, answers")
       .eq("diagnostic_id", id)
       .order("submission_number"),
+
+    // Fetch all report_approvals for this diagnostic
+    adminClient
+      .from("report_approvals")
+      .select("id, reviewer_id, reviewer_name, credential, approved_at, created_at")
+      .eq("diagnostic_id", id)
+      .order("created_at"),
   ]);
 
   if (diagnosticRes.error || !diagnosticRes.data) notFound();
@@ -74,6 +93,12 @@ export default async function DiagnosticReviewPage({
   const responseCount = responsesRes.count ?? 0;
   const questions    = questionsRes.data ?? [];
   const snapshots    = snapshotsRes.data ?? [];
+  const approvals    = approvalRes.data ?? [];
+
+  // Current user's approval for this diagnostic (if reviewer)
+  const myApproval = isReviewer && user
+    ? approvals.find((a: { reviewer_id: string }) => a.reviewer_id === user.id) ?? null
+    : null;
 
   const sys = Array.isArray(diagnostic.ai_systems)
     ? diagnostic.ai_systems[0]
@@ -150,9 +175,57 @@ export default async function DiagnosticReviewPage({
       </div>
 
       {/* AI generation — show for in_review, pending, and draft (allows re-generation / refinement) */}
-      {["in_review", "pending", "draft"].includes(diagnostic.status) && (
+      {["in_review", "pending", "draft"].includes(diagnostic.status) && !isReviewer && (
         <div className="mb-6">
           <GenerateFindingsButton diagnosticId={id} hasFindings={findings.length > 0} />
+        </div>
+      )}
+
+      {/* Reviewer sign-off panel */}
+      {(isReviewer || approvals.length > 0) && (
+        <div
+          className="rounded-xl p-4 mb-6"
+          style={{ background: "#0d1520", border: "1px solid rgba(45,156,219,0.15)" }}
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-wider mb-3"
+            style={{ color: "rgba(232,244,255,0.4)" }}
+          >
+            Reviewer Sign-offs
+          </p>
+          <div className="space-y-2">
+            {(approvals as { reviewer_id: string; reviewer_name: string; credential: string | null; approved_at: string | null }[]).map((a) => (
+              <div key={a.reviewer_id} className="flex items-center gap-3 text-sm">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ background: a.approved_at ? "#2ecc71" : "#e0a832" }}
+                />
+                <span style={{ color: "#e8f4ff" }}>{a.reviewer_name}</span>
+                {a.credential && (
+                  <span style={{ color: "#8899aa" }}>· {a.credential}</span>
+                )}
+                <span className="ml-auto text-xs" style={{ color: "#3d4f60" }}>
+                  {a.approved_at
+                    ? `Signed ${new Date(a.approved_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`
+                    : "Pending sign-off"}
+                </span>
+              </div>
+            ))}
+            {approvals.length === 0 && (
+              <p className="text-xs" style={{ color: "#3d4f60" }}>No reviewer sign-offs yet.</p>
+            )}
+          </div>
+          {isReviewer && user && (
+            <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <ReviewerSignButton
+                diagnosticId={id}
+                reviewerName={currentProfile?.display_name ?? "Reviewer"}
+                credential={currentProfile?.credential ?? null}
+                alreadySigned={!!myApproval?.approved_at}
+                approvedAt={myApproval?.approved_at ?? null}
+              />
+            </div>
+          )}
         </div>
       )}
 

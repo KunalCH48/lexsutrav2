@@ -22,6 +22,12 @@ type ObligationWithFinding = {
   finding: Finding;
 };
 
+type ReviewerApproval = {
+  reviewerName: string;
+  credential:   string | null;
+  approvedAt:   string;
+};
+
 type Props = {
   reportRef: string;
   grade: string;
@@ -30,6 +36,7 @@ type Props = {
   aiSystem: { name: string; risk_category: string; description: string } | null;
   policyVersion: { version_code: string; display_name: string; effective_date: string } | null;
   obligations: ObligationWithFinding[];
+  reviewerApproval?: ReviewerApproval | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -137,6 +144,7 @@ export function ReportViewer({
   aiSystem,
   policyVersion,
   obligations,
+  reviewerApproval,
 }: Props) {
   const criticalCount     = obligations.filter((ob) => ob.finding?.score === "critical_gap").length;
   const partialCount      = obligations.filter((ob) => ob.finding?.score === "partial").length;
@@ -350,7 +358,7 @@ export function ReportViewer({
                   { label: "Regulation",         value: `EU AI Act — Reg. (EU) 2024/1689` },
                   { label: "Policy Version",     value: policyVersion ? `${policyVersion.version_code} (Active ${new Date(policyVersion.effective_date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })})` : "v1.0 (Active Aug 2024)" },
                   { label: "Risk Classification", value: aiSystem?.risk_category ?? "High-Risk" },
-                  { label: "Reviewed By",        value: "LexSutra Expert Review" },
+                  { label: "Reviewed By",        value: reviewerApproval ? `${reviewerApproval.reviewerName}${reviewerApproval.credential ? `, ${reviewerApproval.credential}` : ""}` : "LexSutra Expert Review" },
                   { label: "Client",             value: company ? `${company.name}` : "—" },
                   { label: "Confidentiality",    value: "Confidential" },
                 ].map(({ label, value }) => (
@@ -745,7 +753,7 @@ export function ReportViewer({
                   { label: "Assessment Date",              value: fmtDate(diagnostic.created_at) },
                   { label: "Policy Version Assessed Against", value: policyVersion ? `${policyVersion.display_name} — Regulation (EU) 2024/1689` : "EU AI Act v1.0 — Regulation (EU) 2024/1689" },
                   { label: "Policy Active From",           value: policyVersion ? new Date(policyVersion.effective_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "August 2024" },
-                  { label: "Reviewed and Approved By",     value: "LexSutra Expert Review Team" },
+                  { label: "Reviewed and Approved By",     value: reviewerApproval ? `${reviewerApproval.reviewerName}${reviewerApproval.credential ? `, ${reviewerApproval.credential}` : ""} · Signed ${fmtDateShort(reviewerApproval.approvedAt)}` : "LexSutra Expert Review Team" },
                   { label: "AI Processing Disclosure",     value: "Findings drafted with Claude (Anthropic) · Human-reviewed before delivery · Covered under Anthropic Commercial Terms of Service (DPA effective 24 Feb 2025)" },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex gap-4">

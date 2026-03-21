@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { AdminSidebar } from "./AdminSidebar";
 
-export function MobileNav() {
+export function MobileNav({ userRole }: { userRole?: string }) {
   const [open, setOpen] = useState(false);
   const pathname        = usePathname();
 
@@ -45,7 +45,7 @@ export function MobileNav() {
         style={{ transform: open ? "translateX(0)" : "translateX(-100%)" }}
       >
         <div className="relative h-full">
-          <AdminSidebar />
+          <AdminSidebar userRole={userRole} />
           <button
             onClick={() => setOpen(false)}
             className="absolute top-4 right-4 p-1.5 rounded-lg"

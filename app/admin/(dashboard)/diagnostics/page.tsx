@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
@@ -7,9 +7,29 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Diagnostics — LexSutra Admin" };
 
 export default async function DiagnosticsPage() {
-  const supabase = createSupabaseAdminClient();
+  const supabase      = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: diagnostics } = await supabase
+  const adminClient = createSupabaseAdminClient();
+
+  // Get current user's role
+  const { data: profile } = user
+    ? await adminClient.from("profiles").select("role").eq("id", user.id).single()
+    : { data: null };
+
+  const isReviewer = profile?.role === "reviewer";
+
+  // For reviewers, only show diagnostics from their assigned companies
+  let allowedCompanyIds: string[] | null = null;
+  if (isReviewer && user) {
+    const { data: accessRows } = await adminClient
+      .from("reviewer_company_access")
+      .select("company_id")
+      .eq("reviewer_id", user.id);
+    allowedCompanyIds = (accessRows ?? []).map((r: { company_id: string }) => r.company_id);
+  }
+
+  let query = adminClient
     .from("diagnostics")
     .select(`
       id,
@@ -18,12 +38,26 @@ export default async function DiagnosticsPage() {
       ai_systems (
         name,
         risk_category,
-        companies ( name )
+        companies ( id, name )
       )
     `)
     .order("created_at", { ascending: false });
 
-  const rows = diagnostics ?? [];
+  const { data: allDiagnostics } = await query;
+
+  // Filter client-side for reviewers (PostgREST deep filter on joined tables is complex)
+  let diagnostics = allDiagnostics ?? [];
+  if (isReviewer && allowedCompanyIds !== null) {
+    diagnostics = diagnostics.filter((d: any) => {
+      const sys = Array.isArray(d.ai_systems) ? d.ai_systems[0] : d.ai_systems;
+      const company = sys?.companies
+        ? Array.isArray(sys.companies) ? sys.companies[0] : sys.companies
+        : null;
+      return company && allowedCompanyIds!.includes((company as { id: string }).id);
+    });
+  }
+
+  const rows = diagnostics;
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-GB", {

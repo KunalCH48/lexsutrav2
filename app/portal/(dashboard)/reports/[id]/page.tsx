@@ -56,8 +56,8 @@ export default async function ReportPage({
   // Verify this diagnostic belongs to the logged-in user's company
   if (!company || (company as { id: string }).id !== companyId) notFound();
 
-  // Fetch obligations + findings using actual DB column names
-  const [{ data: obligations }, { data: findings }] = await Promise.all([
+  // Fetch obligations, findings, and reviewer approval in parallel
+  const [{ data: obligations }, { data: findings }, { data: approvalRow }] = await Promise.all([
     adminClient
       .from("obligations")
       .select("id, name:title, article_ref:eu_article_ref, description")
@@ -66,7 +66,24 @@ export default async function ReportPage({
       .from("diagnostic_findings")
       .select("obligation_id, score, rag_status, summary, recommendations, eu_article_refs, priority")
       .eq("diagnostic_id", diagnosticId),
+    // Get the most recent approved review sign-off
+    adminClient
+      .from("report_approvals")
+      .select("reviewer_name, credential, approved_at")
+      .eq("diagnostic_id", diagnosticId)
+      .not("approved_at", "is", null)
+      .order("approved_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const reviewerApproval = approvalRow
+    ? {
+        reviewerName: (approvalRow as { reviewer_name: string; credential: string | null; approved_at: string }).reviewer_name,
+        credential:   (approvalRow as { reviewer_name: string; credential: string | null; approved_at: string }).credential,
+        approvedAt:   (approvalRow as { reviewer_name: string; credential: string | null; approved_at: string }).approved_at,
+      }
+    : null;
 
   type RawFinding = {
     obligation_id:   string;
@@ -125,6 +142,7 @@ export default async function ReportPage({
       company={companyForViewer ? { id: companyForViewer.id, name: companyForViewer.name, email: companyForViewer.contact_email } : null}
       aiSystem={sys as { name: string; risk_category: string; description: string } | null}
       policyVersion={pv as { version_code: string; display_name: string; effective_date: string } | null}
+      reviewerApproval={reviewerApproval}
       obligations={(obligations ?? []).map((ob: {
         id: string;
         name: string;

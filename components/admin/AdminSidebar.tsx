@@ -12,6 +12,7 @@ import {
   MessageSquare,
   FileText,
   Radar,
+  UserCheck,
 } from "lucide-react";
 import { SidebarLink } from "./SidebarLink";
 import { SignOutButton } from "./SignOutButton";
@@ -28,12 +29,16 @@ const OPERATIONS = [
 const PLATFORM = [
   { href: "/admin/regulatory-intel", label: "Regulatory Intel", icon: Radar,         exact: false },
   { href: "/admin/policy-versions",  label: "Policy Versions",  icon: BookOpen,      exact: false },
+  { href: "/admin/reviewers",        label: "Reviewers",        icon: UserCheck,     exact: false },
   { href: "/admin/errors",           label: "Error Logs",       icon: AlertTriangle, exact: false },
   { href: "/admin/activity",         label: "Activity Logs",    icon: ScrollText,    exact: false },
   { href: "/admin/revenue",          label: "Revenue",          icon: DollarSign,    exact: false },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ userRole }: { userRole?: string }) {
+  const platformLinks = userRole === "reviewer"
+    ? PLATFORM.filter((item) => item.href !== "/admin/reviewers" && item.href !== "/admin/revenue")
+    : PLATFORM;
   return (
     <aside
       className="w-60 h-screen flex flex-col shrink-0 sticky top-0"
@@ -85,7 +90,7 @@ export function AdminSidebar() {
           Platform
         </p>
         <div className="space-y-0.5">
-          {PLATFORM.map((item) => (
+          {platformLinks.map((item) => (
             <SidebarLink key={item.href} {...item} />
           ))}
         </div>
