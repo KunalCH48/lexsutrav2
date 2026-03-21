@@ -316,7 +316,7 @@ export default async function ReviewerClientDetailPage({
                     className="flex items-center justify-between gap-2 rounded-lg px-3 py-2"
                     style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(45,156,219,0.06)" }}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <StatusBadge status={d.status} />
                       <span className="text-xs" style={{ color: "#3d4f60" }}>{fmtDate(d.created_at)}</span>
                       {d.scan_quality && (
@@ -325,9 +325,13 @@ export default async function ReviewerClientDetailPage({
                         </span>
                       )}
                     </div>
-                    <span className="text-xs shrink-0" style={{ color: "#3d4f60" }}>
-                      {d.website_url ?? d.contact_email ?? ""}
-                    </span>
+                    <Link
+                      href={`/reviewer/demo-requests/${d.id}`}
+                      className="text-xs shrink-0 font-medium"
+                      style={{ color: "#2d9cdb" }}
+                    >
+                      Review →
+                    </Link>
                   </div>
                 ))}
               </div>

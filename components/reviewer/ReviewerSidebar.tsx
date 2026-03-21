@@ -5,8 +5,8 @@ import { SidebarLink } from "@/components/admin/SidebarLink";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 
 const LINKS = [
-  { href: "/reviewer/clients",     label: "My Clients",      icon: Users,         exact: false },
-  { href: "/reviewer/diagnostics", label: "Diagnostics",     icon: ClipboardList, exact: false },
+  { href: "/reviewer/clients",     label: "My Clients",  icon: Users,         exact: false },
+  { href: "/reviewer/diagnostics", label: "Diagnostics", icon: ClipboardList, exact: false },
 ];
 
 export function ReviewerSidebar() {
