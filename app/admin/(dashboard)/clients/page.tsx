@@ -20,13 +20,15 @@ export default async function ClientsPage() {
     { data: findings },
     { data: documents },
     { data: demoRequests },
+    { data: companyUrls },
   ] = await Promise.all([
-    supabase.from("companies").select("id, name, contact_email, website_url, created_at").order("created_at", { ascending: false }),
+    supabase.from("companies").select("id, name, contact_email, created_at").order("created_at", { ascending: false }),
     supabase.from("ai_systems").select("id, company_id"),
     supabase.from("diagnostics").select("id, ai_system_id, status, created_at"),
     supabase.from("diagnostic_findings").select("diagnostic_id, rag_status"),
     supabase.from("documents").select("id, company_id, confirmed_at"),
     supabase.from("demo_requests").select("id, contact_email, website_url, status, created_at"),
+    supabase.from("companies").select("id, website_url"),  // separate query — safe fallback for URL matching
   ]);
 
   const rows = companies ?? [];
@@ -65,12 +67,30 @@ export default async function ClientsPage() {
     return u.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
   }
 
-  function findDemo(email: string | null, url: string | null): DemoRow | null {
-    if (!email && !url) return null;
-    return demos.find((d) =>
-      (email && d.contact_email?.toLowerCase() === email.toLowerCase()) ||
-      (url && d.website_url && normalizeUrl(d.website_url) === normalizeUrl(url))
-    ) ?? null;
+  // Build company website_url → demo lookup (uses separate safe query)
+  const urlToDemo = new Map<string, DemoRow>();
+  for (const d of demos) {
+    const n = normalizeUrl(d.website_url);
+    if (n) urlToDemo.set(n, d);
+  }
+
+  // Map company id → website_url (from the separate safe query)
+  const companyUrlMap = new Map<string, string | null>(
+    (companyUrls ?? []).map((c: { id: string; website_url: string | null }) => [c.id, c.website_url])
+  );
+
+  function findDemo(companyId: string, email: string | null): DemoRow | null {
+    // 1. Match by email (most reliable)
+    if (email) {
+      const byEmail = demos.find((d) => d.contact_email?.toLowerCase() === email.toLowerCase());
+      if (byEmail) return byEmail;
+    }
+    // 2. Match by website URL (safe — uses separate query, won't break main list)
+    const companyUrl = companyUrlMap.get(companyId);
+    if (companyUrl) {
+      return urlToDemo.get(normalizeUrl(companyUrl)) ?? null;
+    }
+    return null;
   }
 
   return (
@@ -101,7 +121,7 @@ export default async function ClientsPage() {
             const criticals = allDiags.reduce((sum, d) => sum + (critsByDiag.get(d.id) ?? 0), 0);
             const companyDocs    = (documents ?? []).filter((d: any) => d.company_id === c.id);
             const confirmedDocs  = companyDocs.filter((d: any) => d.confirmed_at).length;
-            const demo           = findDemo(c.contact_email, c.website_url);
+            const demo           = findDemo(c.id, c.contact_email);
 
             return (
               <TableRow key={c.id}>

@@ -17,23 +17,17 @@ export default async function DemoRequestsPage() {
 
     supabase
       .from("companies")
-      .select("id, contact_email, website_url"),
+      .select("id, contact_email"),
   ]);
 
   const rows = requests ?? [];
 
-  function normalizeUrl(u: string | null) {
-    if (!u) return "";
-    return u.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
-  }
-
-  // Find company by email OR website URL
-  function findCompanyId(email: string | null, url: string | null): string | undefined {
-    return (companies ?? []).find((c: any) =>
-      (email && c.contact_email?.toLowerCase() === email.toLowerCase()) ||
-      (url && c.website_url && normalizeUrl(c.website_url) === normalizeUrl(url))
-    )?.id;
-  }
+  // email → company_id (for cross-reference links)
+  const emailToCompanyId = new Map(
+    (companies ?? []).map((c: { id: string; contact_email: string }) =>
+      [c.contact_email?.toLowerCase(), c.id]
+    )
+  );
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-GB", {
@@ -81,17 +75,14 @@ export default async function DemoRequestsPage() {
             <TableRow key={r.id}>
               <TableCell muted>{fmtDate(r.created_at)}</TableCell>
               <TableCell>
-                {findCompanyId(r.contact_email, r.website_url) ? (
-                  <Link
-                    href={`/admin/clients/${findCompanyId(r.contact_email, r.website_url)}`}
-                    className="hover:underline"
-                    style={{ color: "#e8f4ff" }}
-                  >
-                    {r.company_name}
-                  </Link>
-                ) : (
-                  r.company_name
-                )}
+                {(() => {
+                  const companyId = emailToCompanyId.get(r.contact_email?.toLowerCase());
+                  return companyId ? (
+                    <Link href={`/admin/clients/${companyId}`} className="hover:underline" style={{ color: "#e8f4ff" }}>
+                      {r.company_name}
+                    </Link>
+                  ) : r.company_name;
+                })()}
               </TableCell>
               <TableCell muted>{r.contact_email}</TableCell>
               <TableCell>
