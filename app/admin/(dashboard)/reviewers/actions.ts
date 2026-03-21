@@ -107,6 +107,7 @@ export async function assignCompany(reviewerId: string, companyId: string) {
     });
 
     revalidatePath("/admin/reviewers");
+    revalidatePath("/admin/clients", "layout");
 
   } catch (err) {
     await logError({ error: err, source: "admin/reviewers/actions", action: "assignCompany", userId });
@@ -138,6 +139,7 @@ export async function removeAccess(reviewerId: string, companyId: string) {
     });
 
     revalidatePath("/admin/reviewers");
+    revalidatePath("/admin/clients", "layout");
 
   } catch (err) {
     await logError({ error: err, source: "admin/reviewers/actions", action: "removeAccess", userId });

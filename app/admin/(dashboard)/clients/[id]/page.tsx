@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
+import { CompanyReviewerPanel } from "@/components/admin/CompanyReviewerPanel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Client Detail — LexSutra Admin" };
@@ -58,12 +59,16 @@ export default async function ClientDetailPage({
     { data: demoRequests },
     { data: clientProfile },
     { data: activityLogs },
+    { data: allReviewers },
+    { data: assignedAccess },
   ] = await Promise.all([
     adminClient.from("ai_systems").select("id, name, risk_category, description").eq("company_id", id),
     adminClient.from("documents").select("id, file_name, file_size, file_type, confirmed_at, created_at").eq("company_id", id).order("created_at", { ascending: false }),
     adminClient.from("demo_requests").select("id, status, created_at, company_name, contact_email, website_url").order("created_at", { ascending: false }),
     adminClient.from("profiles").select("id, display_name, role").eq("company_id", id).eq("role", "client").maybeSingle(),
     adminClient.from("activity_log").select("id, action, created_at").eq("entity_id", id).order("created_at", { ascending: false }).limit(15),
+    adminClient.from("profiles").select("id, display_name, credential").eq("role", "reviewer").order("display_name"),
+    adminClient.from("reviewer_company_access").select("reviewer_id").eq("company_id", id),
   ]);
 
   const systems = aiSystems ?? [];
@@ -117,6 +122,8 @@ export default async function ClientDetailPage({
       .order("approved_at", { ascending: false });
     approvals = data ?? [];
   }
+
+  const assignedReviewerIds = (assignedAccess ?? []).map((r: any) => r.reviewer_id);
 
   // Stats
   const criticals     = findings.filter((f: any) => f.rag_status === "red").length;
@@ -262,27 +269,29 @@ export default async function ClientDetailPage({
             )}
           </Section>
 
-          {/* Reviewer Sign-offs */}
-          {approvals.length > 0 && (
-            <Section title="Reviewer Sign-offs">
-              <div className="space-y-3">
+          {/* Reviewers — assign access */}
+          <Section title="Reviewers">
+            <CompanyReviewerPanel
+              companyId={id}
+              allReviewers={allReviewers ?? []}
+              assignedReviewerIds={assignedReviewerIds}
+            />
+            {/* Sign-off history */}
+            {approvals.length > 0 && (
+              <div className="mt-4 pt-4 space-y-2" style={{ borderTop: "1px solid rgba(45,156,219,0.08)" }}>
+                <p className="text-xs font-medium mb-2" style={{ color: "#3d4f60" }}>Report sign-offs</p>
                 {approvals.map((a: any) => (
                   <div key={a.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm" style={{ color: "#e8f4ff" }}>{a.reviewer_name}</p>
-                      {a.credential && <p className="text-xs" style={{ color: "#3d4f60" }}>{a.credential}</p>}
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(46,204,113,0.1)", color: "#2ecc71" }}>
-                        Signed
-                      </span>
-                      <p className="text-xs mt-0.5" style={{ color: "#3d4f60" }}>{fmtDate(a.approved_at)}</p>
+                    <p className="text-xs" style={{ color: "#8899aa" }}>{a.reviewer_name}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(46,204,113,0.1)", color: "#2ecc71" }}>✓ Signed</span>
+                      <span className="text-xs" style={{ color: "#3d4f60" }}>{fmtDate(a.approved_at)}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            </Section>
-          )}
+            )}
+          </Section>
         </div>
 
         {/* Right */}
