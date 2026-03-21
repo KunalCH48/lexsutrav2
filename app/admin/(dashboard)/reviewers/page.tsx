@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { ReviewerManagePanel } from "@/components/admin/ReviewerManagePanel";
+import { LoginAsButton } from "@/components/admin/LoginAsButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Reviewers — LexSutra Admin" };
@@ -64,7 +65,7 @@ export default async function ReviewersPage() {
           >
             Active Reviewers
           </h3>
-          <DataTable headers={["Reviewer", "Credential", "Assigned Companies", "Actions"]}>
+          <DataTable headers={["Reviewer", "Credential", "Assigned Companies", "Actions", ""]}>
             {reviewerList.map((r: { id: string; display_name: string | null; credential: string | null }) => {
               const assigned = assignedMap[r.id] ?? [];
               return (
@@ -105,6 +106,9 @@ export default async function ReviewersPage() {
                       companies={companyList}
                       compact
                     />
+                  </TableCell>
+                  <TableCell>
+                    <LoginAsButton userId={r.id} label="View as Reviewer" />
                   </TableCell>
                 </TableRow>
               );

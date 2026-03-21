@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") {
+  if (!profile || !["admin", "reviewer"].includes(profile.role)) {
     await supabase.auth.signOut();
     return NextResponse.redirect(`${origin}/admin/login?error=not_admin`);
   }

@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
+import { LoginAsButton } from "@/components/admin/LoginAsButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Companies — LexSutra Admin" };
@@ -7,12 +8,26 @@ export const metadata = { title: "Companies — LexSutra Admin" };
 export default async function CompaniesPage() {
   const supabase = createSupabaseAdminClient();
 
-  const { data: companies } = await supabase
-    .from("companies")
-    .select("id, name, contact_email, created_at, ai_systems(count)")
-    .order("created_at", { ascending: false });
+  const [{ data: companies }, { data: clientProfiles }] = await Promise.all([
+    supabase
+      .from("companies")
+      .select("id, name, contact_email, created_at, ai_systems(count)")
+      .order("created_at", { ascending: false }),
+
+    // Get the user ID for each client profile (so we can generate login-as links)
+    supabase
+      .from("profiles")
+      .select("id, company_id")
+      .eq("role", "client"),
+  ]);
 
   const rows = companies ?? [];
+
+  // Build map: company_id → profile id (user id)
+  const companyToUserId: Record<string, string> = {};
+  for (const p of (clientProfiles ?? []) as { id: string; company_id: string | null }[]) {
+    if (p.company_id) companyToUserId[p.company_id] = p.id;
+  }
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-GB", {
@@ -45,10 +60,10 @@ export default async function CompaniesPage() {
         </a>
       </div>
 
-      <DataTable headers={["Company", "Email", "AI Systems", "Created"]}>
+      <DataTable headers={["Company", "Email", "AI Systems", "Created", ""]}>
         {rows.length === 0 ? (
           <tr>
-            <td colSpan={4} className="px-4 py-8 text-center text-sm" style={{ color: "#3d4f60" }}>
+            <td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: "#3d4f60" }}>
               No companies registered yet.
             </td>
           </tr>
@@ -59,6 +74,7 @@ export default async function CompaniesPage() {
                 ? (c.ai_systems[0] as { count: number }).count
                 : 0
               : 0;
+            const clientUserId = companyToUserId[c.id] ?? null;
             return (
               <TableRow key={c.id}>
                 <TableCell>{c.name}</TableCell>
@@ -72,6 +88,13 @@ export default async function CompaniesPage() {
                   </span>
                 </TableCell>
                 <TableCell muted>{fmtDate(c.created_at)}</TableCell>
+                <TableCell>
+                  {clientUserId ? (
+                    <LoginAsButton userId={clientUserId} label="View as Client" />
+                  ) : (
+                    <span className="text-xs" style={{ color: "#3d4f60" }}>No account yet</span>
+                  )}
+                </TableCell>
               </TableRow>
             );
           })
