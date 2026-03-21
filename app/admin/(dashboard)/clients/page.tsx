@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 
@@ -11,7 +11,29 @@ function fmtDate(iso: string) {
 }
 
 export default async function ClientsPage() {
+  const serverClient = await createSupabaseServerClient();
+  const { data: { user } } = await serverClient.auth.getUser();
+
   const supabase = createSupabaseAdminClient();
+
+  // Reviewer access filter
+  let allowedCompanyIds: string[] | null = null;
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (profile?.role === "reviewer") {
+      const { data: access } = await supabase
+        .from("reviewer_company_access")
+        .select("company_id")
+        .eq("reviewer_id", user.id);
+      allowedCompanyIds = (access ?? []).map((r: { company_id: string }) => r.company_id);
+    }
+  }
+
+  // Build companies query — reviewers only see assigned companies
+  const companiesQuery = supabase.from("companies").select("id, name, contact_email, created_at").order("created_at", { ascending: false });
+  if (allowedCompanyIds !== null) {
+    companiesQuery.in("id", allowedCompanyIds.length > 0 ? allowedCompanyIds : ["00000000-0000-0000-0000-000000000000"]);
+  }
 
   const [
     { data: companies },
@@ -22,7 +44,7 @@ export default async function ClientsPage() {
     { data: demoRequests },
     { data: companyUrls },
   ] = await Promise.all([
-    supabase.from("companies").select("id, name, contact_email, created_at").order("created_at", { ascending: false }),
+    companiesQuery,
     supabase.from("ai_systems").select("id, company_id"),
     supabase.from("diagnostics").select("id, ai_system_id, status, created_at"),
     supabase.from("diagnostic_findings").select("diagnostic_id, rag_status"),
