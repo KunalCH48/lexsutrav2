@@ -22,7 +22,9 @@ async function requireAdmin() {
 }
 
 // Invite a new reviewer by email (creates auth user + profile with role=reviewer)
-export async function inviteReviewer(formData: FormData) {
+export async function inviteReviewer(
+  formData: FormData
+): Promise<{ success: true } | { error: string }> {
   let userId: string | null = null;
   try {
     const { user, adminClient } = await requireAdmin();
@@ -32,9 +34,9 @@ export async function inviteReviewer(formData: FormData) {
     const displayName = (formData.get("display_name") as string)?.trim();
     const credential  = (formData.get("credential") as string)?.trim() || null;
 
-    if (!email || !displayName) throw new Error("Email and display name are required.");
+    if (!email || !displayName) return { error: "Email and display name are required." };
 
-    // Check if a profile with this email already exists
+    // Check if a user with this email already exists
     const { data: existingUser } = await adminClient.auth.admin.listUsers();
     const existing = existingUser?.users?.find((u: { email?: string }) => u.email === email);
 
@@ -42,25 +44,23 @@ export async function inviteReviewer(formData: FormData) {
 
     if (existing) {
       reviewerId = existing.id;
-      // Update their profile to reviewer if not already
-      await adminClient
-        .from("profiles")
-        .upsert({
-          id:           reviewerId,
-          role:         "reviewer",
-          display_name: displayName,
-          credential,
-        }, { onConflict: "id" });
+      await adminClient.from("profiles").upsert({
+        id:           reviewerId,
+        role:         "reviewer",
+        display_name: displayName,
+        credential,
+      }, { onConflict: "id" });
     } else {
-      // Create auth user + send invite email
       const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
         data: { role: "reviewer" },
         redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/admin/login`,
       });
-      if (inviteError) throw inviteError;
+      if (inviteError) {
+        await logError({ error: inviteError, source: "admin/reviewers/actions", action: "inviteReviewer", userId });
+        return { error: inviteError.message };
+      }
       reviewerId = invited.user.id;
 
-      // Insert profile
       await adminClient.from("profiles").upsert({
         id:           reviewerId,
         role:         "reviewer",
@@ -78,10 +78,11 @@ export async function inviteReviewer(formData: FormData) {
     });
 
     revalidatePath("/admin/reviewers");
+    return { success: true };
 
   } catch (err) {
     await logError({ error: err, source: "admin/reviewers/actions", action: "inviteReviewer", userId });
-    throw err;
+    return { error: err instanceof Error ? err.message : "Unexpected error." };
   }
 }
 

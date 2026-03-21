@@ -54,11 +54,11 @@ export function ReviewerManagePanel(props: Props) {
           <form
             action={async (fd) => {
               setError("");
-              try {
-                await inviteReviewer(fd);
+              const result = await inviteReviewer(fd);
+              if ("error" in result) {
+                setError(result.error);
+              } else {
                 setShowInvite(false);
-              } catch (err: unknown) {
-                setError(err instanceof Error ? err.message : "Failed to invite reviewer");
               }
             }}
             className="space-y-3"
