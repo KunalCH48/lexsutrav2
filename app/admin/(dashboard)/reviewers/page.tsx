@@ -1,14 +1,13 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
-import { requireNotReviewer } from "@/lib/admin-guard";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { ReviewerManagePanel } from "@/components/admin/ReviewerManagePanel";
+import { ReviewerClientsPanel } from "@/components/admin/ReviewerClientsPanel";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Reviewers — LexSutra Admin" };
 
 export default async function ReviewersPage() {
-  await requireNotReviewer();
   const supabase = createSupabaseAdminClient();
 
   const [{ data: reviewers }, { data: companies }] = await Promise.all([
@@ -67,7 +66,7 @@ export default async function ReviewersPage() {
           >
             Active Reviewers
           </h3>
-          <DataTable headers={["Reviewer", "Credential", "Assigned Companies", "Actions", ""]}>
+          <DataTable headers={["Reviewer", "Credential", "Clients", "Actions", ""]}>
             {reviewerList.map((r: { id: string; display_name: string | null; credential: string | null }) => {
               const assigned = assignedMap[r.id] ?? [];
               return (
@@ -79,25 +78,11 @@ export default async function ReviewersPage() {
                   </TableCell>
                   <TableCell muted>{r.credential ?? "—"}</TableCell>
                   <TableCell>
-                    {assigned.length === 0 ? (
-                      <span style={{ color: "#3d4f60" }}>No companies assigned</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {assigned.map((c) => (
-                          <span
-                            key={c.id}
-                            className="text-xs px-2 py-0.5 rounded"
-                            style={{
-                              background: "rgba(45,156,219,0.1)",
-                              color:      "#2d9cdb",
-                              border:     "1px solid rgba(45,156,219,0.2)",
-                            }}
-                          >
-                            {c.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <ReviewerClientsPanel
+                      reviewerId={r.id}
+                      assignedCompanies={assigned}
+                      allCompanies={companyList}
+                    />
                   </TableCell>
                   <TableCell>
                     <ReviewerManagePanel

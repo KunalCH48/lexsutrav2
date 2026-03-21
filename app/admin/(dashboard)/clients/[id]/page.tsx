@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
 import { CompanyReviewerPanel } from "@/components/admin/CompanyReviewerPanel";
@@ -43,22 +43,6 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
   const adminClient = createSupabaseAdminClient();
-
-  // Reviewer guard: check they're assigned to this company
-  const serverClient = await createSupabaseServerClient();
-  const { data: { user } } = await serverClient.auth.getUser();
-  if (user) {
-    const { data: profile } = await adminClient.from("profiles").select("role").eq("id", user.id).single();
-    if (profile?.role === "reviewer") {
-      const { data: access } = await adminClient
-        .from("reviewer_company_access")
-        .select("company_id")
-        .eq("reviewer_id", user.id)
-        .eq("company_id", id)
-        .maybeSingle();
-      if (!access) notFound();
-    }
-  }
 
   // 1. Company
   const { data: company, error: companyErr } = await adminClient

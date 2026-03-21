@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { MobileNav } from "@/components/admin/MobileNav";
+import { ReviewerSidebar } from "@/components/reviewer/ReviewerSidebar";
 
-export default async function DashboardLayout({
+export default async function ReviewerLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -14,39 +13,39 @@ export default async function DashboardLayout({
 
   const adminClient = createSupabaseAdminClient();
   const { data: profile } = await adminClient
-    .from("profiles").select("role, display_name").eq("id", user.id).single();
-  if (!profile || profile.role !== "admin") {
-    if (profile?.role === "reviewer") redirect("/reviewer");
+    .from("profiles")
+    .select("role, display_name")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "reviewer") {
+    if (profile?.role === "admin") redirect("/admin");
     redirect("/admin/login");
   }
 
-  const displayName = profile.display_name ?? "Founder";
+  const displayName = profile.display_name ?? "Reviewer";
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#080c14" }}>
-      {/* Desktop sidebar — hidden on mobile */}
+      {/* Desktop sidebar */}
       <div className="hidden md:block">
-        <AdminSidebar />
+        <ReviewerSidebar />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top admin bar */}
+        {/* Top bar */}
         <div
           className="h-14 flex items-center justify-between px-4 md:px-6 shrink-0"
           style={{
             background:   "rgba(6,8,16,0.95)",
-            borderBottom: "1px solid rgba(224,82,82,0.2)",
+            borderBottom: "1px solid rgba(45,156,219,0.2)",
           }}
         >
-          <div className="flex items-center gap-3">
-            {/* Hamburger — mobile only */}
-            <MobileNav />
-            <span className="text-sm font-semibold tracking-widest" style={{ color: "#e05252" }}>
-              ⚡ ADMIN MODE
-            </span>
-          </div>
+          <span className="text-sm font-semibold tracking-widest" style={{ color: "#2d9cdb" }}>
+            REVIEWER PORTAL
+          </span>
           <span className="text-xs hidden sm:block" style={{ color: "rgba(232,244,255,0.4)" }}>
-            LexSutra Internal · {displayName}
+            LexSutra · {displayName}
           </span>
         </div>
 

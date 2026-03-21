@@ -35,13 +35,7 @@ const PLATFORM = [
   { href: "/admin/revenue",          label: "Revenue",          icon: DollarSign,    exact: false },
 ];
 
-const REVIEWER_LINKS = [
-  { href: "/admin/diagnostics", label: "Diagnostic Queue", icon: ClipboardList, exact: false },
-  { href: "/admin/clients",     label: "My Clients",       icon: Users,         exact: false },
-];
-
-export function AdminSidebar({ userRole }: { userRole?: string }) {
-  const isReviewer = userRole === "reviewer";
+export function AdminSidebar() {
   return (
     <aside
       className="w-60 h-screen flex flex-col shrink-0 sticky top-0"
@@ -61,43 +55,33 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         <div
           className="text-center py-1.5 rounded text-xs font-medium tracking-widest uppercase"
           style={{
-            background: isReviewer ? "rgba(45,156,219,0.1)"  : "rgba(224,82,82,0.1)",
-            border:     isReviewer ? "1px solid rgba(45,156,219,0.2)" : "1px solid rgba(224,82,82,0.2)",
-            color:      isReviewer ? "#2d9cdb" : "#e05252",
+            background: "rgba(224,82,82,0.1)",
+            border:     "1px solid rgba(224,82,82,0.2)",
+            color:      "#e05252",
           }}
         >
-          {isReviewer ? "Reviewer Access" : "Admin Access"}
+          Admin Access
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        {isReviewer ? (
-          <div className="space-y-0.5 mt-2">
-            {REVIEWER_LINKS.map((item) => (
-              <SidebarLink key={item.href} {...item} />
-            ))}
-          </div>
-        ) : (
-          <>
-            <p className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(232,244,255,0.3)" }}>
-              Operations
-            </p>
-            <div className="space-y-0.5 mb-4">
-              {OPERATIONS.map((item) => (
-                <SidebarLink key={item.href} {...item} />
-              ))}
-            </div>
-            <p className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(232,244,255,0.3)" }}>
-              Platform
-            </p>
-            <div className="space-y-0.5">
-              {PLATFORM.map((item) => (
-                <SidebarLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
+        <p className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(232,244,255,0.3)" }}>
+          Operations
+        </p>
+        <div className="space-y-0.5 mb-4">
+          {OPERATIONS.map((item) => (
+            <SidebarLink key={item.href} {...item} />
+          ))}
+        </div>
+        <p className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(232,244,255,0.3)" }}>
+          Platform
+        </p>
+        <div className="space-y-0.5">
+          {PLATFORM.map((item) => (
+            <SidebarLink key={item.href} {...item} />
+          ))}
+        </div>
       </nav>
 
       {/* Sign out */}

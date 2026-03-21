@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
-import { requireNotReviewer } from "@/lib/admin-guard";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { AddPolicyVersionForm, SetCurrentButton } from "@/components/admin/PolicyVersionControls";
 
@@ -14,7 +13,6 @@ function fmtDate(iso: string | null) {
 }
 
 export default async function PolicyVersionsPage() {
-  await requireNotReviewer();
   const adminClient = createSupabaseAdminClient();
 
   const [versionsRes, diagnosticsRes] = await Promise.all([

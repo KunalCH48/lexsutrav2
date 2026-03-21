@@ -61,5 +61,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/admin/login?error=not_admin`);
   }
 
-  return response;
+  // Redirect reviewers to their own portal, admins to admin
+  const redirectTo = profile.role === "reviewer"
+    ? `${origin}/reviewer`
+    : `${origin}/admin`;
+
+  response.headers.set("Location", redirectTo);
+  return new NextResponse(null, { status: 307, headers: response.headers });
 }
