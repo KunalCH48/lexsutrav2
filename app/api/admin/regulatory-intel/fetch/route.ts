@@ -88,6 +88,17 @@ export async function POST(req: NextRequest) {
         const html = await res.text();
         const text = stripHtml(html).slice(0, 12_000); // cap at 12k chars for Claude
 
+        // Fetch existing titles for this source to pass to Claude
+        const { data: existingRows } = await adminClient
+          .from("regulatory_intel")
+          .select("title")
+          .eq("source_name", source.name);
+
+        const existingTitlesList = (existingRows ?? []).map((r: { title: string }) => r.title);
+        const existingTitlesContext = existingTitlesList.length > 0
+          ? `\n\nALREADY STORED — do NOT return these or anything that is essentially the same topic (even if worded differently):\n${existingTitlesList.map((t: string) => `- ${t}`).join("\n")}`
+          : "";
+
         // Ask Claude to extract regulatory developments from this page
         const message = await anthropic.messages.create({
           model:      "claude-sonnet-4-6",
@@ -116,7 +127,7 @@ Impact levels:
           messages: [
             {
               role:    "user",
-              content: `Source: ${source.name}\nURL: ${source.url}\n\nPage content:\n${text}`,
+              content: `Source: ${source.name}\nURL: ${source.url}${existingTitlesContext}\n\nPage content:\n${text}`,
             },
           ],
         });
@@ -139,16 +150,11 @@ Impact levels:
 
         if (items.length === 0) continue;
 
-        // Deduplicate: skip titles we already have from this source (exact match)
-        const { data: existing } = await adminClient
-          .from("regulatory_intel")
-          .select("title")
-          .eq("source_name", source.name);
-
-        const existingTitles = new Set((existing ?? []).map((r: { title: string }) => r.title.toLowerCase()));
+        // Deduplicate in-memory: skip titles already stored for this source
+        const existingTitlesSet = new Set(existingTitlesList.map((t: string) => t.toLowerCase().trim()));
 
         const toInsert = items
-          .filter((item) => !existingTitles.has(item.title.toLowerCase()))
+          .filter((item) => !existingTitlesSet.has(item.title.toLowerCase().trim()))
           .map((item) => ({
             title:                item.title,
             source_name:          source.name,
@@ -168,7 +174,10 @@ Impact levels:
             .insert(toInsert);
 
           if (insertError) {
-            errors.push(`${source.name}: DB insert failed — ${insertError.message}`);
+            // 23505 = unique_violation — item already exists, not a real error
+            if (insertError.code !== "23505") {
+              errors.push(`${source.name}: DB insert failed — ${insertError.message}`);
+            }
           } else {
             totalAdded += toInsert.length;
           }
