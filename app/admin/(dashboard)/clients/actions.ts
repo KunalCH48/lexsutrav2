@@ -17,7 +17,12 @@ async function requireAdminOrReviewer() {
     .single();
 
   if (!profile || !["admin", "reviewer"].includes(profile.role)) throw new Error("Forbidden");
-  return { user, adminClient };
+  return { user, adminClient, role: profile.role as "admin" | "reviewer" };
+}
+
+function revalidateClientPaths(companyId: string) {
+  revalidatePath(`/admin/clients/${companyId}`);
+  revalidatePath(`/reviewer/clients/${companyId}`);
 }
 
 export async function addCompanyNote(companyId: string, content: string) {
@@ -35,25 +40,46 @@ export async function addCompanyNote(companyId: string, content: string) {
 
     if (error) throw error;
 
-    revalidatePath(`/admin/clients/${companyId}`);
+    revalidateClientPaths(companyId);
   } catch (err) {
     await logError({ error: err, source: "admin/clients/actions", action: "addCompanyNote" });
     throw err;
   }
 }
 
-export async function deleteCompanyNote(noteId: string, companyId: string) {
+export async function updateCompanyNote(noteId: string, content: string, companyId: string) {
   try {
-    const { adminClient } = await requireAdminOrReviewer();
+    const { user, adminClient, role } = await requireAdminOrReviewer();
 
-    const { error } = await adminClient
-      .from("company_notes")
-      .delete()
-      .eq("id", noteId);
+    const trimmed = content.trim();
+    if (!trimmed) throw new Error("Note cannot be empty");
 
+    // Admins can edit any note; reviewers can only edit their own
+    let query = adminClient.from("company_notes").update({ content: trimmed }).eq("id", noteId);
+    if (role !== "admin") query = query.eq("created_by", user.id);
+
+    const { error } = await query;
     if (error) throw error;
 
-    revalidatePath(`/admin/clients/${companyId}`);
+    revalidateClientPaths(companyId);
+  } catch (err) {
+    await logError({ error: err, source: "admin/clients/actions", action: "updateCompanyNote" });
+    throw err;
+  }
+}
+
+export async function deleteCompanyNote(noteId: string, companyId: string) {
+  try {
+    const { user, adminClient, role } = await requireAdminOrReviewer();
+
+    // Admins can delete any note; reviewers can only delete their own
+    let query = adminClient.from("company_notes").delete().eq("id", noteId);
+    if (role !== "admin") query = query.eq("created_by", user.id);
+
+    const { error } = await query;
+    if (error) throw error;
+
+    revalidateClientPaths(companyId);
   } catch (err) {
     await logError({ error: err, source: "admin/clients/actions", action: "deleteCompanyNote" });
     throw err;

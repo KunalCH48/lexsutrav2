@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
 import { CompanyReviewerPanel } from "@/components/admin/CompanyReviewerPanel";
@@ -42,6 +42,8 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const serverClient = await createSupabaseServerClient();
+  const { data: { user: currentUser } } = await serverClient.auth.getUser();
   const adminClient = createSupabaseAdminClient();
 
   // 1. Company
@@ -73,7 +75,7 @@ export default async function ClientDetailPage({
     adminClient.from("profiles").select("id, display_name, credential").eq("role", "reviewer").order("display_name"),
     adminClient.from("reviewer_company_access").select("reviewer_id").eq("company_id", id),
     adminClient.from("company_notes").select("id, content, created_at, created_by").eq("company_id", id).order("created_at", { ascending: false }),
-    adminClient.from("profiles").select("id, display_name").eq("role", "admin"),
+    adminClient.from("profiles").select("id, display_name, role"),
   ]);
 
   const systems = aiSystems ?? [];
@@ -84,9 +86,9 @@ export default async function ClientDetailPage({
     company.contact_email && d.contact_email?.toLowerCase() === company.contact_email.toLowerCase()
   );
 
-  // Build author map for notes
+  // Build author map for notes (all roles)
   const authorMap = new Map(
-    (noteAuthors ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name])
+    (noteAuthors ?? []).map((p: { id: string; display_name: string | null; role: string }) => [p.id, p.display_name])
   );
   const notesWithAuthors = (notes ?? []).map((n: any) => ({
     ...n,
@@ -213,7 +215,7 @@ export default async function ClientDetailPage({
       {/* Notes — full width at top so it's always visible */}
       <div className="mb-6">
         <Section title="Admin Notes">
-          <ClientNotesPanel companyId={id} initialNotes={notesWithAuthors} />
+          <ClientNotesPanel companyId={id} initialNotes={notesWithAuthors} currentUserId={currentUser?.id} />
         </Section>
       </div>
 
