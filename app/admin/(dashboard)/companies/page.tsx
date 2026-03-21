@@ -99,8 +99,8 @@ export default async function CompaniesPage() {
                 <TableCell>
                   <Link
                     href={`/admin/companies/${c.id}`}
-                    className="text-xs font-medium"
-                    style={{ color: "#2d9cdb" }}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg"
+                    style={{ background: "rgba(45,156,219,0.08)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.15)" }}
                   >
                     Open →
                   </Link>
