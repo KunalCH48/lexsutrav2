@@ -21,7 +21,7 @@ export default async function ClientsPage() {
     { data: documents },
     { data: demoRequests },
   ] = await Promise.all([
-    supabase.from("companies").select("id, name, contact_email, created_at").order("created_at", { ascending: false }),
+    supabase.from("companies").select("id, name, contact_email, website_url, created_at").order("created_at", { ascending: false }),
     supabase.from("ai_systems").select("id, company_id"),
     supabase.from("diagnostics").select("id, ai_system_id, status, created_at"),
     supabase.from("diagnostic_findings").select("diagnostic_id, rag_status"),
@@ -60,9 +60,17 @@ export default async function ClientsPage() {
   type DemoRow = { id: string; contact_email: string; website_url: string | null; status: string; created_at: string };
   const demos = (demoRequests ?? []) as DemoRow[];
 
-  function findDemo(email: string | null): DemoRow | null {
-    if (!email) return null;
-    return demos.find((d) => d.contact_email?.toLowerCase() === email.toLowerCase()) ?? null;
+  function normalizeUrl(u: string | null) {
+    if (!u) return "";
+    return u.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+  }
+
+  function findDemo(email: string | null, url: string | null): DemoRow | null {
+    if (!email && !url) return null;
+    return demos.find((d) =>
+      (email && d.contact_email?.toLowerCase() === email.toLowerCase()) ||
+      (url && d.website_url && normalizeUrl(d.website_url) === normalizeUrl(url))
+    ) ?? null;
   }
 
   return (
@@ -93,7 +101,7 @@ export default async function ClientsPage() {
             const criticals = allDiags.reduce((sum, d) => sum + (critsByDiag.get(d.id) ?? 0), 0);
             const companyDocs    = (documents ?? []).filter((d: any) => d.company_id === c.id);
             const confirmedDocs  = companyDocs.filter((d: any) => d.confirmed_at).length;
-            const demo           = findDemo(c.contact_email);
+            const demo           = findDemo(c.contact_email, c.website_url);
 
             return (
               <TableRow key={c.id}>

@@ -46,7 +46,7 @@ export default async function ClientDetailPage({
   // 1. Company
   const { data: company, error: companyErr } = await adminClient
     .from("companies")
-    .select("id, name, contact_email, created_at")
+    .select("id, name, contact_email, website_url, created_at")
     .eq("id", id)
     .single();
 
@@ -74,9 +74,10 @@ export default async function ClientDetailPage({
   const systems = aiSystems ?? [];
   const docs    = documents ?? [];
 
-  // Find matching demo request by email
+  // Find matching demo request by email OR website URL
   const demo = (demoRequests ?? []).find((d: any) =>
-    company.contact_email && d.contact_email?.toLowerCase() === company.contact_email.toLowerCase()
+    (company.contact_email && d.contact_email?.toLowerCase() === company.contact_email.toLowerCase()) ||
+    (company.website_url && d.website_url && normalizeUrl(d.website_url) === normalizeUrl(company.website_url))
   ) ?? null;
 
   // 3. Diagnostics for this company's AI systems (flat)
@@ -147,6 +148,14 @@ export default async function ClientDetailPage({
           </h2>
           <p className="text-sm" style={{ color: "#8899aa" }}>
             {company.contact_email}
+            {company.website_url && (
+              <>
+                {" · "}
+                <a href={company.website_url} target="_blank" rel="noopener noreferrer" className="gold-link">
+                  {normalizeUrl(company.website_url)}
+                </a>
+              </>
+            )}
           </p>
           <p className="text-xs mt-1" style={{ color: "#3d4f60" }}>
             Client since {fmtDate(company.created_at)}

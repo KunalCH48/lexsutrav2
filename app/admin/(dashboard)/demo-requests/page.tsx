@@ -17,17 +17,23 @@ export default async function DemoRequestsPage() {
 
     supabase
       .from("companies")
-      .select("id, contact_email"),
+      .select("id, contact_email, website_url"),
   ]);
 
   const rows = requests ?? [];
 
-  // Build email → company_id map for cross-reference links
-  const emailToCompanyId = new Map(
-    (companies ?? []).map((c: { id: string; contact_email: string }) =>
-      [c.contact_email?.toLowerCase(), c.id]
-    )
-  );
+  function normalizeUrl(u: string | null) {
+    if (!u) return "";
+    return u.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+  }
+
+  // Find company by email OR website URL
+  function findCompanyId(email: string | null, url: string | null): string | undefined {
+    return (companies ?? []).find((c: any) =>
+      (email && c.contact_email?.toLowerCase() === email.toLowerCase()) ||
+      (url && c.website_url && normalizeUrl(c.website_url) === normalizeUrl(url))
+    )?.id;
+  }
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-GB", {
@@ -75,9 +81,9 @@ export default async function DemoRequestsPage() {
             <TableRow key={r.id}>
               <TableCell muted>{fmtDate(r.created_at)}</TableCell>
               <TableCell>
-                {emailToCompanyId.get(r.contact_email?.toLowerCase()) ? (
+                {findCompanyId(r.contact_email, r.website_url) ? (
                   <Link
-                    href={`/admin/clients/${emailToCompanyId.get(r.contact_email?.toLowerCase())}`}
+                    href={`/admin/clients/${findCompanyId(r.contact_email, r.website_url)}`}
                     className="hover:underline"
                     style={{ color: "#e8f4ff" }}
                   >
