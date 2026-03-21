@@ -78,6 +78,30 @@ export default async function RegulatoryUpdatesPage() {
           </p>
         </div>
 
+        {/* Personalisation CTA */}
+        <div
+          className="rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
+          style={{ background: "linear-gradient(135deg, rgba(200,168,75,0.07) 0%, rgba(45,156,219,0.07) 100%)", border: "1px solid rgba(200,168,75,0.25)" }}
+        >
+          <div className="flex-1">
+            <p className="text-sm font-semibold mb-1" style={{ color: "#e8f4ff" }}>
+              What do these updates mean for <em>your</em> company?
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "#8899aa" }}>
+              Enter your website and we'll analyse your public footprint to tell you exactly
+              which obligations apply to your AI system — and where your gaps are.
+              <span style={{ color: "#3d4f60" }}> Based on publicly available information only.</span>
+            </p>
+          </div>
+          <Link
+            href="/#demo"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shrink-0 transition-opacity hover:opacity-90"
+            style={{ background: "#c8a84b", color: "#080c14" }}
+          >
+            Analyse my company →
+          </Link>
+        </div>
+
         {/* Items */}
         {items.length === 0 ? (
           <div
