@@ -267,6 +267,18 @@ function Hero() {
         {/* Right — mock report */}
         <div className="hidden lg:block animate-fade-up delay-200">
           <MockReport />
+          <div className="mt-4 text-center">
+            <a
+              href="https://pmnjcumaytqxfigiuhgr.supabase.co/storage/v1/object/sign/demo-reports/snapshots/c50c6ffa-ed32-4ac9-ac8a-721537b76658/Hireflow_AI_LexSutra_Snapshot_LSR-2026-C50C.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85NjBjYzFjOC1iM2I5LTQ0MzEtYjk3Ni00OGUyNjM3MGUzZmYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkZW1vLXJlcG9ydHMvc25hcHNob3RzL2M1MGM2ZmZhLWVkMzItNGFjOS1hYzhhLTcyMTUzN2I3NjY1OC9IaXJlZmxvd19BSV9MZXhTdXRyYV9TbmFwc2hvdF9MU1ItMjAyNi1DNTBDLnBkZiIsImlhdCI6MTc3NDEzNTQ0NSwiZXhwIjoxOTMxODE1NDQ1fQ._0wuWdGaF-YEwTd4sDNGIRtkpySjLWL2x1gF6_s0gJ8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm"
+              style={{ color: "rgba(201,168,76,0.7)" }}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              View a real sample report (PDF) →
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -1029,7 +1041,8 @@ function Footer() {
                 { label: "How It Works", href: "#how-it-works" },
                 { label: "Obligations",  href: "#obligations" },
                 { label: "Pricing",      href: "#pricing" },
-                { label: "Free Snapshot",      href: "#request" },
+                { label: "Free Snapshot", href: "#request" },
+                { label: "Sample Report (PDF)", href: "https://pmnjcumaytqxfigiuhgr.supabase.co/storage/v1/object/sign/demo-reports/snapshots/c50c6ffa-ed32-4ac9-ac8a-721537b76658/Hireflow_AI_LexSutra_Snapshot_LSR-2026-C50C.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85NjBjYzFjOC1iM2I5LTQ0MzEtYjk3Ni00OGUyNjM3MGUzZmYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkZW1vLXJlcG9ydHMvc25hcHNob3RzL2M1MGM2ZmZhLWVkMzItNGFjOS1hYzhhLTcyMTUzN2I3NjY1OC9IaXJlZmxvd19BSV9MZXhTdXRyYV9TbmFwc2hvdF9MU1ItMjAyNi1DNTBDLnBkZiIsImlhdCI6MTc3NDEzNTQ0NSwiZXhwIjoxOTMxODE1NDQ1fQ._0wuWdGaF-YEwTd4sDNGIRtkpySjLWL2x1gF6_s0gJ8" },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <a href={href} className="footer-link text-sm">
