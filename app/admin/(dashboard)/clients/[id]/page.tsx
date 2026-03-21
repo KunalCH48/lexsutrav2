@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
 import { CompanyReviewerPanel } from "@/components/admin/CompanyReviewerPanel";
+import { ClientNotesPanel } from "@/components/admin/ClientNotesPanel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Client Detail — LexSutra Admin" };
@@ -52,35 +53,48 @@ export default async function ClientDetailPage({
 
   if (companyErr || !company) notFound();
 
-  // 2. Everything else in parallel (flat queries — no deep nesting)
+  // 2. Everything in parallel
   const [
     { data: aiSystems },
     { data: documents },
-    { data: demoRequests },
+    { data: allDemoRequests },
     { data: clientProfile },
     { data: activityLogs },
     { data: allReviewers },
     { data: assignedAccess },
+    { data: notes },
+    { data: noteAuthors },
   ] = await Promise.all([
     adminClient.from("ai_systems").select("id, name, risk_category, description").eq("company_id", id),
     adminClient.from("documents").select("id, file_name, file_size, file_type, confirmed_at, created_at").eq("company_id", id).order("created_at", { ascending: false }),
-    adminClient.from("demo_requests").select("id, status, created_at, company_name, contact_email, website_url").order("created_at", { ascending: false }),
+    adminClient.from("demo_requests").select("id, status, created_at, company_name, contact_email, website_url, research_brief, insights_snapshot, scan_quality").order("created_at", { ascending: false }),
     adminClient.from("profiles").select("id, display_name, role").eq("company_id", id).eq("role", "client").maybeSingle(),
     adminClient.from("activity_log").select("id, action, created_at").eq("entity_id", id).order("created_at", { ascending: false }).limit(15),
     adminClient.from("profiles").select("id, display_name, credential").eq("role", "reviewer").order("display_name"),
     adminClient.from("reviewer_company_access").select("reviewer_id").eq("company_id", id),
+    adminClient.from("company_notes").select("id, content, created_at, created_by").eq("company_id", id).order("created_at", { ascending: false }),
+    adminClient.from("profiles").select("id, display_name").eq("role", "admin"),
   ]);
 
   const systems = aiSystems ?? [];
   const docs    = documents ?? [];
 
-  // Find matching demo request by email OR website URL
-  const demo = (demoRequests ?? []).find((d: any) =>
+  // Match ALL demo requests to this company by email OR URL
+  const matchedDemos = (allDemoRequests ?? []).filter((d: any) =>
     (company.contact_email && d.contact_email?.toLowerCase() === company.contact_email.toLowerCase()) ||
     (company.website_url && d.website_url && normalizeUrl(d.website_url) === normalizeUrl(company.website_url))
-  ) ?? null;
+  );
 
-  // 3. Diagnostics for this company's AI systems (flat)
+  // Build author map for notes
+  const authorMap = new Map(
+    (noteAuthors ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name])
+  );
+  const notesWithAuthors = (notes ?? []).map((n: any) => ({
+    ...n,
+    author_name: n.created_by ? (authorMap.get(n.created_by) ?? null) : null,
+  }));
+
+  // 3. Diagnostics
   const systemIds = systems.map((s: any) => s.id);
   let diagnostics: any[] = [];
   let findings: any[] = [];
@@ -103,7 +117,6 @@ export default async function ClientDetailPage({
     }
   }
 
-  // Build criticals per diagnostic
   const critsByDiag = new Map<string, number>();
   for (const f of findings as { diagnostic_id: string; rag_status: string }[]) {
     if (f.rag_status === "red") {
@@ -129,6 +142,9 @@ export default async function ClientDetailPage({
   // Stats
   const criticals     = findings.filter((f: any) => f.rag_status === "red").length;
   const confirmedDocs = docs.filter((d: any) => d.confirmed_at).length;
+
+  // Latest demo with research data
+  const latestDemoWithResearch = matchedDemos.find((d: any) => d.research_brief || d.insights_snapshot) ?? null;
 
   return (
     <div className="max-w-5xl">
@@ -186,6 +202,13 @@ export default async function ClientDetailPage({
         ))}
       </div>
 
+      {/* Notes — full width at top so it's always visible */}
+      <div className="mb-6">
+        <Section title="Admin Notes">
+          <ClientNotesPanel companyId={id} initialNotes={notesWithAuthors} />
+        </Section>
+      </div>
+
       <div className="grid grid-cols-2 gap-6">
         {/* Left */}
         <div className="space-y-6">
@@ -209,15 +232,11 @@ export default async function ClientDetailPage({
                     <div className="mb-2">
                       <p className="text-sm font-medium" style={{ color: "#e8f4ff" }}>{sys.name}</p>
                       {sys.risk_category && (
-                        <span
-                          className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block"
-                          style={{ background: "rgba(255,255,255,0.05)", color: "#8899aa", border: "1px solid rgba(255,255,255,0.08)" }}
-                        >
+                        <span className="text-xs px-1.5 py-0.5 rounded mt-0.5 inline-block" style={{ background: "rgba(255,255,255,0.05)", color: "#8899aa", border: "1px solid rgba(255,255,255,0.08)" }}>
                           {sys.risk_category}
                         </span>
                       )}
                     </div>
-
                     {sysDiags.length === 0 ? (
                       <p className="text-xs" style={{ color: "#3d4f60" }}>No diagnostics yet.</p>
                     ) : (
@@ -235,9 +254,7 @@ export default async function ClientDetailPage({
                                 <StatusBadge status={d.status} />
                                 <span className="text-xs" style={{ color: "#3d4f60" }}>{fmtDate(d.created_at)}</span>
                                 {crits > 0 && (
-                                  <span className="text-xs px-1.5 rounded" style={{ background: "rgba(224,82,82,0.1)", color: "#e05252" }}>
-                                    {crits} critical
-                                  </span>
+                                  <span className="text-xs px-1.5 rounded" style={{ background: "rgba(224,82,82,0.1)", color: "#e05252" }}>{crits} critical</span>
                                 )}
                                 {approval && (
                                   <span className="text-xs" style={{ color: "#2ecc71" }} title={`Signed by ${approval.reviewer_name}`}>✓ signed</span>
@@ -257,35 +274,47 @@ export default async function ClientDetailPage({
             )}
           </Section>
 
-          {/* Demo Request */}
-          <Section title="Demo Request">
-            {demo ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <StatusBadge status={demo.status} />
-                  <p className="text-xs mt-1" style={{ color: "#3d4f60" }}>Submitted {fmtDate(demo.created_at)}</p>
-                </div>
-                <Link
-                  href={`/admin/demo-requests/${demo.id}`}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg"
-                  style={{ background: "rgba(45,156,219,0.12)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.25)" }}
-                >
-                  View →
-                </Link>
-              </div>
+          {/* All Demo Requests */}
+          <Section title={`Demo Requests (${matchedDemos.length})`}>
+            {matchedDemos.length === 0 ? (
+              <Empty>No demo requests linked.</Empty>
             ) : (
-              <Empty>No demo request linked.</Empty>
+              <div className="space-y-2">
+                {matchedDemos.map((d: any) => (
+                  <div
+                    key={d.id}
+                    className="flex items-center justify-between gap-2 rounded-lg px-3 py-2"
+                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(45,156,219,0.06)" }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={d.status} />
+                      <span className="text-xs" style={{ color: "#3d4f60" }}>{fmtDate(d.created_at)}</span>
+                      {d.scan_quality && (
+                        <span className="text-xs px-1.5 rounded" style={{ background: "rgba(45,156,219,0.08)", color: "#2d9cdb" }}>
+                          {d.scan_quality}
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      href={`/admin/demo-requests/${d.id}`}
+                      className="text-xs shrink-0"
+                      style={{ color: "#2d9cdb" }}
+                    >
+                      Review →
+                    </Link>
+                  </div>
+                ))}
+              </div>
             )}
           </Section>
 
-          {/* Reviewers — assign access */}
+          {/* Reviewers */}
           <Section title="Reviewers">
             <CompanyReviewerPanel
               companyId={id}
               allReviewers={allReviewers ?? []}
               assignedReviewerIds={assignedReviewerIds}
             />
-            {/* Sign-off history */}
             {approvals.length > 0 && (
               <div className="mt-4 pt-4 space-y-2" style={{ borderTop: "1px solid rgba(45,156,219,0.08)" }}>
                 <p className="text-xs font-medium mb-2" style={{ color: "#3d4f60" }}>Report sign-offs</p>
@@ -334,6 +363,47 @@ export default async function ClientDetailPage({
               </div>
             )}
           </Section>
+
+          {/* Research & Intelligence (manual scraping) */}
+          {latestDemoWithResearch && (
+            <Section title="Research & Intelligence">
+              {latestDemoWithResearch.research_brief && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#3d4f60" }}>Research Brief</p>
+                  <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: "#8899aa" }}>
+                    {latestDemoWithResearch.research_brief}
+                  </p>
+                </div>
+              )}
+              {latestDemoWithResearch.insights_snapshot && (() => {
+                let insights: Record<string, string> | null = null;
+                try { insights = JSON.parse(latestDemoWithResearch.insights_snapshot); } catch { /* raw text */ }
+                return (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#3d4f60" }}>Website Scan</p>
+                    {insights && typeof insights === "object" ? (
+                      <div className="space-y-2">
+                        {Object.entries(insights).map(([k, v]) => v ? (
+                          <div key={k}>
+                            <p className="text-xs font-medium capitalize" style={{ color: "#5bb8f0" }}>{k.replace(/_/g, " ")}</p>
+                            <p className="text-xs" style={{ color: "#8899aa" }}>{String(v)}</p>
+                          </div>
+                        ) : null)}
+                      </div>
+                    ) : (
+                      <p className="text-xs whitespace-pre-wrap" style={{ color: "#8899aa" }}>{latestDemoWithResearch.insights_snapshot}</p>
+                    )}
+                  </div>
+                );
+              })()}
+              <Link
+                href={`/admin/demo-requests/${latestDemoWithResearch.id}`}
+                className="gold-link text-xs mt-3 inline-block"
+              >
+                Full research report →
+              </Link>
+            </Section>
+          )}
 
           {/* Recent Activity */}
           <Section title="Recent Activity">
