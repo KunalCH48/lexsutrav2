@@ -45,7 +45,7 @@ export default async function ClientDetailPage({
   // 1. Company
   const { data: company, error: companyErr } = await adminClient
     .from("companies")
-    .select("id, name, contact_email, website_url, created_at")
+    .select("id, name, contact_email, created_at")
     .eq("id", id)
     .single();
 
@@ -69,10 +69,9 @@ export default async function ClientDetailPage({
   const systems = aiSystems ?? [];
   const docs    = documents ?? [];
 
-  // Find matching demo request by email OR website URL
+  // Find matching demo request by email
   const demo = (demoRequests ?? []).find((d: any) =>
-    (company.contact_email && d.contact_email?.toLowerCase() === company.contact_email.toLowerCase()) ||
-    (company.website_url && d.website_url && normalizeUrl(d.website_url) === normalizeUrl(company.website_url))
+    company.contact_email && d.contact_email?.toLowerCase() === company.contact_email.toLowerCase()
   ) ?? null;
 
   // 3. Diagnostics for this company's AI systems (flat)
@@ -81,16 +80,13 @@ export default async function ClientDetailPage({
   let findings: any[] = [];
 
   if (systemIds.length > 0) {
-    const [{ data: diags }, { data: fnds }] = await Promise.all([
-      adminClient.from("diagnostics").select("id, ai_system_id, status, created_at").in("ai_system_id", systemIds).order("created_at", { ascending: false }),
-      adminClient.from("diagnostic_findings").select("diagnostic_id, rag_status").in("diagnostic_id",
-        // we need diagnostic ids — but we don't have them yet, do this after
-        ["placeholder"]
-      ),
-    ]);
+    const { data: diags } = await adminClient
+      .from("diagnostics")
+      .select("id, ai_system_id, status, created_at")
+      .in("ai_system_id", systemIds)
+      .order("created_at", { ascending: false });
     diagnostics = diags ?? [];
 
-    // Fetch findings using diagnostic ids
     if (diagnostics.length > 0) {
       const diagIds = diagnostics.map((d: any) => d.id);
       const { data: findingsData } = await adminClient
@@ -144,14 +140,6 @@ export default async function ClientDetailPage({
           </h2>
           <p className="text-sm" style={{ color: "#8899aa" }}>
             {company.contact_email}
-            {company.website_url && (
-              <>
-                {" · "}
-                <a href={company.website_url} target="_blank" rel="noopener noreferrer" className="gold-link">
-                  {normalizeUrl(company.website_url)}
-                </a>
-              </>
-            )}
           </p>
           <p className="text-xs mt-1" style={{ color: "#3d4f60" }}>
             Client since {fmtDate(company.created_at)}
