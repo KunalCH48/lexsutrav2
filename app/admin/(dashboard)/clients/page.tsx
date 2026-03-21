@@ -13,34 +13,64 @@ function fmtDate(iso: string) {
 export default async function ClientsPage() {
   const supabase = createSupabaseAdminClient();
 
-  const [{ data: companies }, { data: demoRequests }] = await Promise.all([
-    supabase
-      .from("companies")
-      .select(`
-        id, name, contact_email, created_at,
-        ai_systems (
-          id,
-          diagnostics (
-            id, status, created_at,
-            diagnostic_findings ( rag_status )
-          )
-        ),
-        documents ( id, confirmed_at )
-      `)
-      .order("created_at", { ascending: false }),
-
-    supabase
-      .from("demo_requests")
-      .select("id, contact_email, status, created_at"),
+  const [
+    { data: companies },
+    { data: aiSystems },
+    { data: diagnostics },
+    { data: findings },
+    { data: documents },
+    { data: demoRequests },
+  ] = await Promise.all([
+    supabase.from("companies").select("id, name, contact_email, website_url, created_at").order("created_at", { ascending: false }),
+    supabase.from("ai_systems").select("id, company_id"),
+    supabase.from("diagnostics").select("id, ai_system_id, status, created_at"),
+    supabase.from("diagnostic_findings").select("diagnostic_id, rag_status"),
+    supabase.from("documents").select("id, company_id, confirmed_at"),
+    supabase.from("demo_requests").select("id, contact_email, website_url, status, created_at"),
   ]);
 
-  const rows       = companies ?? [];
-  type DemoRow = { id: string; contact_email: string; status: string; created_at: string };
-  const demoMap    = new Map<string, DemoRow>(
-    (demoRequests ?? []).map((d: DemoRow) =>
-      [d.contact_email.toLowerCase(), d]
-    )
-  );
+  const rows = companies ?? [];
+
+  // Build lookup maps
+  // company_id → ai_system ids
+  const sysMap = new Map<string, string[]>();
+  for (const s of (aiSystems ?? []) as { id: string; company_id: string }[]) {
+    const arr = sysMap.get(s.company_id) ?? [];
+    arr.push(s.id);
+    sysMap.set(s.company_id, arr);
+  }
+
+  // ai_system_id → diagnostic ids
+  const diagBySys = new Map<string, { id: string; status: string; created_at: string }[]>();
+  for (const d of (diagnostics ?? []) as { id: string; ai_system_id: string; status: string; created_at: string }[]) {
+    const arr = diagBySys.get(d.ai_system_id) ?? [];
+    arr.push(d);
+    diagBySys.set(d.ai_system_id, arr);
+  }
+
+  // diagnostic_id → red count
+  const critsByDiag = new Map<string, number>();
+  for (const f of (findings ?? []) as { diagnostic_id: string; rag_status: string }[]) {
+    if (f.rag_status === "red") {
+      critsByDiag.set(f.diagnostic_id, (critsByDiag.get(f.diagnostic_id) ?? 0) + 1);
+    }
+  }
+
+  // Demo request: match by email OR website_url
+  type DemoRow = { id: string; contact_email: string; website_url: string | null; status: string; created_at: string };
+  const demos = (demoRequests ?? []) as DemoRow[];
+
+  function findDemo(email: string | null, url: string | null): DemoRow | null {
+    if (!email && !url) return null;
+    return demos.find((d) =>
+      (email && d.contact_email?.toLowerCase() === email.toLowerCase()) ||
+      (url && d.website_url && normalizeUrl(d.website_url) === normalizeUrl(url))
+    ) ?? null;
+  }
+
+  function normalizeUrl(u: string) {
+    return u.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+  }
 
   return (
     <div>
@@ -53,7 +83,7 @@ export default async function ClientsPage() {
         </div>
       </div>
 
-      <DataTable headers={["Client", "AI Systems", "Diagnostics", "Latest Status", "Docs", "Demo", "Since", ""]}>
+      <DataTable headers={["Client", "AI Systems", "Diagnostics", "Critical", "Docs", "Demo", "Since", ""]}>
         {rows.length === 0 ? (
           <tr>
             <td colSpan={8} className="px-4 py-8 text-center text-sm" style={{ color: "#3d4f60" }}>
@@ -62,21 +92,19 @@ export default async function ClientsPage() {
           </tr>
         ) : (
           rows.map((c: any) => {
-            const aiSystems   = c.ai_systems ?? [];
-            const allDiags    = aiSystems.flatMap((s: any) => s.diagnostics ?? []);
-            const latestDiag  = allDiags.sort((a: any, b: any) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            const sysList   = sysMap.get(c.id) ?? [];
+            const allDiags  = sysList.flatMap((sid) => diagBySys.get(sid) ?? []);
+            const latestDiag = [...allDiags].sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             )[0] ?? null;
-
-            const allFindings = allDiags.flatMap((d: any) => d.diagnostic_findings ?? []);
-            const criticals   = allFindings.filter((f: any) => f.rag_status === "red").length;
-            const docs        = c.documents ?? [];
-            const confirmedDocs = docs.filter((d: any) => d.confirmed_at).length;
-            const demo        = demoMap.get(c.contact_email?.toLowerCase());
+            const criticals = allDiags.reduce((sum, d) => sum + (critsByDiag.get(d.id) ?? 0), 0);
+            const companyDocs    = (documents ?? []).filter((d: any) => d.company_id === c.id);
+            const confirmedDocs  = companyDocs.filter((d: any) => d.confirmed_at).length;
+            const demo           = findDemo(c.contact_email, c.website_url);
 
             return (
               <TableRow key={c.id}>
-                {/* Client name + email */}
+                {/* Client */}
                 <TableCell>
                   <div>
                     <Link
@@ -90,37 +118,30 @@ export default async function ClientsPage() {
                   </div>
                 </TableCell>
 
-                {/* AI systems count */}
+                {/* AI systems */}
                 <TableCell>
                   <span
                     className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold"
                     style={{ background: "rgba(45,156,219,0.1)", color: "#2d9cdb" }}
                   >
-                    {aiSystems.length}
+                    {sysList.length}
                   </span>
                 </TableCell>
 
-                {/* Diagnostics + critical count */}
+                {/* Diagnostics */}
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm" style={{ color: "#e8f4ff" }}>{allDiags.length}</span>
-                    {criticals > 0 && (
-                      <span
-                        className="text-xs px-1.5 py-0.5 rounded"
-                        style={{ background: "rgba(224,82,82,0.1)", color: "#e05252", border: "1px solid rgba(224,82,82,0.2)" }}
-                      >
-                        {criticals} critical
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-sm" style={{ color: "#e8f4ff" }}>{allDiags.length}</span>
                 </TableCell>
 
-                {/* Latest diagnostic status */}
+                {/* Critical gaps */}
                 <TableCell>
-                  {latestDiag ? (
-                    <Link href={`/admin/diagnostics/${latestDiag.id}`}>
-                      <StatusBadge status={latestDiag.status} />
-                    </Link>
+                  {criticals > 0 ? (
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded"
+                      style={{ background: "rgba(224,82,82,0.1)", color: "#e05252", border: "1px solid rgba(224,82,82,0.2)" }}
+                    >
+                      {criticals}
+                    </span>
                   ) : (
                     <span style={{ color: "#3d4f60" }}>—</span>
                   )}
@@ -129,14 +150,14 @@ export default async function ClientsPage() {
                 {/* Documents */}
                 <TableCell>
                   <span className="text-sm" style={{ color: "#e8f4ff" }}>{confirmedDocs}</span>
-                  {docs.length > confirmedDocs && (
+                  {companyDocs.length > confirmedDocs && (
                     <span className="text-xs ml-1" style={{ color: "#e0a832" }}>
-                      ({docs.length - confirmedDocs} pending)
+                      ({companyDocs.length - confirmedDocs} pending)
                     </span>
                   )}
                 </TableCell>
 
-                {/* Demo request */}
+                {/* Demo */}
                 <TableCell>
                   {demo ? (
                     <Link href={`/admin/demo-requests/${demo.id}`}>
@@ -147,10 +168,10 @@ export default async function ClientsPage() {
                   )}
                 </TableCell>
 
-                {/* Created date */}
+                {/* Since */}
                 <TableCell muted>{fmtDate(c.created_at)}</TableCell>
 
-                {/* View */}
+                {/* Open */}
                 <TableCell>
                   <Link
                     href={`/admin/clients/${c.id}`}
