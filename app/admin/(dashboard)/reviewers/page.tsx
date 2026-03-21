@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { ReviewerManagePanel } from "@/components/admin/ReviewerManagePanel";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Reviewers — LexSutra Admin" };
 
 export default async function ReviewersPage() {
+  await requireNotReviewer();
   const supabase = createSupabaseAdminClient();
 
   const [{ data: reviewers }, { data: companies }] = await Promise.all([

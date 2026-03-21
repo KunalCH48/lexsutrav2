@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import DemoActionPanel from "@/components/admin/DemoActionPanel";
 import DemoAnalysisPanel from "@/components/admin/DemoAnalysisPanel";
@@ -75,6 +76,7 @@ export default async function DemoReviewPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireNotReviewer();
   const { id } = await params;
   const adminClient = createSupabaseAdminClient();
 

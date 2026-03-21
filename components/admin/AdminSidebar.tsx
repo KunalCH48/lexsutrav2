@@ -35,10 +35,13 @@ const PLATFORM = [
   { href: "/admin/revenue",          label: "Revenue",          icon: DollarSign,    exact: false },
 ];
 
+const REVIEWER_LINKS = [
+  { href: "/admin/diagnostics", label: "Diagnostic Queue", icon: ClipboardList, exact: false },
+  { href: "/admin/clients",     label: "My Clients",       icon: Users,         exact: false },
+];
+
 export function AdminSidebar({ userRole }: { userRole?: string }) {
-  const platformLinks = userRole === "reviewer"
-    ? PLATFORM.filter((item) => item.href !== "/admin/reviewers" && item.href !== "/admin/revenue")
-    : PLATFORM;
+  const isReviewer = userRole === "reviewer";
   return (
     <aside
       className="w-60 h-screen flex flex-col shrink-0 sticky top-0"
@@ -49,58 +52,56 @@ export function AdminSidebar({ userRole }: { userRole?: string }) {
         className="h-14 flex items-center px-6 shrink-0"
         style={{ borderBottom: "1px solid rgba(45,156,219,0.15)" }}
       >
-        <span className="text-lg font-serif font-bold" style={{ color: "#2d9cdb" }}>
-          Lex
-        </span>
+        <span className="text-lg font-serif font-bold" style={{ color: "#2d9cdb" }}>Lex</span>
         <span className="text-lg font-serif font-bold text-white">Sutra</span>
       </div>
 
-      {/* Admin badge */}
+      {/* Role badge */}
       <div className="px-4 pt-4 pb-2">
         <div
           className="text-center py-1.5 rounded text-xs font-medium tracking-widest uppercase"
           style={{
-            background: "rgba(224,82,82,0.1)",
-            border: "1px solid rgba(224,82,82,0.2)",
-            color: "#e05252",
+            background: isReviewer ? "rgba(45,156,219,0.1)"  : "rgba(224,82,82,0.1)",
+            border:     isReviewer ? "1px solid rgba(45,156,219,0.2)" : "1px solid rgba(224,82,82,0.2)",
+            color:      isReviewer ? "#2d9cdb" : "#e05252",
           }}
         >
-          Admin Access
+          {isReviewer ? "Reviewer Access" : "Admin Access"}
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        <p
-          className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase"
-          style={{ color: "rgba(232,244,255,0.3)" }}
-        >
-          Operations
-        </p>
-        <div className="space-y-0.5 mb-4">
-          {OPERATIONS.map((item) => (
-            <SidebarLink key={item.href} {...item} />
-          ))}
-        </div>
-
-        <p
-          className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase"
-          style={{ color: "rgba(232,244,255,0.3)" }}
-        >
-          Platform
-        </p>
-        <div className="space-y-0.5">
-          {platformLinks.map((item) => (
-            <SidebarLink key={item.href} {...item} />
-          ))}
-        </div>
+        {isReviewer ? (
+          <div className="space-y-0.5 mt-2">
+            {REVIEWER_LINKS.map((item) => (
+              <SidebarLink key={item.href} {...item} />
+            ))}
+          </div>
+        ) : (
+          <>
+            <p className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(232,244,255,0.3)" }}>
+              Operations
+            </p>
+            <div className="space-y-0.5 mb-4">
+              {OPERATIONS.map((item) => (
+                <SidebarLink key={item.href} {...item} />
+              ))}
+            </div>
+            <p className="px-3 pt-3 pb-1 text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(232,244,255,0.3)" }}>
+              Platform
+            </p>
+            <div className="space-y-0.5">
+              {PLATFORM.map((item) => (
+                <SidebarLink key={item.href} {...item} />
+              ))}
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Sign out */}
-      <div
-        className="px-3 pb-4 pt-3"
-        style={{ borderTop: "1px solid rgba(45,156,219,0.15)" }}
-      >
+      <div className="px-3 pb-4 pt-3" style={{ borderTop: "1px solid rgba(45,156,219,0.15)" }}>
         <SignOutButton />
       </div>
     </aside>

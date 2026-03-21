@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { PaginationControls } from "@/components/admin/PaginationControls";
 
@@ -12,6 +13,7 @@ export default async function ActivityPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requireNotReviewer();
   // Next.js 16 — searchParams is a Promise
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);

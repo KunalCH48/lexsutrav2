@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import { PaginationControls } from "@/components/admin/PaginationControls";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function ErrorLogsPage({
 }: {
   searchParams: Promise<{ page?: string; severity?: string }>;
 }) {
+  await requireNotReviewer();
   const { page: pageStr, severity: severityFilter } = await searchParams;
   const page   = Math.max(1, parseInt(pageStr ?? "1", 10));
   const offset = (page - 1) * PAGE_SIZE;

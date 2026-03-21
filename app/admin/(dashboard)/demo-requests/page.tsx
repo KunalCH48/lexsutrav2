@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Demo Requests — LexSutra Admin" };
 
 export default async function DemoRequestsPage() {
+  await requireNotReviewer();
   const supabase = createSupabaseAdminClient();
 
   const [{ data: requests }, { data: companies }] = await Promise.all([

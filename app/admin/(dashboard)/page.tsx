@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +63,7 @@ const STATUS_COLORS: Record<string, { bg: string; color: string; label: string }
 };
 
 export default async function AdminOverviewPage() {
+  await requireNotReviewer();
   const stats = await getStats();
 
   const metrics = [

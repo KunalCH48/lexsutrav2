@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { requireNotReviewer } from "@/lib/admin-guard";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 
@@ -41,6 +42,7 @@ function monthLabel(key: string) {
 }
 
 export default async function RevenuePage() {
+  await requireNotReviewer();
   const adminClient = createSupabaseAdminClient();
 
   const { data: diagnostics } = await adminClient
