@@ -6,6 +6,7 @@ import { LoginAsButton } from "@/components/admin/LoginAsButton";
 import { CompanyReviewerPanel } from "@/components/admin/CompanyReviewerPanel";
 import { ClientNotesPanel } from "@/components/admin/ClientNotesPanel";
 import { ResearchIntelSummary } from "@/components/admin/ResearchIntelSummary";
+import { ClientOnboardingChecklist } from "@/components/admin/ClientOnboardingChecklist";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Client Detail — LexSutra Admin" };
@@ -67,6 +68,7 @@ export default async function ClientDetailPage({
     { data: assignedAccess },
     { data: notes },
     { data: noteAuthors },
+    { data: onboarding },
   ] = await Promise.all([
     adminClient.from("ai_systems").select("id, name, risk_category, description").eq("company_id", id),
     adminClient.from("documents").select("id, file_name, file_size, file_type, confirmed_at, created_at").eq("company_id", id).order("created_at", { ascending: false }),
@@ -77,6 +79,7 @@ export default async function ClientDetailPage({
     adminClient.from("reviewer_company_access").select("reviewer_id").eq("company_id", id),
     adminClient.from("company_notes").select("id, content, created_at, created_by").eq("company_id", id).order("created_at", { ascending: false }),
     adminClient.from("profiles").select("id, display_name, role"),
+    adminClient.from("client_onboarding").select("*").eq("company_id", id).maybeSingle(),
   ]);
 
   const systems = aiSystems ?? [];
@@ -211,6 +214,11 @@ export default async function ClientDetailPage({
             <p className="text-2xl font-semibold" style={{ color: color ?? "#e8f4ff" }}>{value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Onboarding checklist */}
+      <div className="mb-6">
+        <ClientOnboardingChecklist companyId={id} initialState={onboarding ?? null} />
       </div>
 
       {/* Notes — full width at top so it's always visible */}
