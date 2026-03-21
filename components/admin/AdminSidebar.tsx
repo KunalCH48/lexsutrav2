@@ -21,7 +21,7 @@ const OPERATIONS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/demo-requests", label: "Demo Queue", icon: Inbox, exact: false },
   { href: "/admin/diagnostics", label: "Diagnostic Queue", icon: ClipboardList, exact: false },
-  { href: "/admin/clients",   label: "All Clients",  icon: Users,         exact: false },
+  { href: "/admin/companies", label: "All Clients",  icon: Users,         exact: false },
   { href: "/admin/feedback",  label: "Feedback",     icon: MessageSquare, exact: false },
   { href: "/admin/reports",   label: "Reports",      icon: FileText,      exact: false },
 ];
