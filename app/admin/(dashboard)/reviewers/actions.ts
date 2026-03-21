@@ -65,6 +65,43 @@ export async function inviteReviewer(
       credential,
     }, { onConflict: "id" });
 
+    // Send invite email via Resend
+    if (process.env.RESEND_API_KEY) {
+      const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.com"}/admin/login`;
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "LexSutra <hello@send.lexsutra.com>",
+          to:   [email],
+          subject: "You've been added as a Reviewer on LexSutra",
+          html: `
+            <div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px;border-radius:12px;">
+              <p style="font-size:24px;font-weight:600;color:#c8a84b;margin-bottom:8px;">LexSutra</p>
+              <h1 style="font-size:20px;margin-bottom:16px;">You've been added as a Reviewer</h1>
+              <p style="color:rgba(232,244,255,0.7);margin-bottom:8px;">
+                Hi ${displayName},
+              </p>
+              <p style="color:rgba(232,244,255,0.7);margin-bottom:24px;">
+                You've been granted reviewer access on LexSutra. You can now log in to review EU AI Act diagnostic reports assigned to you.
+              </p>
+              <a href="${loginUrl}"
+                 style="display:inline-block;background:#2d9cdb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+                Log In with Google →
+              </a>
+              <p style="color:rgba(232,244,255,0.5);font-size:13px;margin-top:24px;">
+                Use your Google account for <strong>${email}</strong> to sign in.
+              </p>
+              <p style="color:rgba(232,244,255,0.3);font-size:12px;margin-top:32px;">LexSutra · EU AI Act Compliance Diagnostics · lexsutra.com</p>
+            </div>
+          `,
+        }),
+      });
+    }
+
     await adminClient.from("activity_log").insert({
       actor_id:    user.id,
       action:      "invite_reviewer",
