@@ -1091,9 +1091,9 @@ export default function Home() {
         <Differentiation />
         <Process />
         <Obligations />
+        <RegulatoryFeedSection />
         <Pricing />
         <Testimonials />
-        <RegulatoryFeedSection />
         <DemoCTASection />
       </main>
       <Footer />
