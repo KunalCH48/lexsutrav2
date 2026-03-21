@@ -145,7 +145,13 @@ export default async function DiagnosticReviewPage({
             className="text-2xl font-semibold mb-1"
             style={{ fontFamily: "var(--font-serif, serif)", color: "#e8f4ff" }}
           >
-            {company?.name ?? "Unknown Company"}
+            {company?.id ? (
+              <Link href={`/admin/clients/${company.id}`} className="hover:underline">
+                {company.name ?? "Unknown Company"}
+              </Link>
+            ) : (
+              company?.name ?? "Unknown Company"
+            )}
           </h2>
           <p className="text-sm" style={{ color: "#8899aa" }}>
             {sys?.name ?? "AI System"} · {sys?.risk_category ?? "Unknown Risk"} · Created {fmtDate(diagnostic.created_at)}

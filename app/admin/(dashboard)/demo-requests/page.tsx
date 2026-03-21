@@ -9,12 +9,25 @@ export const metadata = { title: "Demo Requests — LexSutra Admin" };
 export default async function DemoRequestsPage() {
   const supabase = createSupabaseAdminClient();
 
-  const { data: requests } = await supabase
-    .from("demo_requests")
-    .select("id, company_name, contact_email, website_url, status, created_at")
-    .order("created_at", { ascending: false });
+  const [{ data: requests }, { data: companies }] = await Promise.all([
+    supabase
+      .from("demo_requests")
+      .select("id, company_name, contact_email, website_url, status, created_at")
+      .order("created_at", { ascending: false }),
+
+    supabase
+      .from("companies")
+      .select("id, contact_email"),
+  ]);
 
   const rows = requests ?? [];
+
+  // Build email → company_id map for cross-reference links
+  const emailToCompanyId = new Map(
+    (companies ?? []).map((c: { id: string; contact_email: string }) =>
+      [c.contact_email?.toLowerCase(), c.id]
+    )
+  );
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-GB", {
@@ -61,7 +74,19 @@ export default async function DemoRequestsPage() {
           rows.map((r: any) => (
             <TableRow key={r.id}>
               <TableCell muted>{fmtDate(r.created_at)}</TableCell>
-              <TableCell>{r.company_name}</TableCell>
+              <TableCell>
+                {emailToCompanyId.get(r.contact_email?.toLowerCase()) ? (
+                  <Link
+                    href={`/admin/clients/${emailToCompanyId.get(r.contact_email?.toLowerCase())}`}
+                    className="hover:underline"
+                    style={{ color: "#e8f4ff" }}
+                  >
+                    {r.company_name}
+                  </Link>
+                ) : (
+                  r.company_name
+                )}
+              </TableCell>
               <TableCell muted>{r.contact_email}</TableCell>
               <TableCell>
                 {r.website_url ? (

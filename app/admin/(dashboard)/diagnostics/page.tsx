@@ -100,15 +100,26 @@ export default async function DiagnosticsPage() {
         ) : (
           rows.map((d: any) => {
             const sys = Array.isArray(d.ai_systems) ? d.ai_systems[0] : d.ai_systems;
-            const company = sys?.companies
-              ? Array.isArray(sys.companies)
-                ? sys.companies[0]?.name
-                : (sys.companies as { name: string })?.name
-              : "—";
+            const companyObj = sys?.companies
+              ? Array.isArray(sys.companies) ? sys.companies[0] : sys.companies
+              : null;
+            const company = companyObj?.name ?? "—";
 
             return (
               <TableRow key={d.id}>
-                <TableCell>{company ?? "—"}</TableCell>
+                <TableCell>
+                  {companyObj?.id ? (
+                    <Link
+                      href={`/admin/clients/${companyObj.id}`}
+                      className="hover:underline"
+                      style={{ color: "#e8f4ff" }}
+                    >
+                      {company}
+                    </Link>
+                  ) : (
+                    company
+                  )}
+                </TableCell>
                 <TableCell>{sys?.name ?? "—"}</TableCell>
                 <TableCell>
                   {sys?.risk_category ? (

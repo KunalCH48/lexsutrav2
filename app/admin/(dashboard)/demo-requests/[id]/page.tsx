@@ -115,6 +115,14 @@ export default async function DemoReviewPage({
           <p className="text-sm" style={{ color: "#3d4f60" }}>
             Submitted {fmtDate(demo.created_at)} · {timeAgo(demo.created_at)}
           </p>
+          {existingCompany && (
+            <Link
+              href={`/admin/clients/${existingCompany.id}`}
+              className="gold-link text-xs mt-1 inline-block"
+            >
+              → View Client Account: {existingCompany.name}
+            </Link>
+          )}
         </div>
         <StatusBadge status={demo.status} />
       </div>
