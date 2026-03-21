@@ -1011,10 +1011,10 @@ function Footer() {
               </a>
               <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
               <a
-                href="mailto:hello@lexsutra.com"
+                href="mailto:hello@send.lexsutra.com"
                 className="footer-link text-sm"
               >
-                hello@lexsutra.com
+                hello@send.lexsutra.com
               </a>
             </div>
           </div>

@@ -46,7 +46,7 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from:    "LexSutra <hello@lexsutra.com>",
+          from:    "LexSutra <hello@send.lexsutra.com>",
           to:      ["kunal@lexsutra.com"],
           subject: `Diagnostic requested — ${company?.name ?? "Unknown company"}`,
           html: `
@@ -72,6 +72,6 @@ export async function requestDiagnostic(): Promise<{ success: true } | { error: 
       userId: userId ?? undefined,
       metadata: {},
     });
-    return { error: "Something went wrong. Please try again or contact hello@lexsutra.com." };
+    return { error: "Something went wrong. Please try again or contact hello@send.lexsutra.com." };
   }
 }

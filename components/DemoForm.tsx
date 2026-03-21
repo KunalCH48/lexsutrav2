@@ -692,7 +692,7 @@ export function DemoForm() {
     } catch {
       setStatus("error");
       setError(
-        "Something went wrong. Please try again or email us at hello@lexsutra.com."
+        "Something went wrong. Please try again or email us at hello@send.lexsutra.com."
       );
     }
   }

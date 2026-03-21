@@ -176,7 +176,7 @@ export async function submitForReview(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <hello@lexsutra.com>",
+          from: "LexSutra <hello@send.lexsutra.com>",
           to:   ["kunal@lexsutra.com"],
           subject: `Questionnaire ${submissionNumber > 1 ? `re-submitted (v${submissionNumber})` : "submitted"} — ${company?.name ?? "Client"}`,
           html: `

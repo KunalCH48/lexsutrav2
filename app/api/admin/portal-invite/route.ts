@@ -74,7 +74,7 @@ export async function POST(request: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "LexSutra <hello@lexsutra.com>",
+          from: "LexSutra <hello@send.lexsutra.com>",
           to:   [email],
           subject: "Your LexSutra portal access link",
           html: `

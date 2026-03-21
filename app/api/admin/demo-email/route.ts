@@ -163,7 +163,7 @@ function buildEmailHtml({
           <p style="font-size:13.5px;color:#374151;line-height:1.7;margin:0 0 28px 0;">
             If you have any questions about this report or would like to begin the full diagnostic,
             please reply to this email or contact us at
-            <a href="mailto:hello@lexsutra.com" style="color:#1d6fa4;text-decoration:none;">hello@lexsutra.com</a>.
+            <a href="mailto:hello@send.lexsutra.com" style="color:#1d6fa4;text-decoration:none;">hello@send.lexsutra.com</a>.
           </p>
 
           <p style="font-size:13.5px;color:#374151;margin:0;">
@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from:    "LexSutra <reports@lexsutra.com>",
+        from:    "LexSutra <reports@send.lexsutra.com>",
         to:      [toEmail],
         subject: `LexSutra Compliance Snapshot — ${demo.company_name} [${reportRef}]`,
         html,

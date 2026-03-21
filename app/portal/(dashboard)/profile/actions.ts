@@ -58,6 +58,6 @@ export async function addAiSystem({
 
   } catch (err) {
     await logError({ error: err, source: "portal/profile/actions", action: "addAiSystem", userId, companyId, metadata: { name, riskCategory } });
-    return { error: "Something went wrong. Please try again or contact hello@lexsutra.com." };
+    return { error: "Something went wrong. Please try again or contact hello@send.lexsutra.com." };
   }
 }

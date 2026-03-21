@@ -118,7 +118,7 @@ export default function PrivacyPage() {
                 LexSutra is a compliance infrastructure company. We hold ourselves to the same standards
                 we help our clients meet. This policy is written in plain language — if something is unclear,
                 email us at{" "}
-                <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>.
+                <a href="mailto:hello@send.lexsutra.com" style={{ color: "#2d9cdb" }}>hello@send.lexsutra.com</a>.
               </p>
             </div>
           </div>
@@ -130,7 +130,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               <strong style={{ color: "#e8f4ff" }}>Contact:</strong>{" "}
-              <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>
+              <a href="mailto:hello@send.lexsutra.com" style={{ color: "#2d9cdb" }}>hello@send.lexsutra.com</a>
               {" "}· lexsutra.com
             </p>
             <p>
@@ -284,7 +284,7 @@ export default function PrivacyPage() {
           {/* 8. Your rights */}
           <Section id="rights" title="8. Your Rights Under GDPR">
             <p>You have the following rights. To exercise any of them, email{" "}
-              <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>.
+              <a href="mailto:hello@send.lexsutra.com" style={{ color: "#2d9cdb" }}>hello@send.lexsutra.com</a>.
               We will respond within 30 days.
             </p>
             <div className="space-y-2 mt-3">
@@ -347,7 +347,7 @@ export default function PrivacyPage() {
               <p style={{ color: "#e8f4ff" }}><strong>LexSutra</strong></p>
               <p>Netherlands</p>
               <p>
-                <a href="mailto:hello@lexsutra.com" style={{ color: "#2d9cdb" }}>hello@lexsutra.com</a>
+                <a href="mailto:hello@send.lexsutra.com" style={{ color: "#2d9cdb" }}>hello@send.lexsutra.com</a>
               </p>
               <p>
                 <a href="https://lexsutra.com" style={{ color: "#2d9cdb" }}>lexsutra.com</a>

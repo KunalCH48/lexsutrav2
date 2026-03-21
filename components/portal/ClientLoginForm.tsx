@@ -6,7 +6,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 type ErrorDef = { message: string; tone: "red" | "amber" };
 
 const ERROR_MESSAGES: Record<string, ErrorDef> = {
-  not_client:      { tone: "red",   message: "This account doesn't have client access. Contact us at hello@lexsutra.com." },
+  not_client:      { tone: "red",   message: "This account doesn't have client access. Contact us at hello@send.lexsutra.com." },
   auth_failed:     { tone: "red",   message: "Authentication failed. Please try again." },
   invite_invalid:  { tone: "red",   message: "This access link is not valid. Please contact your LexSutra account manager for a new one." },
   invite_expired:  { tone: "amber", message: "This access link has expired. Please contact your LexSutra account manager for a fresh link." },

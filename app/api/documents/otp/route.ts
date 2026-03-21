@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "LexSutra <hello@lexsutra.com>",
+            from: "LexSutra <hello@send.lexsutra.com>",
             to:   [email],
             subject: "LexSutra — New Document Confirmation Code",
             html: `

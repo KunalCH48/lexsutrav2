@@ -114,7 +114,7 @@ export async function approveAndDeliver(
         method: "POST",
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "LexSutra <reports@lexsutra.com>",
+          from: "LexSutra <reports@send.lexsutra.com>",
           to: [(company as { contact_email: string }).contact_email],
           subject: `Your LexSutra Diagnostic Report is Ready — ${sys?.name ?? "AI System"}`,
           html: `

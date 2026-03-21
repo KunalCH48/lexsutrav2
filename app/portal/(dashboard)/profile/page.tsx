@@ -75,7 +75,7 @@ export default async function ProfilePage() {
 
         <p className="text-xs pt-2" style={{ color: "#3d4f60" }}>
           To update your company details, contact{" "}
-          <a href="mailto:hello@lexsutra.com" className="gold-link">hello@lexsutra.com</a>.
+          <a href="mailto:hello@send.lexsutra.com" className="gold-link">hello@send.lexsutra.com</a>.
         </p>
       </div>
 
