@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
@@ -60,7 +61,7 @@ export default async function CompaniesPage() {
         </a>
       </div>
 
-      <DataTable headers={["Company", "Email", "AI Systems", "Created", ""]}>
+      <DataTable headers={["Company", "Email", "AI Systems", "Created", "", ""]}>
         {rows.length === 0 ? (
           <tr>
             <td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: "#3d4f60" }}>
@@ -94,6 +95,15 @@ export default async function CompaniesPage() {
                   ) : (
                     <span className="text-xs" style={{ color: "#3d4f60" }}>No account yet</span>
                   )}
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/admin/companies/${c.id}`}
+                    className="text-xs font-medium"
+                    style={{ color: "#2d9cdb" }}
+                  >
+                    Open →
+                  </Link>
                 </TableCell>
               </TableRow>
             );

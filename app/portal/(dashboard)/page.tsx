@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { OnboardingProgress } from "@/components/portal/OnboardingProgress";
 
 export const metadata = { title: "Dashboard — LexSutra Portal" };
 
@@ -68,8 +69,8 @@ export default async function PortalDashboardPage() {
 
   const companyId = profile.company_id;
 
-  const [companyRes, systemsRes, activityRes, policyRes] = await Promise.all([
-    adminClient.from("companies").select("id, name, contact_email").eq("id", companyId).single(),
+  const [companyRes, systemsRes, activityRes, policyRes, docsRes, diagnosticsRes] = await Promise.all([
+    adminClient.from("companies").select("id, name, contact_email, website_url").eq("id", companyId).single(),
     adminClient.from("ai_systems").select("id, name, risk_category").eq("company_id", companyId),
     adminClient
       .from("activity_log")
@@ -84,12 +85,29 @@ export default async function PortalDashboardPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .single(),
+    adminClient
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .not("confirmed_at", "is", null),
+    adminClient
+      .from("diagnostics")
+      .select("id, status", { count: "exact" })
+      .eq("company_id", companyId),
   ]);
 
   const company  = companyRes.data;
   const systems  = systemsRes.data ?? [];
   const activity = activityRes.data ?? [];
   const latestPolicy = policyRes.data;
+
+  // Onboarding progress counts
+  const documentCount   = docsRes.count ?? 0;
+  const allDiagnostics  = diagnosticsRes.data ?? [];
+  const diagnosticCount = diagnosticsRes.count ?? allDiagnostics.length;
+  const hasDeliveredReport = allDiagnostics.some(
+    (d: { id: string; status: string }) => d.status === "delivered"
+  );
 
   // Latest delivered diagnostic + findings
   let latestDiagnostic: { id: string; status: string; created_at: string; policy_version_id: string | null } | null = null;
@@ -169,6 +187,17 @@ export default async function PortalDashboardPage() {
           + Request Diagnostic
         </Link>
       </div>
+
+      {/* Onboarding progress */}
+      {company && (
+        <OnboardingProgress
+          companyWebsite={company.website_url ?? null}
+          aiSystemCount={systems.length}
+          documentCount={documentCount}
+          diagnosticCount={diagnosticCount}
+          hasDeliveredReport={hasDeliveredReport}
+        />
+      )}
 
       {/* Metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
