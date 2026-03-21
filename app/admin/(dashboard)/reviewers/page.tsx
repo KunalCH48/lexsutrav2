@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { DataTable, TableRow, TableCell } from "@/components/admin/DataTable";
 import { ReviewerManagePanel } from "@/components/admin/ReviewerManagePanel";
 import { ReviewerClientsPanel } from "@/components/admin/ReviewerClientsPanel";
 import { LoginAsButton } from "@/components/admin/LoginAsButton";
+import { ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Reviewers — LexSutra Admin" };
@@ -66,7 +68,7 @@ export default async function ReviewersPage() {
           >
             Active Reviewers
           </h3>
-          <DataTable headers={["Reviewer", "Credential", "Clients", "Actions", ""]}>
+          <DataTable headers={["Reviewer", "Credential", "Clients", "Actions"]}>
             {reviewerList.map((r: { id: string; display_name: string | null; credential: string | null }) => {
               const assigned = assignedMap[r.id] ?? [];
               return (
@@ -85,17 +87,16 @@ export default async function ReviewersPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <ReviewerManagePanel
-                      reviewerId={r.id}
-                      reviewerName={r.display_name ?? ""}
-                      credential={r.credential ?? ""}
-                      assignedCompanyIds={assigned.map((c) => c.id)}
-                      companies={companyList}
-                      compact
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <LoginAsButton userId={r.id} label="View as Reviewer" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <LoginAsButton userId={r.id} label="View as Reviewer" />
+                      <Link
+                        href={`/admin/reviewers/${r.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg"
+                        style={{ background: "rgba(45,156,219,0.08)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.15)" }}
+                      >
+                        Open <ArrowRight size={11} />
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
