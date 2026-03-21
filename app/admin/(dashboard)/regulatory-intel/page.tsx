@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { FetchIntelButton } from "@/components/admin/FetchIntelButton";
+import { PublishIntelButton } from "@/components/admin/PublishIntelButton";
 import { ExternalLink, AlertTriangle, Info, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ type IntelRow = {
   impact_level: string | null;
   example_impact: string | null;
   created_at: string;
+  published: boolean;
 };
 
 export default async function RegulatoryIntelPage({
@@ -47,7 +49,7 @@ export default async function RegulatoryIntelPage({
 
   let query = adminClient
     .from("regulatory_intel")
-    .select("id, title, source_name, source_url, published_at, fetched_at, change_summary, affected_obligations, impact_level, example_impact, created_at")
+    .select("id, title, source_name, source_url, published_at, fetched_at, change_summary, affected_obligations, impact_level, example_impact, created_at, published")
     .order("created_at", { ascending: false });
 
   if (impact && impact !== "all") {
@@ -212,6 +214,7 @@ export default async function RegulatoryIntelPage({
                       >
                         {style.label}
                       </span>
+                      <PublishIntelButton id={item.id} published={item.published ?? false} />
                     </div>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       <a

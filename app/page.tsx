@@ -17,6 +17,7 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { Countdown } from "@/components/Countdown";
 import { DemoForm } from "@/components/DemoForm";
+import RegulatoryFeedSection from "@/components/RegulatoryFeedSection";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVBAR
@@ -1092,6 +1093,7 @@ export default function Home() {
         <Obligations />
         <Pricing />
         <Testimonials />
+        <RegulatoryFeedSection />
         <DemoCTASection />
       </main>
       <Footer />
