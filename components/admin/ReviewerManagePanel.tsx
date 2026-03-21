@@ -110,7 +110,8 @@ export function ReviewerManagePanel(props: Props) {
               Send Invite
             </button>
             <p className="text-xs" style={{ color: "rgba(232,244,255,0.3)" }}>
-              An invite email will be sent. The reviewer logs in via Google SSO or the link in the email.
+              No email is sent. Share this link with the reviewer so they can log in via Google SSO:{" "}
+              <span style={{ color: "#2d9cdb" }}>{typeof window !== "undefined" ? window.location.origin : "https://lexsutra.com"}/admin/login</span>
             </p>
           </form>
         )}

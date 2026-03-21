@@ -44,30 +44,26 @@ export async function inviteReviewer(
 
     if (existing) {
       reviewerId = existing.id;
-      await adminClient.from("profiles").upsert({
-        id:           reviewerId,
-        role:         "reviewer",
-        display_name: displayName,
-        credential,
-      }, { onConflict: "id" });
     } else {
-      const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-        data: { role: "reviewer" },
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/admin/login`,
+      // Create auth user without sending an invite email.
+      // Reviewer logs in via Google SSO — no email needed.
+      const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        email_confirm: true,
       });
-      if (inviteError) {
-        await logError({ error: inviteError, source: "admin/reviewers/actions", action: "inviteReviewer", userId });
-        return { error: inviteError.message };
+      if (createError) {
+        await logError({ error: createError, source: "admin/reviewers/actions", action: "inviteReviewer", userId });
+        return { error: createError.message };
       }
-      reviewerId = invited.user.id;
-
-      await adminClient.from("profiles").upsert({
-        id:           reviewerId,
-        role:         "reviewer",
-        display_name: displayName,
-        credential,
-      }, { onConflict: "id" });
+      reviewerId = created.user.id;
     }
+
+    await adminClient.from("profiles").upsert({
+      id:           reviewerId,
+      role:         "reviewer",
+      display_name: displayName,
+      credential,
+    }, { onConflict: "id" });
 
     await adminClient.from("activity_log").insert({
       actor_id:    user.id,
