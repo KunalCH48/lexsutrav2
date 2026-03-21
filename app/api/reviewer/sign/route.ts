@@ -50,22 +50,6 @@ export async function POST(req: NextRequest) {
 
     // For reviewers: verify they have access to this diagnostic's company
     if (profile.role === "reviewer") {
-      const { data: accessCheck } = await adminClient
-        .from("reviewer_company_access")
-        .select("id")
-        .eq("reviewer_id", user.id)
-        .eq(
-          "company_id",
-          adminClient
-            .from("ai_systems")
-            .select("company_id")
-            .eq("id",
-              adminClient.from("diagnostics").select("ai_system_id").eq("id", diagnosticId).single()
-            )
-        )
-        .maybeSingle();
-
-      // Simpler check: get the diagnostic's company_id via join and check access table
       const { data: diagWithCompany } = await adminClient
         .from("diagnostics")
         .select("ai_systems ( company_id )")

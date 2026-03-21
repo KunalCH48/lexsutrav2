@@ -1,18 +1,30 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 
-// Temporary dev utility — generate a portal magic link without sending an email
-// Usage: GET /api/admin/gen-portal-link?email=kunal.lexutra+test@gmail.com
+// Dev/admin utility — generate a portal magic link for any email
+// Usage: GET /api/admin/gen-portal-link?email=someone@example.com
+// Requires: admin session (role=admin)
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get("email");
-
-  if (!email) {
-    return NextResponse.json({ error: "email param required" }, { status: 400 });
-  }
+  // Auth guard — admin only
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const adminClient = createSupabaseAdminClient();
-  // Use the request origin so this works on both localhost and production
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get("email");
+  if (!email) return NextResponse.json({ error: "email param required" }, { status: 400 });
+
   const origin = new URL(request.url).origin;
 
   const { data, error } = await adminClient.auth.admin.generateLink({
@@ -21,10 +33,7 @@ export async function GET(request: Request) {
     options: { redirectTo: `${origin}/portal/auth/callback` },
   });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const link = data?.properties?.action_link;
-  return NextResponse.json({ link });
+  return NextResponse.json({ link: data?.properties?.action_link });
 }
