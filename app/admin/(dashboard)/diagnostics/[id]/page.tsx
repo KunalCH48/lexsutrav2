@@ -37,7 +37,7 @@ export default async function DiagnosticReviewPage({
 
   const isReviewer = currentProfile?.role === "reviewer";
 
-  const [diagnosticRes, obligationsRes, findingsRes, responsesRes, questionsRes, snapshotsRes, approvalRes] = await Promise.all([
+  const [diagnosticRes, obligationsRes, findingsRes, responsesRes, questionsRes, snapshotsRes, approvalRes, reportSnapshotsRes] = await Promise.all([
     adminClient
       .from("diagnostics")
       .select(`
@@ -83,6 +83,13 @@ export default async function DiagnosticReviewPage({
       .select("id, reviewer_id, reviewer_name, credential, approved_at, created_at")
       .eq("diagnostic_id", id)
       .order("created_at"),
+
+    // Fetch report version snapshots
+    adminClient
+      .from("diagnostic_report_snapshots")
+      .select("id, snapshot_number, grade, version_note, approved_at, findings")
+      .eq("diagnostic_id", id)
+      .order("snapshot_number", { ascending: false }),
   ]);
 
   if (diagnosticRes.error || !diagnosticRes.data) notFound();
@@ -93,7 +100,8 @@ export default async function DiagnosticReviewPage({
   const responseCount = responsesRes.count ?? 0;
   const questions    = questionsRes.data ?? [];
   const snapshots    = snapshotsRes.data ?? [];
-  const approvals    = approvalRes.data ?? [];
+  const approvals       = approvalRes.data ?? [];
+  const reportSnapshots = reportSnapshotsRes.data ?? [];
 
   // Current user's approval for this diagnostic (if reviewer)
   const myApproval = isReviewer && user
@@ -245,6 +253,68 @@ export default async function DiagnosticReviewPage({
         </h3>
         <SubmissionHistory snapshots={snapshots} obligations={obligationsWithQuestions} />
       </div>
+
+      {/* Report version history */}
+      {reportSnapshots.length > 0 && (
+        <div className="mt-10 mb-2">
+          <h3
+            className="text-lg font-semibold mb-4"
+            style={{ fontFamily: "var(--font-serif, serif)", color: "#e8f4ff" }}
+          >
+            Report Version History
+          </h3>
+          <div className="space-y-3">
+            {(reportSnapshots as {
+              id: string;
+              snapshot_number: number;
+              grade: string | null;
+              version_note: string | null;
+              approved_at: string;
+              findings: unknown[];
+            }[]).map((snap) => (
+              <div
+                key={snap.id}
+                className="rounded-xl px-5 py-4"
+                style={{ background: "#0d1520", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                      style={{ background: "rgba(200,168,75,0.1)", color: "#c8a84b", border: "1px solid rgba(200,168,75,0.2)" }}
+                    >
+                      v{snap.snapshot_number}
+                    </span>
+                    {snap.grade && (
+                      <span
+                        className="text-sm font-bold"
+                        style={{
+                          color: ["A+","A","B+"].includes(snap.grade) ? "#2ecc71"
+                            : ["B","C+"].includes(snap.grade) ? "#e0a832"
+                            : "#e05252",
+                        }}
+                      >
+                        {snap.grade}
+                      </span>
+                    )}
+                    <span className="text-xs" style={{ color: "#8899aa" }}>
+                      {snap.findings.length} findings frozen
+                    </span>
+                    {snap.version_note && (
+                      <span className="text-xs italic" style={{ color: "#8899aa" }}>
+                        — {snap.version_note}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs shrink-0" style={{ color: "#3d4f60" }}>
+                    {fmtDate(snap.approved_at)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Findings editor */}
       <div className="mt-10">

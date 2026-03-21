@@ -78,7 +78,9 @@ export async function saveFindings(
 }
 
 export async function approveAndDeliver(
-  diagnosticId: string
+  diagnosticId: string,
+  versionNote?: string,
+  grade?: string,
 ): Promise<{ success: true } | { error: string }> {
   let companyId: string | null = null;
 
@@ -99,6 +101,28 @@ export async function approveAndDeliver(
     const sys     = Array.isArray(diagnostic.ai_systems) ? diagnostic.ai_systems[0] : diagnostic.ai_systems;
     const company = sys?.companies ? (Array.isArray(sys.companies) ? sys.companies[0] : sys.companies) : null;
     companyId     = (company as { id?: string } | null)?.id ?? null;
+
+    // Snapshot current findings before approving
+    const [{ data: currentFindings }, { count: existingSnapshots }] = await Promise.all([
+      adminClient
+        .from("diagnostic_findings")
+        .select("obligation_id, rag_status, score, summary, recommendations, eu_article_refs, priority")
+        .eq("diagnostic_id", diagnosticId),
+      adminClient
+        .from("diagnostic_report_snapshots")
+        .select("*", { count: "exact", head: true })
+        .eq("diagnostic_id", diagnosticId),
+    ]);
+
+    if (currentFindings && currentFindings.length > 0) {
+      await adminClient.from("diagnostic_report_snapshots").insert({
+        diagnostic_id:   diagnosticId,
+        snapshot_number: (existingSnapshots ?? 0) + 1,
+        grade:           grade ?? null,
+        version_note:    versionNote?.trim() || null,
+        findings:        currentFindings,
+      });
+    }
 
     const { error: updateError } = await adminClient
       .from("diagnostics").update({ status: "delivered" }).eq("id", diagnosticId);
@@ -156,6 +180,7 @@ export async function approveAndDeliver(
 
     revalidatePath(`/admin/diagnostics/${diagnosticId}`);
     revalidatePath("/admin/diagnostics");
+    if (companyId) revalidatePath(`/admin/clients/${companyId}`);
     return { success: true };
 
   } catch (err) {

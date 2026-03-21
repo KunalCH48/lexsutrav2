@@ -123,20 +123,37 @@ export default async function ClientDetailPage({
     }
   }
 
-  // 4. Reviewer sign-offs
+  // 4. Reviewer sign-offs + report snapshots
   let approvals: any[] = [];
+  let reportSnapshots: any[] = [];
   if (diagnostics.length > 0) {
     const diagIds = diagnostics.map((d: any) => d.id);
-    const { data } = await adminClient
-      .from("report_approvals")
-      .select("id, diagnostic_id, reviewer_name, credential, approved_at")
-      .in("diagnostic_id", diagIds)
-      .not("approved_at", "is", null)
-      .order("approved_at", { ascending: false });
-    approvals = data ?? [];
+    const [approvalsRes, snapshotsRes] = await Promise.all([
+      adminClient
+        .from("report_approvals")
+        .select("id, diagnostic_id, reviewer_name, credential, approved_at")
+        .in("diagnostic_id", diagIds)
+        .not("approved_at", "is", null)
+        .order("approved_at", { ascending: false }),
+      adminClient
+        .from("diagnostic_report_snapshots")
+        .select("id, diagnostic_id, snapshot_number, grade, version_note, approved_at")
+        .in("diagnostic_id", diagIds)
+        .order("snapshot_number", { ascending: false }),
+    ]);
+    approvals = approvalsRes.data ?? [];
+    reportSnapshots = snapshotsRes.data ?? [];
   }
 
   const assignedReviewerIds = (assignedAccess ?? []).map((r: any) => r.reviewer_id);
+
+  // Group report snapshots by diagnostic
+  const snapshotsByDiag = new Map<string, any[]>();
+  for (const snap of reportSnapshots) {
+    const list = snapshotsByDiag.get(snap.diagnostic_id) ?? [];
+    list.push(snap);
+    snapshotsByDiag.set(snap.diagnostic_id, list);
+  }
 
   // Stats
   const criticals     = findings.filter((f: any) => f.rag_status === "red").length;
@@ -233,27 +250,54 @@ export default async function ClientDetailPage({
                     ) : (
                       <div className="space-y-1.5">
                         {sysDiags.map((d: any) => {
-                          const crits    = critsByDiag.get(d.id) ?? 0;
-                          const approval = approvals.find((a: any) => a.diagnostic_id === d.id);
+                          const crits     = critsByDiag.get(d.id) ?? 0;
+                          const approval  = approvals.find((a: any) => a.diagnostic_id === d.id);
+                          const diagSnaps = snapshotsByDiag.get(d.id) ?? [];
                           return (
                             <div
                               key={d.id}
-                              className="flex items-center justify-between gap-2 rounded-lg px-3 py-2"
+                              className="rounded-lg px-3 py-2 space-y-1.5"
                               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(45,156,219,0.06)" }}
                             >
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <StatusBadge status={d.status} />
-                                <span className="text-xs" style={{ color: "#3d4f60" }}>{fmtDate(d.created_at)}</span>
-                                {crits > 0 && (
-                                  <span className="text-xs px-1.5 rounded" style={{ background: "rgba(224,82,82,0.1)", color: "#e05252" }}>{crits} critical</span>
-                                )}
-                                {approval && (
-                                  <span className="text-xs" style={{ color: "#2ecc71" }} title={`Signed by ${approval.reviewer_name}`}>✓ signed</span>
-                                )}
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <StatusBadge status={d.status} />
+                                  <span className="text-xs" style={{ color: "#3d4f60" }}>{fmtDate(d.created_at)}</span>
+                                  {crits > 0 && (
+                                    <span className="text-xs px-1.5 rounded" style={{ background: "rgba(224,82,82,0.1)", color: "#e05252" }}>{crits} critical</span>
+                                  )}
+                                  {approval && (
+                                    <span className="text-xs" style={{ color: "#2ecc71" }} title={`Signed by ${approval.reviewer_name}`}>✓ signed</span>
+                                  )}
+                                </div>
+                                <Link href={`/admin/diagnostics/${d.id}`} className="text-xs shrink-0" style={{ color: "#2d9cdb" }}>
+                                  Review →
+                                </Link>
                               </div>
-                              <Link href={`/admin/diagnostics/${d.id}`} className="text-xs shrink-0" style={{ color: "#2d9cdb" }}>
-                                Review →
-                              </Link>
+                              {/* Report version history inline */}
+                              {diagSnaps.length > 0 && (
+                                <div className="pl-2 space-y-1" style={{ borderLeft: "2px solid rgba(200,168,75,0.2)" }}>
+                                  {diagSnaps.map((snap: any) => (
+                                    <div key={snap.id} className="flex items-center gap-2 text-xs">
+                                      <span style={{ color: "#c8a84b", fontFamily: "monospace" }}>v{snap.snapshot_number}</span>
+                                      {snap.grade && (
+                                        <span style={{
+                                          color: ["A+","A","B+"].includes(snap.grade) ? "#2ecc71"
+                                            : ["B","C+"].includes(snap.grade) ? "#e0a832"
+                                            : "#e05252",
+                                          fontWeight: 600,
+                                        }}>
+                                          {snap.grade}
+                                        </span>
+                                      )}
+                                      {snap.version_note && (
+                                        <span className="italic truncate" style={{ color: "#5a6a7a" }}>{snap.version_note}</span>
+                                      )}
+                                      <span className="ml-auto shrink-0" style={{ color: "#3d4f60" }}>{fmtDate(snap.approved_at)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -367,22 +411,30 @@ export default async function ClientDetailPage({
                 </div>
               )}
               {latestDemoWithResearch.insights_snapshot && (() => {
-                let insights: Record<string, string> | null = null;
-                try { insights = JSON.parse(latestDemoWithResearch.insights_snapshot); } catch { /* raw text */ }
+                const raw = latestDemoWithResearch.insights_snapshot;
+                // Supabase returns JSONB as a JS object already; handle both object and string
+                let insights: Record<string, unknown> | null = null;
+                if (raw && typeof raw === "object") {
+                  insights = raw as Record<string, unknown>;
+                } else if (typeof raw === "string") {
+                  try { insights = JSON.parse(raw); } catch { /* not JSON */ }
+                }
                 return (
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#3d4f60" }}>Website Scan</p>
-                    {insights && typeof insights === "object" ? (
+                    {insights ? (
                       <div className="space-y-2">
                         {Object.entries(insights).map(([k, v]) => v ? (
                           <div key={k}>
                             <p className="text-xs font-medium capitalize" style={{ color: "#5bb8f0" }}>{k.replace(/_/g, " ")}</p>
-                            <p className="text-xs" style={{ color: "#8899aa" }}>{String(v)}</p>
+                            <p className="text-xs" style={{ color: "#8899aa" }}>
+                              {typeof v === "object" ? JSON.stringify(v, null, 2) : String(v)}
+                            </p>
                           </div>
                         ) : null)}
                       </div>
                     ) : (
-                      <p className="text-xs whitespace-pre-wrap" style={{ color: "#8899aa" }}>{latestDemoWithResearch.insights_snapshot}</p>
+                      <p className="text-xs whitespace-pre-wrap" style={{ color: "#8899aa" }}>{typeof raw === "string" ? raw : ""}</p>
                     )}
                   </div>
                 );

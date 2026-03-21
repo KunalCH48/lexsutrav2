@@ -145,6 +145,8 @@ export default function FindingsEditor({
   const [guidanceOpen, setGuidanceOpen] = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isPending, startTransition]    = useTransition();
+  const [showApproveForm, setShowApproveForm] = useState(false);
+  const [versionNote, setVersionNote]         = useState("");
 
   const grade      = calcGrade(findings, obligations);
   const isDelivered = diagnosticStatus === "delivered";
@@ -168,7 +170,6 @@ export default function FindingsEditor({
   }
 
   function handleApproveDeliver() {
-    if (!confirm("Approve and deliver this report? The client will receive an email notification.")) return;
     setFeedback(null);
     startTransition(async () => {
       const saveResult = await saveFindings(diagnosticId, findings as FindingPayload[]);
@@ -176,11 +177,13 @@ export default function FindingsEditor({
         setFeedback({ type: "error", message: saveResult.error });
         return;
       }
-      const approveResult = await approveAndDeliver(diagnosticId);
+      const approveResult = await approveAndDeliver(diagnosticId, versionNote, grade.letter);
       if ("error" in approveResult) {
         setFeedback({ type: "error", message: approveResult.error });
       } else {
         setFeedback({ type: "success", message: "Report approved and delivered. Email sent to client." });
+        setShowApproveForm(false);
+        setVersionNote("");
       }
     });
   }
@@ -506,14 +509,57 @@ export default function FindingsEditor({
           >
             {isPending ? "Saving…" : "Save Draft"}
           </button>
-          <button
-            onClick={handleApproveDeliver}
-            disabled={isPending}
-            className="flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
-            style={{ background: "#2d9cdb", color: "#fff" }}
-          >
-            {isPending ? "Approving…" : "Approve & Deliver →"}
-          </button>
+          {showApproveForm ? (
+            <div
+              className="flex-1 rounded-xl p-4 space-y-3"
+              style={{ background: "rgba(45,156,219,0.07)", border: "1px solid rgba(45,156,219,0.25)" }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#2d9cdb" }}>
+                Approve &amp; Deliver — Version Note
+              </p>
+              <textarea
+                rows={2}
+                value={versionNote}
+                onChange={(e) => setVersionNote(e.target.value)}
+                placeholder="Optional: e.g. 'Regenerated after client review' or 'Post-submission update'"
+                disabled={isPending}
+                className="w-full rounded-lg px-3 py-2 text-sm resize-none disabled:opacity-50"
+                style={{
+                  background: "#111d2e",
+                  border: "1px solid rgba(45,156,219,0.2)",
+                  color: "#e8f4ff",
+                  outline: "none",
+                }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleApproveDeliver}
+                  disabled={isPending}
+                  className="flex-1 rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
+                  style={{ background: "#2d9cdb", color: "#fff" }}
+                >
+                  {isPending ? "Delivering…" : "Confirm & Deliver →"}
+                </button>
+                <button
+                  onClick={() => { setShowApproveForm(false); setVersionNote(""); }}
+                  disabled={isPending}
+                  className="rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+                  style={{ background: "rgba(255,255,255,0.05)", color: "#8899aa", border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowApproveForm(true)}
+              disabled={isPending}
+              className="flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
+              style={{ background: "#2d9cdb", color: "#fff" }}
+            >
+              Approve &amp; Deliver →
+            </button>
+          )}
         </div>
       )}
     </div>
