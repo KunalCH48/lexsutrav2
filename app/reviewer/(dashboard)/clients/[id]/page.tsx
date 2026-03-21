@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ClientNotesPanel } from "@/components/admin/ClientNotesPanel";
+import { ResearchIntelSummary } from "@/components/admin/ResearchIntelSummary";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Client Detail — LexSutra Reviewer" };
@@ -375,42 +376,12 @@ export default async function ReviewerClientDetailPage({
           {/* Research & Intelligence */}
           {latestDemoWithResearch && (
             <Section title="Research & Intelligence">
-              {latestDemoWithResearch.research_brief && (
-                <div className="mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#3d4f60" }}>Research Brief</p>
-                  <p className="text-xs whitespace-pre-wrap leading-relaxed" style={{ color: "#8899aa" }}>
-                    {latestDemoWithResearch.research_brief}
-                  </p>
-                </div>
-              )}
-              {latestDemoWithResearch.insights_snapshot && (() => {
-                const raw = latestDemoWithResearch.insights_snapshot;
-                let insights: Record<string, unknown> | null = null;
-                if (raw && typeof raw === "object") {
-                  insights = raw as Record<string, unknown>;
-                } else if (typeof raw === "string") {
-                  try { insights = JSON.parse(raw); } catch { /* not JSON */ }
-                }
-                return (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#3d4f60" }}>Website Scan</p>
-                    {insights ? (
-                      <div className="space-y-2">
-                        {Object.entries(insights).map(([k, v]) => v ? (
-                          <div key={k}>
-                            <p className="text-xs font-medium capitalize" style={{ color: "#5bb8f0" }}>{k.replace(/_/g, " ")}</p>
-                            <p className="text-xs" style={{ color: "#8899aa" }}>
-                              {typeof v === "object" ? JSON.stringify(v, null, 2) : String(v)}
-                            </p>
-                          </div>
-                        ) : null)}
-                      </div>
-                    ) : (
-                      <p className="text-xs whitespace-pre-wrap" style={{ color: "#8899aa" }}>{typeof raw === "string" ? raw : ""}</p>
-                    )}
-                  </div>
-                );
-              })()}
+              <ResearchIntelSummary
+                insightsSnapshot={latestDemoWithResearch.insights_snapshot}
+                researchBrief={latestDemoWithResearch.research_brief ?? null}
+                demoId={latestDemoWithResearch.id}
+                linkPrefix="/reviewer"
+              />
             </Section>
           )}
 
