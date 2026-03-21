@@ -80,8 +80,8 @@ export async function createClientAccount(
         },
         body: JSON.stringify({
           from:    "LexSutra <hello@send.lexsutra.com>",
-          to:      ["kunal@lexsutra.com"],
-          subject: `Your LexSutra compliance portal is ready — ${demo.company_name} (to: ${demo.contact_email})`,
+          to:      [demo.contact_email],
+          subject: `Your LexSutra compliance portal is ready`,
           html: `
             <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
               <p style="color:#2d9cdb;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">LexSutra · EU AI Act Compliance</p>
@@ -149,8 +149,8 @@ export async function resendWelcomeEmail(
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from:    "LexSutra <hello@send.lexsutra.com>",
-        to:      ["kunal@lexsutra.com"],
-        subject: `Your LexSutra compliance portal — ${companyName} (to: ${email})`,
+        to:      [email],
+        subject: `Your LexSutra compliance portal`,
         html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#080c14;color:#e8f4ff;padding:40px 32px;border-radius:12px;">
             <p style="color:#2d9cdb;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">LexSutra · EU AI Act Compliance</p>
