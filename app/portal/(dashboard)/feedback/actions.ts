@@ -79,7 +79,7 @@ export async function submitFeedback(formData: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from:    "LexSutra <onboarding@resend.dev>",
+          from:    "LexSutra <hello@send.lexsutra.com>",
           to:      ["kunal@lexsutra.com"],
           subject: `New client feedback — ${company?.name ?? "Unknown"}`,
           html: `
