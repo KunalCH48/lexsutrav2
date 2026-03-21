@@ -363,7 +363,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "LexSutra <hello@lexsutra.com>",
+            from: "LexSutra <hello@send.lexsutra.com>",
             to: [NOTIFY_EMAIL],
             subject: `New demo request — ${company_name}`,
             html: buildAdminEmail(company_name, email, website_url, assessment),
@@ -376,7 +376,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "LexSutra <hello@lexsutra.com>",
+            from: "LexSutra <hello@send.lexsutra.com>",
             to: [email],
             replyTo: "hello@lexsutra.com",
             subject: `Your preliminary EU AI Act profile — ${company_name}`,

@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from:    "LexSutra <reports@lexsutra.com>",
+        from:    "LexSutra <reports@send.lexsutra.com>",
         to:      [toEmail],
         subject: `LexSutra Compliance Snapshot — ${demo.company_name} [${reportRef}]`,
         html,
