@@ -13,6 +13,14 @@ export function LoginAsButton({ userId, label = "Login As" }: Props) {
   const [error,   setError]   = useState("");
 
   async function handleClick() {
+    // Warn: using the link signs admin out in all tabs (shared localStorage)
+    const ok = window.confirm(
+      `This will open a session as this user.\n\n` +
+      `⚠️ It will sign YOU OUT as admin in this browser tab — you'll need to sign back in after.\n\n` +
+      `Tip: copy the link into a different browser/incognito window to avoid this.\n\nProceed?`
+    );
+    if (!ok) return;
+
     setLoading(true);
     setError("");
     try {
@@ -23,7 +31,7 @@ export function LoginAsButton({ userId, label = "Login As" }: Props) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed"); setLoading(false); return; }
-      // Open in new tab — admin session stays intact in current tab
+      // Open in new tab
       window.open(data.url, "_blank", "noopener,noreferrer");
     } catch {
       setError("Network error");
