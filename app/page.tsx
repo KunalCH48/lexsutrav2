@@ -44,9 +44,10 @@ function Navbar() {
         {/* Nav links */}
         <div className="hidden md:flex items-center gap-8">
           {[
-            { label: "How It Works", href: "#how-it-works" },
-            { label: "Obligations",  href: "#obligations" },
-            { label: "Pricing",      href: "#pricing" },
+            { label: "How It Works",       href: "#how-it-works" },
+            { label: "Obligations",        href: "#obligations" },
+            { label: "Pricing",            href: "#pricing" },
+            { label: "Regulatory Updates", href: "/regulatory-updates" },
           ].map(({ label, href }) => (
             <a key={label} href={href} className="nav-link text-sm">
               {label}

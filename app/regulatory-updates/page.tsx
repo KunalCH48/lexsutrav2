@@ -94,7 +94,7 @@ export default async function RegulatoryUpdatesPage() {
             </p>
           </div>
           <Link
-            href="/#demo"
+            href="/#request"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shrink-0 transition-opacity hover:opacity-90"
             style={{ background: "#c8a84b", color: "#080c14" }}
           >
@@ -217,7 +217,7 @@ export default async function RegulatoryUpdatesPage() {
             LexSutra provides a full EU AI Act compliance diagnostic — graded report, legal citations, remediation roadmap.
           </p>
           <Link
-            href="/#demo"
+            href="/#request"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold"
             style={{ background: "#2d9cdb", color: "#fff" }}
           >

@@ -157,7 +157,7 @@ export default async function RegulatoryFeedSection() {
               Full intelligence feed →
             </Link>
             <Link
-              href="/#demo"
+              href="/#request"
               className="text-xs font-medium px-4 py-2 rounded-lg"
               style={{ background: "#2d9cdb", color: "#fff" }}
             >
