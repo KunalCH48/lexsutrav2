@@ -35,8 +35,9 @@ export default async function ClientsPage() {
   ]);
 
   const rows       = companies ?? [];
-  const demoMap    = new Map(
-    (demoRequests ?? []).map((d: { contact_email: string; id: string; status: string; created_at: string }) =>
+  type DemoRow = { id: string; contact_email: string; status: string; created_at: string };
+  const demoMap    = new Map<string, DemoRow>(
+    (demoRequests ?? []).map((d: DemoRow) =>
       [d.contact_email.toLowerCase(), d]
     )
   );
