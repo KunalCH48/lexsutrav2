@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
 import type { FootprintSources } from "@/lib/fetch-public-footprint";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const anthropic = new Anthropic();
 
