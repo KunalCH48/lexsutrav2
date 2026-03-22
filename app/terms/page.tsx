@@ -323,6 +323,25 @@ export default function TermsPage() {
             </p>
           </Section>
 
+          {/* 14. Platform Evolution */}
+          <Section id="platform-evolution" title="14. Platform Evolution & Continuous Improvement">
+            <p>
+              LexSutra is an actively developed platform. We continuously improve our assessment
+              methodology, diagnostic tools, portal features, and report formats. We may add, modify,
+              or remove platform features at any time without prior notice, unless such changes
+              materially affect these terms.
+            </p>
+            <p>
+              Improvements to our assessment methodology after your report is issued do not affect
+              the validity of your existing report — it remains stamped against the regulation version
+              and methodology in force at the time of issue.
+            </p>
+            <p>
+              We do not guarantee uninterrupted access to the platform. Where planned maintenance
+              requires downtime, we will communicate this where reasonably practicable.
+            </p>
+          </Section>
+
           {/* Footer links */}
           <div
             className="flex flex-wrap gap-6 pt-8 mt-8 text-sm"

@@ -108,7 +108,7 @@ export default async function PortalLayout({
               <p className="text-xs font-medium" style={{ color: "#c8a84b" }}>
                 Your account setup is incomplete.{" "}
                 <span style={{ color: "#e8c96a" }}>
-                  Complete your onboarding to unlock your full compliance portal.
+                  Answer a few quick questions to personalise your compliance portal.
                 </span>
               </p>
             </div>

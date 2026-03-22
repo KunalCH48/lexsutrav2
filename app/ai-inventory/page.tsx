@@ -273,7 +273,7 @@ export default function AIInventoryPage() {
                 border: "1px solid rgba(45,156,219,0.25)",
               }}
             >
-              Go to portal →
+              Register My AI Systems →
             </Link>
           </div>
 
@@ -553,7 +553,7 @@ export default function AIInventoryPage() {
                     href="/#request"
                     className="inline-flex items-center gap-2 btn-gold px-5 py-2.5 text-sm font-semibold rounded-lg"
                   >
-                    Request a quote — tell us your context
+                    Request a Quote →
                     <ArrowRight size={14} />
                   </Link>
                 </div>

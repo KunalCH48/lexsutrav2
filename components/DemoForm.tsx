@@ -872,7 +872,7 @@ export function DemoForm() {
           (e.target as HTMLButtonElement).style.background = "#c9a84c";
         }}
       >
-        Request Diagnosis
+        Analyse My Company
         <ArrowRight className="w-4 h-4" />
       </button>
 

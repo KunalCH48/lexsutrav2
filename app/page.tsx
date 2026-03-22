@@ -646,7 +646,7 @@ function Pricing() {
     {
       name: "Core",
       badge: "MOST POPULAR",
-      desc: "The full diagnostic — the definitive EU AI Act assessment for high-risk systems.",
+      desc: "The full diagnostic report — legally cited, human-approved, and structured to hand to your legal counsel, investors, or a regulator with confidence.",
       features: [
         "Everything in Starter",
         "Full 80+ question diagnostic",
@@ -662,7 +662,7 @@ function Pricing() {
     {
       name: "Premium",
       badge: null,
-      desc: "For teams preparing for investment, audit, or market launch.",
+      desc: "Core diagnostic plus a 1-hour strategy session with a compliance expert and an Investor Readiness Pack. Built for teams preparing for due diligence, audit, or market launch.",
       features: [
         "Everything in Core",
         "1-hour strategy session with expert",
