@@ -7,6 +7,16 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+type InsightsSnapshot = {
+  versions: { v: number; content: string; generated_at: string }[];
+  approved_pdf_path?: string;
+};
+
+type StructuredReportMeta = {
+  grade: string;
+  risk_classification: string;
+};
+
 export default async function PortalReportsPage() {
   const supabase    = await (await import("@/lib/supabase-server")).createSupabaseServerClient();
   const adminClient = createSupabaseAdminClient();
@@ -14,25 +24,63 @@ export default async function PortalReportsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return <div className="text-sm" style={{ color: "#3d4f60" }}>Sign in to view reports.</div>;
 
-  const { data: profile } = await adminClient.from("profiles").select("company_id").eq("id", user.id).single();
+  // Fetch demo snapshot and profile in parallel
+  const [{ data: demoRow }, { data: profile }] = await Promise.all([
+    adminClient
+      .from("demo_requests")
+      .select("id, company_name, created_at, insights_snapshot")
+      .eq("contact_email", user.email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+    adminClient.from("profiles").select("company_id").eq("id", user.id).single(),
+  ]);
+
+  // Parse snapshot card data
+  let snapshotCard: { grade: string; riskClassification: string; date: string } | null = null;
+  if (demoRow) {
+    const snapshot = (demoRow.insights_snapshot ?? null) as InsightsSnapshot | null;
+    if (snapshot?.approved_pdf_path && snapshot.versions?.length) {
+      const latest = snapshot.versions[snapshot.versions.length - 1];
+      try {
+        const p = JSON.parse(latest.content) as StructuredReportMeta;
+        snapshotCard = {
+          grade:             p.grade ?? "—",
+          riskClassification: p.risk_classification ?? "AI System Compliance Assessment",
+          date:              latest.generated_at,
+        };
+      } catch { /* show card without grade */ }
+      if (!snapshotCard) {
+        snapshotCard = { grade: "—", riskClassification: "AI System Compliance Assessment", date: demoRow.created_at };
+      }
+    }
+  }
+
   const companyId = profile?.company_id ?? null;
-  if (!companyId) return <div className="text-sm" style={{ color: "#3d4f60" }}>No company linked to your account.</div>;
 
-  const { data: systems } = await adminClient
-    .from("ai_systems").select("id").eq("company_id", companyId);
+  let rows: {
+    id: string;
+    created_at: string;
+    policy_versions: { version_code: string; display_name: string } | { version_code: string; display_name: string }[] | null;
+    ai_systems: { name: string } | { name: string }[] | null;
+  }[] = [];
 
-  const systemIds = (systems ?? []).map((s: { id: string }) => s.id);
+  if (companyId) {
+    const { data: systems } = await adminClient
+      .from("ai_systems").select("id").eq("company_id", companyId);
 
-  const { data: reports } = systemIds.length > 0
-    ? await adminClient
+    const systemIds = (systems ?? []).map((s: { id: string }) => s.id);
+
+    if (systemIds.length > 0) {
+      const { data: reports } = await adminClient
         .from("diagnostics")
         .select(`id, created_at, policy_versions ( version_code, display_name ), ai_systems ( name )`)
         .in("ai_system_id", systemIds)
         .eq("status", "delivered")
-        .order("created_at", { ascending: false })
-    : { data: [] };
-
-  const rows = reports ?? [];
+        .order("created_at", { ascending: false });
+      rows = reports ?? [];
+    }
+  }
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -45,6 +93,52 @@ export default async function PortalReportsPage() {
         </p>
       </div>
 
+      {/* Snapshot card — shown above diagnostic reports when approved PDF exists */}
+      {snapshotCard && (
+        <div
+          className="rounded-xl px-5 py-4 flex items-center justify-between gap-4"
+          style={{
+            background:   "#0d1520",
+            border:       "1px solid rgba(200,168,75,0.3)",
+            borderLeft:   "3px solid #c8a84b",
+          }}
+        >
+          <div>
+            <div className="flex items-center gap-2.5 mb-1">
+              <p className="text-sm font-medium" style={{ color: "#e8f4ff" }}>
+                Preliminary EU AI Act Snapshot
+              </p>
+              {snapshotCard.grade !== "—" && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded" style={{
+                  background: "rgba(200,168,75,0.12)",
+                  border:     "1px solid rgba(200,168,75,0.3)",
+                  color:      "#c8a84b",
+                }}>
+                  Grade {snapshotCard.grade}
+                </span>
+              )}
+            </div>
+            <p className="text-xs" style={{ color: "#3d4f60" }}>
+              {fmtDate(snapshotCard.date)}
+              {snapshotCard.riskClassification !== "AI System Compliance Assessment"
+                ? ` · ${snapshotCard.riskClassification}`
+                : ""}
+            </p>
+          </div>
+          <Link
+            href="/portal/snapshot"
+            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap"
+            style={{
+              background: "rgba(200,168,75,0.08)",
+              color:      "#c8a84b",
+              border:     "1px solid rgba(200,168,75,0.25)",
+            }}
+          >
+            View Report →
+          </Link>
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <div
           className="rounded-xl p-10 text-center"
@@ -55,12 +149,7 @@ export default async function PortalReportsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {rows.map((r: {
-            id: string;
-            created_at: string;
-            policy_versions: { version_code: string; display_name: string } | { version_code: string; display_name: string }[] | null;
-            ai_systems: { name: string } | { name: string }[] | null;
-          }) => {
+          {rows.map((r) => {
             const pv  = Array.isArray(r.policy_versions) ? r.policy_versions[0] : r.policy_versions;
             const sys = Array.isArray(r.ai_systems) ? r.ai_systems[0] : r.ai_systems;
             return (

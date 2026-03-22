@@ -22,7 +22,7 @@ function buildEmailHtml({
   criticalCount,
   partialCount,
   compliantCount,
-  downloadUrl,
+  portalUrl,
   reportRef,
   assessmentDate,
 }: {
@@ -33,7 +33,7 @@ function buildEmailHtml({
   criticalCount:      number;
   partialCount:       number;
   compliantCount:     number;
-  downloadUrl:        string;
+  portalUrl:          string;
   reportRef:          string;
   assessmentDate:     string;
 }): string {
@@ -114,22 +114,19 @@ function buildEmailHtml({
           </p>
           <p style="font-size:13.5px;color:#374151;line-height:1.7;margin:0 0 28px 0;">
             Your full report — including detailed obligation findings, required actions, effort estimates,
-            and a prioritised remediation roadmap — is attached and available to download below.
+            and a prioritised remediation roadmap — is available in the LexSutra Portal.
           </p>
 
-          <!-- Download button -->
+          <!-- Portal button -->
           <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
             <tr>
               <td style="background:#1d6fa4;border-radius:6px;padding:13px 28px;">
-                <a href="${downloadUrl}" style="color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:0.2px;">
-                  Download Your Compliance Report →
+                <a href="${portalUrl}" style="color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:0.2px;">
+                  View Your Report →
                 </a>
               </td>
             </tr>
           </table>
-          <p style="font-size:11px;color:#9ca3af;margin:-20px 0 28px 0;">
-            This download link is valid for 7 days. Contact us if you need a new link.
-          </p>
 
           <!-- Info box -->
           <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:6px;margin-bottom:28px;">
@@ -236,16 +233,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No approved PDF found. Generate and approve the snapshot first." }, { status: 400 });
     }
 
-    // Generate a 7-day signed URL for the email
-    const { data: signedData, error: signedErr } = await adminClient.storage
-      .from("demo-reports")
-      .createSignedUrl(pdfPath, 60 * 60 * 24 * 7); // 7 days
-
-    if (signedErr || !signedData) {
-      await logError({ error: signedErr ?? new Error("No signed URL"), source: "api/admin/demo-email", action: "POST:signedUrl", metadata: { demoId } });
-      return NextResponse.json({ error: "Failed to generate download link for PDF." }, { status: 500 });
-    }
-
     // Parse report for email content
     let grade              = "—";
     let riskClassification = "AI System Compliance Assessment";
@@ -277,7 +264,7 @@ export async function POST(req: NextRequest) {
       criticalCount,
       partialCount,
       compliantCount,
-      downloadUrl:        signedData.signedUrl,
+      portalUrl:          `${process.env.NEXT_PUBLIC_APP_URL ?? "https://lexsutra.com"}/portal`,
       reportRef,
       assessmentDate,
     });

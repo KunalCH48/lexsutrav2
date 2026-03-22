@@ -1152,7 +1152,7 @@ function ApproveSection({
           <div className="rounded-lg px-4 py-4 space-y-3"
             style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#3d4f60" }}>
-              Send to Client
+              Notify Client
             </p>
             {emailSent ? (
               <div className="rounded px-3 py-2.5 text-xs font-semibold"
@@ -1176,7 +1176,7 @@ function ApproveSection({
                   />
                 </div>
                 <p className="text-xs" style={{ color: "#3d4f60", lineHeight: 1.6 }}>
-                  Sends branded LexSutra email with grade summary, report details, and 7-day PDF download link.
+                  Sends email prompting the client to log in to the portal to view their snapshot report.
                 </p>
                 {emailErr && <p className="text-xs" style={{ color: "#e05252" }}>{emailErr}</p>}
                 <button
