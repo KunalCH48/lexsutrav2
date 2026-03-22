@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase-server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { OnboardingProgress } from "@/components/portal/OnboardingProgress";
+import { SnapshotNudge } from "@/components/portal/SnapshotNudge";
 
 export const metadata = { title: "Dashboard — LexSutra Portal" };
 
@@ -69,7 +70,7 @@ export default async function PortalDashboardPage() {
 
   const companyId = profile.company_id;
 
-  const [companyRes, systemsRes, activityRes, policyRes, docsRes, diagnosticsRes] = await Promise.all([
+  const [companyRes, systemsRes, activityRes, policyRes, docsRes, diagnosticsRes, snapshotRes] = await Promise.all([
     adminClient.from("companies").select("id, name, contact_email, website_url").eq("id", companyId).single(),
     adminClient.from("ai_systems").select("id, name, risk_category").eq("company_id", companyId),
     adminClient
@@ -94,12 +95,35 @@ export default async function PortalDashboardPage() {
       .from("diagnostics")
       .select("id, status", { count: "exact" })
       .eq("company_id", companyId),
+    // Snapshot nudge — check if user has an approved demo snapshot
+    adminClient
+      .from("demo_requests")
+      .select("insights_snapshot")
+      .eq("contact_email", user.email!)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
   ]);
 
   const company  = companyRes.data;
   const systems  = systemsRes.data ?? [];
   const activity = activityRes.data ?? [];
   const latestPolicy = policyRes.data;
+
+  // Snapshot nudge — parse grade + generatedAt from the latest approved snapshot
+  type SnapMeta = { grade: string; generatedAt: string } | null;
+  let snapshotNudge: SnapMeta = null;
+  try {
+    const snap = snapshotRes.data?.insights_snapshot as {
+      versions?: { v: number; content: string; generated_at: string }[];
+      approved_pdf_path?: string;
+    } | null;
+    if (snap?.approved_pdf_path && snap.versions?.length) {
+      const latest = snap.versions[snap.versions.length - 1];
+      const parsed = JSON.parse(latest.content) as { grade?: string };
+      snapshotNudge = { grade: parsed.grade ?? "—", generatedAt: latest.generated_at };
+    }
+  } catch { /* non-critical */ }
 
   // Onboarding progress counts
   const documentCount   = docsRes.count ?? 0;
@@ -187,6 +211,11 @@ export default async function PortalDashboardPage() {
           + Request Diagnostic
         </Link>
       </div>
+
+      {/* Snapshot nudge */}
+      {snapshotNudge && (
+        <SnapshotNudge grade={snapshotNudge.grade} generatedAt={snapshotNudge.generatedAt} />
+      )}
 
       {/* Onboarding progress */}
       {company && (
