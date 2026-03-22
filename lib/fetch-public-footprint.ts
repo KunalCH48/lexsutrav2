@@ -17,8 +17,8 @@ export type PublicFootprintResult = {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const JINA_TIMEOUT_MS  = 10_000;
-const NEWS_TIMEOUT_MS  =  8_000;
+const JINA_TIMEOUT_MS  = 6_000;
+const NEWS_TIMEOUT_MS  = 6_000;
 const MAX_NEWS_ITEMS   = 8;
 const MAX_LINKEDIN_CHARS    = 4_000;
 const MAX_CRUNCHBASE_CHARS  = 3_000;

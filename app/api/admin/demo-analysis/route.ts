@@ -394,10 +394,24 @@ export async function POST(req: NextRequest) {
       let scanQuality: "good" | "partial" | "failed" = "failed";
       let websiteContent = "";
       if (demo.website_url) {
-        const result     = await fetchPublicFootprint(demo.website_url, demo.company_name);
-        scanQuality      = result.quality;
-        websiteContent   = result.content;
-        usedSources      = result.sources;
+        // Hard 20s cap — if footprint fetch stalls (Jina rate limits, LinkedIn blocking etc.)
+        // we still proceed rather than timing out Vercel's function limit
+        const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 20_000));
+        const result = await Promise.race([
+          fetchPublicFootprint(demo.website_url, demo.company_name),
+          timeoutPromise,
+        ]);
+        if (result) {
+          scanQuality    = result.quality;
+          websiteContent = result.content;
+          usedSources    = result.sources;
+        } else {
+          // Timed out — fall back to website-only with a shorter individual timeout
+          const { fetchWebsite } = await import("@/lib/fetch-website");
+          const fallback = await fetchWebsite(demo.website_url);
+          scanQuality    = fallback.quality;
+          websiteContent = fallback.content;
+        }
       }
       usedScanQuality = scanQuality;
 
