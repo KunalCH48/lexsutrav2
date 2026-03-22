@@ -116,7 +116,7 @@ export default function TermsPage() {
               {[
                 ["Starter (€300)", "Public Footprint Pre-Scan — automated review of publicly available information about your AI systems, producing a preliminary risk classification."],
                 ["Core (€2,200)", "Full Diagnostic — structured 80-question assessment across all 8 EU AI Act obligation areas, AI-assisted findings generation, human expert review, and a graded PDF compliance report."],
-                ["Premium (€3,500)", "Core plus a Strategy Session with a LexSutra expert and an Investor Certificate."],
+                ["Premium (€3,500)", "Core plus a Strategy Session with a LexSutra expert and an Investor Readiness Pack."],
                 ["Full Package (€4,500)", "Everything in Premium plus a Competitor Compliance Snapshot."],
               ].map(([tier, desc]) => (
                 <div key={tier as string} className="flex gap-3">

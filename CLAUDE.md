@@ -91,7 +91,7 @@ Also: `diagnostic_submission_snapshots` (questionnaire re-submission history), `
 |------|-------|----------|
 | Starter | €300 | Public Footprint Pre-Scan only |
 | Core | €2,200 | Starter + Full Diagnostic + Scorecard |
-| Premium | €3,500 | Core + Strategy Session + Investor Certificate |
+| Premium | €3,500 | Core + Strategy Session + Investor Readiness Pack |
 | Full Package | €4,500 | Everything + Competitor Compliance Snapshot |
 | Founding clients (first 3) | 50% off | In exchange for testimonial + case study |
 

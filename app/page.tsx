@@ -668,7 +668,7 @@ function Pricing() {
       features: [
         "Everything in Core",
         "1-hour strategy session with expert",
-        "Investor-grade compliance certificate",
+        "Investor Readiness Pack",
         "30-day regulatory Q&A support",
       ],
       featured: false,

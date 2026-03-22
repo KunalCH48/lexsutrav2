@@ -48,7 +48,7 @@ The figures below are internal reference only.
 |---|---|---|
 | **Starter** | ~€300 | Public Footprint Pre-Scan only — initial risk classification, obligation gap summary, PDF snapshot |
 | **Core** | ~€2,200 | Everything in Starter + full 80+ question diagnostic + all 8 EU AI Act obligations assessed + graded PDF report with legal citations + compliance scorecard + prioritised remediation roadmap + human expert review |
-| **Premium** | ~€3,500 | Everything in Core + 1-hour expert strategy session + investor-grade compliance certificate + 30-day regulatory Q&A support |
+| **Premium** | ~€3,500 | Everything in Core + 1-hour expert strategy session + Investor Readiness Pack + 30-day regulatory Q&A support |
 | **Full Package** | ~€4,500 | Everything + competitor compliance snapshot |
 | **Founding clients** | 50% off above | First 3 clients — in exchange for testimonial and case study |
 

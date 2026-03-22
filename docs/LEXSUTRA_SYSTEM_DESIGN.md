@@ -777,7 +777,7 @@ Run these manually in Supabase SQL Editor:
 |------|-------|----------------|
 | Starter | €300 | Public Footprint Pre-Scan (the demo snapshot) |
 | Core | €2,200 | Starter + Full Diagnostic + Scorecard |
-| Premium | €3,500 | Core + Strategy Session + Investor Certificate |
+| Premium | €3,500 | Core + Strategy Session + Investor Readiness Pack |
 | Full Package | €4,500 | Everything + Competitor Compliance Snapshot |
 
 First 3 clients get 50% off in exchange for testimonial + case study.

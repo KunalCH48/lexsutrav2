@@ -188,7 +188,7 @@ Based on company size, funding stage, AI system complexity, and compliance postu
 Available tiers:
 - starter (€300): Public footprint scan only. Appropriate for very early-stage, bootstrapped, or pre-revenue companies.
 - core (€2,200): Full diagnostic + scorecard. Appropriate for funded startups and growth-stage companies.
-- premium (€3,500): Core + strategy session + investor compliance certificate. Appropriate for Series A+, companies seeking investor sign-off, or those close to the August 2026 deadline.
+- premium (€3,500): Core + strategy session + Investor Readiness Pack. Appropriate for Series A+, companies seeking investor sign-off, or those close to the August 2026 deadline.
 - full_package (€4,500): Everything + competitor compliance snapshot. Appropriate for Series B+, established scale-ups, or companies with board-level compliance urgency.
 
 Return a pricing_recommendation object:
@@ -236,7 +236,7 @@ Return this exact JSON structure. No text before or after the JSON.
     "recommended_tier": "premium",
     "recommended_price": "€3,500",
     "confidence": "high",
-    "reasoning": "Company is Series A-funded with ~45 employees and a high-risk AI recruitment platform under Annex III §4(a). Multiple critical compliance gaps and the August 2026 deadline create genuine urgency. The Premium package — which includes a strategy session and investor compliance certificate — is well-matched to a funded scale-up preparing for due diligence.",
+    "reasoning": "Company is Series A-funded with ~45 employees and a high-risk AI recruitment platform under Annex III §4(a). Multiple critical compliance gaps and the August 2026 deadline create genuine urgency. The Premium package — which includes a strategy session and Investor Readiness Pack — is well-matched to a funded scale-up preparing for due diligence.",
     "negotiation_note": "Offer Core (€2,200) as an entry point if the client needs internal budget approval before committing to the full Premium package."
   },
   "obligations": [
