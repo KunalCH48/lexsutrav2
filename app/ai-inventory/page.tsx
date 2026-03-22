@@ -245,6 +245,40 @@ export default function AIInventoryPage() {
             </a>
           </div>
 
+          {/* Smart Inventory nudge */}
+          <div
+            className="mt-4 max-w-xl mx-auto rounded-xl px-6 py-4 flex flex-col sm:flex-row items-center gap-4 animate-fade-up delay-400"
+            style={{ background: "rgba(45,156,219,0.04)", border: "1px solid rgba(45,156,219,0.15)" }}
+          >
+            <div className="flex-1 text-left">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: "rgba(45,156,219,0.12)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.25)" }}
+                >
+                  LexSutra clients
+                </span>
+              </div>
+              <p className="text-sm font-semibold mt-1 mb-0.5" style={{ color: "#e8f4ff" }}>
+                Smart AI Inventory — risk assessed automatically
+              </p>
+              <p className="text-xs" style={{ color: "#8899aa" }}>
+                Register each AI system in your portal and we&apos;ll assess its EU AI Act risk level for you. No spreadsheets.
+              </p>
+            </div>
+            <Link
+              href="/portal"
+              className="text-xs font-semibold px-4 py-2 rounded-lg whitespace-nowrap shrink-0 transition-opacity hover:opacity-80"
+              style={{
+                background: "rgba(45,156,219,0.12)",
+                color: "#2d9cdb",
+                border: "1px solid rgba(45,156,219,0.25)",
+              }}
+            >
+              Go to portal →
+            </Link>
+          </div>
+
         </section>
 
         {/* ── 3 Common Mistakes ── */}
@@ -507,7 +541,7 @@ export default function AIInventoryPage() {
                     LexSutra runs an 80-question diagnostic across all 8 EU AI Act obligation areas and delivers a graded PDF report — colour-coded, legally cited, version-stamped — that you can hand to a regulator, investor, or board.
                   </p>
                   <div className="flex flex-wrap gap-3 mb-5">
-                    {["Human expert review on every report", "Legal citations included", "Prioritised remediation roadmap", "Policy version-stamped"].map((f) => (
+                    {["Smart AI Inventory built-in", "Human expert review on every report", "Legal citations included", "Prioritised remediation roadmap", "Policy version-stamped"].map((f) => (
                       <span
                         key={f}
                         className="text-xs px-3 py-1 rounded-full"

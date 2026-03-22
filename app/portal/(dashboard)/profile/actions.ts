@@ -7,13 +7,27 @@ import { logError } from "@/lib/log-error";
 export async function addAiSystem({
   companyId,
   name,
+  url,
   riskCategory,
+  riskReason,
+  annexIiiDomain,
   description,
+  role,
+  dataSubjects,
+  vendor,
+  deploymentStatus,
 }: {
   companyId: string;
   name: string;
+  url?: string | null;
   riskCategory: string | null;
+  riskReason?: string | null;
+  annexIiiDomain?: string | null;
   description: string;
+  role?: string | null;
+  dataSubjects?: string | null;
+  vendor?: string | null;
+  deploymentStatus?: string | null;
 }): Promise<{ success: true } | { error: string }> {
   let userId: string | null = null;
 
@@ -35,10 +49,17 @@ export async function addAiSystem({
     }
 
     const { error } = await adminClient.from("ai_systems").insert({
-      company_id:    companyId,
-      name:          name.trim(),
-      risk_category: riskCategory,
-      description:   description.trim() || null,
+      company_id:        companyId,
+      name:              name.trim(),
+      url:               url?.trim()              || null,
+      risk_category:     riskCategory,
+      risk_reason:       riskReason?.trim()       || null,
+      annex_iii_domain:  annexIiiDomain?.trim()   || null,
+      description:       description.trim()       || null,
+      role:              role?.trim()             || null,
+      data_subjects:     dataSubjects?.trim()     || null,
+      vendor:            vendor?.trim()           || null,
+      deployment_status: deploymentStatus?.trim() || null,
     });
 
     if (error) {
@@ -49,7 +70,7 @@ export async function addAiSystem({
     await adminClient.from("activity_log").insert({
       actor_id: user.id, action: "register_ai_system",
       entity_type: "ai_systems", entity_id: companyId,
-      metadata: { name, risk_category: riskCategory },
+      metadata: { name, risk_category: riskCategory, role, vendor },
     });
 
     revalidatePath("/portal/profile");
