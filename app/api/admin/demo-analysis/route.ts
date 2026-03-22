@@ -15,6 +15,13 @@ type InsightVersion = {
   internal_feedback: string | null;
   website_scan_quality?: "good" | "partial" | "failed";
   sources_found?: FootprintSources;
+  // Immutable evidence log — raw public content used to generate THIS version.
+  // Locked at generation time so future re-gathers cannot overwrite it.
+  evidence_snapshot?: {
+    raw_content:  string;      // full scraped text passed to Claude
+    fetched_at:   string;      // ISO timestamp of when it was gathered
+    sources:      FootprintSources;
+  };
 };
 
 type InsightsSnapshot = {
@@ -490,6 +497,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Save new version (content = JSON string)
+    // evidence_snapshot locks the raw evidence used for this specific version —
+    // re-gathering later cannot overwrite what backed this report.
+    const evidenceSnapshot = snapshot.footprint_cache
+      ? {
+          raw_content: snapshot.footprint_cache.content,
+          fetched_at:  snapshot.footprint_cache.fetched_at,
+          sources:     snapshot.footprint_cache.sources,
+        }
+      : undefined;
+
     const newVersion: InsightVersion = {
       v:                    existingVersions.length + 1,
       content:              JSON.stringify(parsed),
@@ -497,9 +514,12 @@ export async function POST(req: NextRequest) {
       internal_feedback:    isRefinement ? (feedback ?? null) : null,
       website_scan_quality: usedScanQuality,
       sources_found:        usedSources,
+      evidence_snapshot:    evidenceSnapshot,
     };
 
+    // Preserve the live footprint_cache so the UI can still show it
     const updatedSnapshot: InsightsSnapshot = {
+      ...snapshot,
       versions: [...existingVersions, newVersion],
     };
 
