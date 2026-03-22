@@ -226,7 +226,7 @@ export default async function DemoReviewPage({
           companyName={demo.company_name}
           contactEmail={demo.contact_email}
           scanQuality={demo.scan_quality as "good" | "partial" | "failed" | null}
-          initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null; website_scan_quality?: string }[]; approved_pdf_path?: string } | null}
+          initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null; website_scan_quality?: string }[]; approved_pdf_path?: string; footprint_cache?: { content: string; sources: { websiteQuality: "good" | "partial" | "failed"; newsCount: number; linkedInFound: boolean; linkedInJobsFound: boolean; crunchbaseFound: boolean }; quality: "good" | "partial" | "failed"; fetched_at: string } } | null}
         />
       </div>
     </div>

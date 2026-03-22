@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
-import { fetchPublicFootprint, type FootprintSources } from "@/lib/fetch-public-footprint";
+import type { FootprintSources } from "@/lib/fetch-public-footprint";
 
 export const maxDuration = 60;
 
@@ -18,7 +18,13 @@ type InsightVersion = {
 };
 
 type InsightsSnapshot = {
-  versions: InsightVersion[];
+  versions:         InsightVersion[];
+  footprint_cache?: {
+    content:    string;
+    quality:    "good" | "partial" | "failed";
+    sources:    FootprintSources;
+    fetched_at: string;
+  };
 };
 
 // ── System prompts ────────────────────────────────────────────
@@ -393,25 +399,18 @@ export async function POST(req: NextRequest) {
 
       let scanQuality: "good" | "partial" | "failed" = "failed";
       let websiteContent = "";
-      if (demo.website_url) {
-        // Hard 20s cap — if footprint fetch stalls (Jina rate limits, LinkedIn blocking etc.)
-        // we still proceed rather than timing out Vercel's function limit
-        const timeoutPromise = new Promise<null>(resolve => setTimeout(() => resolve(null), 20_000));
-        const result = await Promise.race([
-          fetchPublicFootprint(demo.website_url, demo.company_name),
-          timeoutPromise,
-        ]);
-        if (result) {
-          scanQuality    = result.quality;
-          websiteContent = result.content;
-          usedSources    = result.sources;
-        } else {
-          // Timed out — fall back to website-only with a shorter individual timeout
-          const { fetchWebsite } = await import("@/lib/fetch-website");
-          const fallback = await fetchWebsite(demo.website_url);
-          scanQuality    = fallback.quality;
-          websiteContent = fallback.content;
-        }
+
+      // Use cached footprint from Step 1 (demo-footprint route) if available
+      if (snapshot.footprint_cache?.content) {
+        scanQuality    = snapshot.footprint_cache.quality;
+        websiteContent = snapshot.footprint_cache.content;
+        usedSources    = snapshot.footprint_cache.sources;
+      } else if (demo.website_url) {
+        // No cache — fall back to basic website scan only
+        const { fetchWebsite } = await import("@/lib/fetch-website");
+        const result   = await fetchWebsite(demo.website_url);
+        scanQuality    = result.quality;
+        websiteContent = result.content;
       }
       usedScanQuality = scanQuality;
 

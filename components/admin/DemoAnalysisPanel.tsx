@@ -1,8 +1,23 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { approveSnapshot } from "@/app/admin/(dashboard)/demo-requests/[id]/actions";
 import { deleteReport } from "@/app/admin/(dashboard)/reports/actions";
+
+type FootprintSources = {
+  websiteQuality:    "good" | "partial" | "failed";
+  newsCount:         number;
+  linkedInFound:     boolean;
+  linkedInJobsFound: boolean;
+  crunchbaseFound:   boolean;
+};
+
+type FootprintCache = {
+  content:    string;
+  sources:    FootprintSources;
+  quality:    "good" | "partial" | "failed";
+  fetched_at: string;
+};
 
 type InsightVersion = {
   v: number;
@@ -10,6 +25,7 @@ type InsightVersion = {
   generated_at: string;
   internal_feedback: string | null;
   website_scan_quality?: string;
+  sources_found?: FootprintSources;
 };
 
 type IdentifiedSystem = {
@@ -71,7 +87,7 @@ type Props = {
   companyName:       string;
   contactEmail?:     string;
   scanQuality?:      "good" | "partial" | "failed" | null;
-  initialSnapshot:   { versions: InsightVersion[]; approved_pdf_path?: string } | null;
+  initialSnapshot:   { versions: InsightVersion[]; approved_pdf_path?: string; footprint_cache?: FootprintCache } | null;
 };
 
 function fmtDateTime(iso: string) {
@@ -79,6 +95,112 @@ function fmtDateTime(iso: string) {
     day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
+}
+
+// ── EU AI Act facts (shown while generating) ───────────────────────
+
+const EU_AI_FACTS = [
+  "The EU AI Act is the world's first comprehensive legal framework for artificial intelligence.",
+  "High-risk AI systems must undergo a conformity assessment before market placement.",
+  "The compliance deadline for high-risk AI systems is 2 August 2026.",
+  "Providers of high-risk AI must maintain technical documentation for at least 10 years.",
+  "The EU AI Act applies to any AI system placed on the market or in service in the EU.",
+  "Article 14 requires meaningful human oversight — not just a rubber-stamp review.",
+  "Training data must be checked for biases under Article 10 before deployment.",
+  "High-risk AI must be registered in an EU-wide public database before market placement (Article 49).",
+  "Non-compliance fines can reach €30M or 6% of global annual turnover.",
+  "Employment and HR AI systems fall under Annex III §4(a) — one of the highest-risk categories.",
+  "Credit scoring AI is classified as high-risk under Annex III §5.",
+  "The CE marking requirement under Article 48 confirms EU AI Act conformity.",
+];
+
+const GATHER_STEPS = [
+  "Scanning company website…",
+  "Searching EU AI Act compliance news…",
+  "Searching funding & investment coverage…",
+  "Checking LinkedIn company profile…",
+  "Checking LinkedIn job postings…",
+  "Checking Crunchbase company profile…",
+  "Compiling intelligence cache…",
+];
+
+function FactsLoadingCard() {
+  const [factIndex, setFactIndex] = useState(0);
+  const [visible, setVisible]     = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setFactIndex((i) => (i + 1) % EU_AI_FACTS.length);
+        setVisible(true);
+      }, 400);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="rounded-lg px-5 py-5 space-y-4"
+      style={{ background: "rgba(45,156,219,0.04)", border: "1px solid rgba(45,156,219,0.15)" }}>
+      <div className="flex items-center gap-3">
+        <div className="w-4 h-4 rounded-full border-2 animate-spin shrink-0"
+          style={{ borderColor: "#2d9cdb", borderTopColor: "transparent" }} />
+        <span className="text-sm font-medium" style={{ color: "#2d9cdb" }}>
+          Generating compliance snapshot — this takes 20–30 seconds…
+        </span>
+      </div>
+      <div style={{ minHeight: 52, transition: "opacity 0.35s ease", opacity: visible ? 1 : 0 }}>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#3d4f60" }}>
+          Did you know?
+        </p>
+        <p className="text-sm leading-relaxed" style={{ color: "#8899aa" }}>
+          {EU_AI_FACTS[factIndex]}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function GatherLoadingCard() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStep((s) => Math.min(s + 1, GATHER_STEPS.length - 1));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="rounded-lg px-5 py-5 space-y-3"
+      style={{ background: "rgba(45,156,219,0.04)", border: "1px solid rgba(45,156,219,0.15)" }}>
+      <div className="flex items-center gap-3">
+        <div className="w-4 h-4 rounded-full border-2 animate-spin shrink-0"
+          style={{ borderColor: "#2d9cdb", borderTopColor: "transparent" }} />
+        <span className="text-sm font-medium" style={{ color: "#2d9cdb" }}>
+          Gathering public intelligence…
+        </span>
+      </div>
+      <div className="space-y-2 pt-1">
+        {GATHER_STEPS.map((s, i) => (
+          <div key={i} className="flex items-center gap-2.5">
+            <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0" style={{
+              background: i < step ? "rgba(46,204,113,0.2)" : i === step ? "rgba(45,156,219,0.2)" : "rgba(255,255,255,0.04)",
+              border:     `1px solid ${i < step ? "#2ecc71" : i === step ? "#2d9cdb" : "rgba(255,255,255,0.1)"}`,
+            }}>
+              {i < step  && <span style={{ color: "#2ecc71", fontSize: 8, lineHeight: 1 }}>✓</span>}
+              {i === step && <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#2d9cdb" }} />}
+            </div>
+            <span className="text-xs" style={{
+              color: i < step ? "#2ecc71" : i === step ? "#e8f4ff" : "#3d4f60",
+            }}>
+              {s}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ── Status config (ALL CAPS labels, matching PDF) ──────────────────
@@ -1089,13 +1211,16 @@ function ApproveSection({
 // ── Main component ─────────────────────────────────────────────────
 
 export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, scanQuality, initialSnapshot }: Props) {
-  const [versions, setVersions]       = useState<InsightVersion[]>(initialSnapshot?.versions ?? []);
+  const [versions, setVersions]           = useState<InsightVersion[]>(initialSnapshot?.versions ?? []);
   const approvedPdfPath = initialSnapshot?.approved_pdf_path;
-  const [viewingV, setViewingV]       = useState<number>(versions.length > 0 ? versions.length : 0);
-  const [feedback, setFeedback]       = useState("");
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
+  const [viewingV, setViewingV]           = useState<number>(versions.length > 0 ? versions.length : 0);
+  const [feedback, setFeedback]           = useState("");
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
+  const [showHistory, setShowHistory]     = useState(false);
+  const [footprintCache, setFootprintCache] = useState<FootprintCache | null>(initialSnapshot?.footprint_cache ?? null);
+  const [gatherLoading, setGatherLoading] = useState(false);
+  const [gatherError, setGatherError]     = useState<string | null>(null);
 
   const current  = versions.find((v) => v.v === viewingV) ?? versions[versions.length - 1] ?? null;
   const latestV  = versions.length;
@@ -1123,6 +1248,33 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, s
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function gather() {
+    setGatherLoading(true);
+    setGatherError(null);
+    try {
+      const res  = await fetch("/api/admin/demo-footprint", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ demoId }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setGatherError(data.error ?? "Intelligence gathering failed.");
+        return;
+      }
+      setFootprintCache({
+        content:    "cached",
+        quality:    data.quality,
+        sources:    data.sources,
+        fetched_at: new Date().toISOString(),
+      });
+    } catch {
+      setGatherError("Network error. Please try again.");
+    } finally {
+      setGatherLoading(false);
     }
   }
 
@@ -1155,8 +1307,8 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, s
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {hasAnalysis && (
+        {hasAnalysis && (
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowHistory((h) => !h)}
               className="text-xs px-2.5 py-1 rounded"
@@ -1164,20 +1316,20 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, s
             >
               {showHistory ? "Hide" : "History"} ({latestV})
             </button>
-          )}
-          <button
-            onClick={() => generate()}
-            disabled={loading}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50 transition-colors"
-            style={{
-              background: hasAnalysis ? "rgba(45,156,219,0.1)" : "#2d9cdb",
-              color:      hasAnalysis ? "#2d9cdb" : "#fff",
-              border:     hasAnalysis ? "1px solid rgba(45,156,219,0.25)" : "none",
-            }}
-          >
-            {loading && !feedback.trim() ? "Generating…" : hasAnalysis ? "Regenerate" : "Generate Analysis"}
-          </button>
-        </div>
+            <button
+              onClick={() => generate()}
+              disabled={loading || gatherLoading}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50 transition-colors"
+              style={{
+                background: "rgba(45,156,219,0.1)",
+                color:      "#2d9cdb",
+                border:     "1px solid rgba(45,156,219,0.25)",
+              }}
+            >
+              {loading && !feedback.trim() ? "Generating…" : "Regenerate"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Scan quality warning ─────────────────────────────────── */}
@@ -1259,32 +1411,75 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, s
         </div>
       )}
 
-      {/* ── Empty state ──────────────────────────────────────────── */}
-      {!hasAnalysis && !loading && (
-        <div className="rounded-lg px-5 py-10 text-center"
-          style={{ background: "rgba(255,255,255,0.015)", border: "1px dashed rgba(45,156,219,0.15)" }}>
-          <p className="text-sm mb-1" style={{ color: "#3d4f60" }}>No analysis generated yet.</p>
-          <p className="text-xs" style={{ color: "#3d4f60" }}>
-            Claude will review the company&apos;s public profile and generate a full EU AI Act
-            pre-diagnostic snapshot covering all 8 mandatory obligations.
-          </p>
+      {/* ── Two-step controls — no analysis yet ─────────────────── */}
+      {!hasAnalysis && !loading && !gatherLoading && (
+        <div className="space-y-2">
+          {/* Step 1: Gather Intelligence */}
+          <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-4"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold" style={{ color: footprintCache ? "#2ecc71" : "#3d4f60" }}>
+                Step 1{footprintCache ? " ✓" : ""} — Gather Intelligence
+              </p>
+              {footprintCache ? (
+                <p className="text-xs mt-0.5" style={{ color: "#8899aa" }}>
+                  {footprintCache.sources.websiteQuality.toUpperCase()} scan · {footprintCache.sources.newsCount} news articles ·{" "}
+                  {footprintCache.sources.linkedInFound ? "LinkedIn ✓" : "LinkedIn —"} ·{" "}
+                  {footprintCache.sources.crunchbaseFound ? "Crunchbase ✓" : "Crunchbase —"}
+                </p>
+              ) : (
+                <p className="text-xs mt-0.5" style={{ color: "#3d4f60" }}>
+                  Scans website · news · LinkedIn · Crunchbase (~15s)
+                </p>
+              )}
+              {gatherError && <p className="text-xs mt-1" style={{ color: "#e05252" }}>{gatherError}</p>}
+            </div>
+            <button
+              onClick={gather}
+              disabled={gatherLoading}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50 transition-colors shrink-0"
+              style={{
+                background: footprintCache ? "rgba(46,204,113,0.08)" : "rgba(45,156,219,0.1)",
+                color:      footprintCache ? "#2ecc71" : "#2d9cdb",
+                border:     footprintCache ? "1px solid rgba(46,204,113,0.2)" : "1px solid rgba(45,156,219,0.25)",
+              }}
+            >
+              {footprintCache ? "↺ Refresh" : "Gather →"}
+            </button>
+          </div>
+
+          {/* Step 2: Generate Analysis */}
+          <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-4"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              <p className="text-xs font-semibold" style={{ color: "#3d4f60" }}>
+                Step 2 — Generate Analysis
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#3d4f60" }}>
+                Claude analyses gathered intelligence against all 8 EU AI Act obligations (~25s)
+              </p>
+            </div>
+            <button
+              onClick={() => generate()}
+              disabled={loading || gatherLoading}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50 transition-colors shrink-0"
+              style={{
+                background: footprintCache ? "#2d9cdb" : "rgba(45,156,219,0.06)",
+                color:      footprintCache ? "#fff"    : "#3d4f60",
+                border:     footprintCache ? "none"    : "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              Generate Analysis
+            </button>
+          </div>
         </div>
       )}
 
-      {/* ── Loading skeleton ─────────────────────────────────────── */}
-      {loading && (
-        <div className="space-y-3 animate-pulse">
-          <div className="h-16 rounded-lg" style={{ background: "rgba(45,156,219,0.05)" }} />
-          <div className="space-y-2">
-            {[92, 78, 88, 65, 82, 74, 90, 70].map((w, i) => (
-              <div key={i} className="h-14 rounded" style={{ width: `${w}%`, background: "rgba(45,156,219,0.04)" }} />
-            ))}
-          </div>
-          <p className="text-xs text-center" style={{ color: "#3d4f60" }}>
-            Generating full compliance snapshot — this may take 20–30 seconds…
-          </p>
-        </div>
-      )}
+      {/* ── Gather loading animation ──────────────────────────────── */}
+      {gatherLoading && <GatherLoadingCard />}
+
+      {/* ── Generate loading animation ────────────────────────────── */}
+      {loading && <FactsLoadingCard />}
 
       {/* ── Analysis content ─────────────────────────────────────── */}
       {!loading && current && (
