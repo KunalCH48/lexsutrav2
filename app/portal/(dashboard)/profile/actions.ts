@@ -12,7 +12,7 @@ export async function addAiSystem({
 }: {
   companyId: string;
   name: string;
-  riskCategory: string;
+  riskCategory: string | null;
   description: string;
 }): Promise<{ success: true } | { error: string }> {
   let userId: string | null = null;

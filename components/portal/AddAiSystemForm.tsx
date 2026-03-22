@@ -3,13 +3,6 @@
 import { useState, useTransition } from "react";
 import { addAiSystem } from "@/app/portal/(dashboard)/profile/actions";
 
-const RISK_OPTIONS = [
-  { value: "high_risk",       label: "High-Risk (Annex III)"    },
-  { value: "limited_risk",    label: "Limited-Risk"              },
-  { value: "minimal_risk",    label: "Minimal-Risk"              },
-  { value: "general_purpose", label: "General Purpose AI (GPAI)" },
-];
-
 const inputStyle = {
   background: "#111d2e",
   border: "1px solid rgba(45,156,219,0.15)",
@@ -19,7 +12,6 @@ const inputStyle = {
 
 export function AddAiSystemForm({ companyId }: { companyId: string }) {
   const [name,        setName]        = useState("");
-  const [riskCategory, setRiskCategory] = useState("high_risk");
   const [description, setDescription] = useState("");
   const [feedback,    setFeedback]    = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isPending,   startTransition] = useTransition();
@@ -30,14 +22,13 @@ export function AddAiSystemForm({ companyId }: { companyId: string }) {
     setFeedback(null);
 
     startTransition(async () => {
-      const result = await addAiSystem({ companyId, name: name.trim(), riskCategory, description: description.trim() });
+      const result = await addAiSystem({ companyId, name: name.trim(), riskCategory: null, description: description.trim() });
       if ("error" in result) {
         setFeedback({ type: "error", message: result.error });
       } else {
         setFeedback({ type: "success", message: `"${name.trim()}" registered successfully.` });
         setName("");
         setDescription("");
-        setRiskCategory("high_risk");
       }
     });
   }
@@ -57,67 +48,58 @@ export function AddAiSystemForm({ companyId }: { companyId: string }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* System name */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium" style={{ color: "#8899aa" }}>
-            System Name <span style={{ color: "#e05252" }}>*</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. CV Screening Tool"
-            disabled={isPending}
-            required
-            className="w-full rounded-lg px-3 py-2.5 text-sm disabled:opacity-50"
-            style={inputStyle}
-          />
-        </div>
-
-        {/* Risk category */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium" style={{ color: "#8899aa" }}>
-            Risk Category <span style={{ color: "#e05252" }}>*</span>
-          </label>
-          <div className="relative">
-            <select
-              value={riskCategory}
-              onChange={(e) => setRiskCategory(e.target.value)}
-              disabled={isPending}
-              className="w-full rounded-lg px-3 py-2.5 text-sm appearance-none pr-8 disabled:opacity-50"
-              style={inputStyle}
-            >
-              {RISK_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value} style={{ background: "#111d2e" }}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-xs" style={{ color: "#8899aa" }}>▾</span>
-          </div>
-        </div>
+      {/* System name */}
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium" style={{ color: "#8899aa" }}>
+          System Name <span style={{ color: "#e05252" }}>*</span>
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. CV Screening Tool, Loan Approval Engine, Fraud Detection Model"
+          disabled={isPending}
+          required
+          className="w-full rounded-lg px-3 py-2.5 text-sm disabled:opacity-50"
+          style={inputStyle}
+        />
       </div>
 
       {/* Description */}
       <div className="space-y-1.5">
         <label className="block text-xs font-medium" style={{ color: "#8899aa" }}>
-          Brief Description
+          What does it do? <span style={{ color: "#e05252" }}>*</span>
         </label>
         <textarea
-          rows={2}
+          rows={3}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="What does this AI system do? e.g. Screens CVs for recruitment shortlisting"
+          placeholder="Describe what the system does and who it affects. e.g. Screens and ranks job applicants based on their CV — used by hiring managers to shortlist candidates before interview."
           disabled={isPending}
+          required
           className="w-full rounded-lg px-3 py-2.5 text-sm resize-none disabled:opacity-50"
           style={inputStyle}
         />
+        <p className="text-xs" style={{ color: "#3d4f60" }}>
+          Plain language is fine — no need for technical or legal terminology.
+        </p>
+      </div>
+
+      {/* Classification note */}
+      <div
+        className="rounded-lg px-4 py-3 flex items-start gap-3"
+        style={{ background: "rgba(45,156,219,0.04)", border: "1px solid rgba(45,156,219,0.12)" }}
+      >
+        <span className="text-sm shrink-0 mt-0.5" style={{ color: "#2d9cdb" }}>ℹ</span>
+        <p className="text-xs leading-relaxed" style={{ color: "#8899aa" }}>
+          <span className="font-semibold" style={{ color: "#c0ccd8" }}>Risk classification is determined by LexSutra.</span>{" "}
+          You don&apos;t need to know whether your system is &ldquo;high-risk&rdquo; under the EU AI Act — that&apos;s what the diagnostic is for.
+        </p>
       </div>
 
       <button
         type="submit"
-        disabled={isPending || !name.trim()}
+        disabled={isPending || !name.trim() || !description.trim()}
         className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
         style={{ background: "rgba(45,156,219,0.15)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.3)" }}
       >
