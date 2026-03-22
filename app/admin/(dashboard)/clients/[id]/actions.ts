@@ -20,7 +20,6 @@ async function requireAdmin() {
   return { user, adminClient };
 }
 
-// Toggle a boolean onboarding field for a client company, or update notes
 export async function toggleClientOnboardingItem(
   companyId: string,
   field: string,
@@ -45,13 +44,13 @@ export async function toggleClientOnboardingItem(
 
     if (error) throw error;
 
-    revalidatePath(`/admin/companies/${companyId}`);
+    revalidatePath(`/admin/clients/${companyId}`);
     return { success: true };
 
   } catch (err) {
     await logError({
       error: err,
-      source: "admin/companies/[id]/actions",
+      source: "admin/clients/[id]/actions",
       action: "toggleClientOnboardingItem",
       userId,
       companyId,

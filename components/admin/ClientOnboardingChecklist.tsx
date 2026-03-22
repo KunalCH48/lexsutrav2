@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toggleClientOnboardingItem } from "@/app/admin/(dashboard)/companies/[id]/actions";
+import { toggleClientOnboardingItem } from "@/app/admin/(dashboard)/clients/[id]/actions";
 
 type OnboardingState = {
   intro_call:         boolean;
