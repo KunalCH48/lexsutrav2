@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { SidebarLink } from "./SidebarLink";
 import { SignOutButton } from "./SignOutButton";
+import { Logo } from "@/components/Logo";
 
 const OPERATIONS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
@@ -46,8 +47,7 @@ export function AdminSidebar() {
         className="h-14 flex items-center px-6 shrink-0"
         style={{ borderBottom: "1px solid rgba(45,156,219,0.15)" }}
       >
-        <span className="text-lg font-serif font-bold" style={{ color: "#2d9cdb" }}>Lex</span>
-        <span className="text-lg font-serif font-bold text-white">Sutra</span>
+        <Logo size="sm" />
       </div>
 
       {/* Role badge */}

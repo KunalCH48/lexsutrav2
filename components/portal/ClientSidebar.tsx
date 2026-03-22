@@ -3,6 +3,7 @@
 import { LayoutDashboard, FolderOpen, ClipboardList, FileText, Building2, MessageSquare } from "lucide-react";
 import { SidebarLink } from "@/components/admin/SidebarLink";
 import { ClientSignOutButton } from "./ClientSignOutButton";
+import { Logo } from "@/components/Logo";
 
 const NAV_ITEMS = [
   { href: "/portal",           label: "Dashboard",   icon: LayoutDashboard, exact: true  },
@@ -28,8 +29,7 @@ export function ClientSidebar({ companyName }: Props) {
         className="h-14 flex items-center px-6 shrink-0"
         style={{ borderBottom: "1px solid rgba(45,156,219,0.15)" }}
       >
-        <span className="text-lg font-serif font-bold" style={{ color: "#2d9cdb" }}>Lex</span>
-        <span className="text-lg font-serif font-bold" style={{ color: "#e8f4ff" }}>Sutra</span>
+        <Logo size="sm" />
       </div>
 
       {/* Company badge */}

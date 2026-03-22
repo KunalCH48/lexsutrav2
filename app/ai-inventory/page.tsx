@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, Building2, Users, CreditCard, Package, ArrowRight, Download } from "lucide-react";
 import { DownloadInventoryButton } from "@/components/DownloadInventoryButton";
+import { Logo } from "@/components/Logo";
 
 export const metadata: Metadata = {
   title: "EU AI Act — AI System Inventory Template | LexSutra",
@@ -141,10 +142,7 @@ function Navbar() {
     >
       <div className="max-w-7xl mx-auto w-full px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center">
-          <span className="text-xl font-semibold select-none" style={{ fontFamily: "var(--font-serif)" }}>
-            <span style={{ color: "#c9a84c" }}>Lex</span>
-            <span className="text-white">Sutra</span>
-          </span>
+          <Logo size="md" />
         </Link>
         <div className="flex items-center gap-6">
           <Link href="/" className="nav-link text-sm hidden sm:block">← Back to home</Link>

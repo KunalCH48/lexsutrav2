@@ -18,6 +18,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Countdown } from "@/components/Countdown";
 import { DemoForm } from "@/components/DemoForm";
 import RegulatoryFeedSection from "@/components/RegulatoryFeedSection";
+import { Logo } from "@/components/Logo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVBAR
@@ -35,10 +36,7 @@ function Navbar() {
       <div className="max-w-7xl mx-auto w-full px-6 flex items-center justify-between">
         {/* Logo */}
         <a href="/" className="flex items-center">
-          <span className="text-xl font-serif font-semibold select-none">
-            <span style={{ color: "#c9a84c" }}>Lex</span>
-            <span className="text-white">Sutra</span>
-          </span>
+          <Logo size="md" />
         </a>
 
         {/* Nav links */}
@@ -1006,9 +1004,8 @@ function Footer() {
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           {/* Logo + tagline */}
           <div className="md:col-span-2">
-            <div className="text-2xl font-serif font-semibold mb-3">
-              <span style={{ color: "#c9a84c" }}>Lex</span>
-              <span className="text-white">Sutra</span>
+            <div className="mb-3">
+              <Logo size="md" />
             </div>
             <p className="text-sm leading-relaxed max-w-xs mb-5" style={{ color: "#8899aa" }}>
               The guiding thread through EU AI Act compliance. A diagnostic report
