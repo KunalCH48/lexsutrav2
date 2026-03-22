@@ -92,7 +92,7 @@ export default async function PortalDiagnosticsPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={d.status} />
-                    {d.status === "delivered" && (
+                    {d.status === "delivered" ? (
                       <Link
                         href={`/portal/reports/${d.id}`}
                         className="text-xs px-3 py-1.5 rounded-lg font-medium"
@@ -104,18 +104,19 @@ export default async function PortalDiagnosticsPage() {
                       >
                         View Report →
                       </Link>
+                    ) : (
+                      <Link
+                        href={`/portal/diagnostics/${d.id}`}
+                        className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                        style={{
+                          background: "rgba(45,156,219,0.1)",
+                          color:      "#2d9cdb",
+                          border:     "1px solid rgba(45,156,219,0.2)",
+                        }}
+                      >
+                        Fill Questionnaire →
+                      </Link>
                     )}
-                    <Link
-                      href={`/portal/diagnostics/${d.id}`}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                      style={{
-                        background: "rgba(45,156,219,0.1)",
-                        color:      "#2d9cdb",
-                        border:     "1px solid rgba(45,156,219,0.2)",
-                      }}
-                    >
-                      {d.status === "delivered" ? "View Questionnaire →" : "Fill Questionnaire →"}
-                    </Link>
                   </div>
                 </div>
               );

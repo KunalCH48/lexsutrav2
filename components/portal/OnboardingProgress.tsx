@@ -35,9 +35,9 @@ const STEPS: Step[] = [
     ctaHref: "/portal/documents",
   },
   {
-    label: "Start your diagnostic",
-    description: "Complete the diagnostic questionnaire to begin.",
-    ctaLabel: "Start diagnostic",
+    label: "Request your diagnostic",
+    description: "Submit a request — our team will set up your diagnostic within 24 hours.",
+    ctaLabel: "Request diagnostic",
     ctaHref: "/portal/diagnostics",
   },
   {

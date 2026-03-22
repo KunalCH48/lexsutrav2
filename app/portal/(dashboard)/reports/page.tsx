@@ -126,7 +126,7 @@ export default async function PortalReportsPage() {
             </p>
           </div>
           <Link
-            href="/portal/snapshot"
+            href="/portal/reports/snapshot"
             className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap"
             style={{
               background: "rgba(200,168,75,0.08)",

@@ -67,7 +67,7 @@ export function SnapshotNudge({ grade, generatedAt }: Props) {
 
       {/* CTA */}
       <Link
-        href="/portal/snapshot"
+        href="/portal/reports/snapshot"
         onClick={dismiss}
         className="text-xs font-semibold px-3.5 py-1.5 rounded-lg shrink-0 transition-opacity hover:opacity-80"
         style={{
