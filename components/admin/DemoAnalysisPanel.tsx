@@ -407,137 +407,6 @@ function StructuredReportView({
         </div>
       )}
 
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
-
-      {/* ══ PRICING RECOMMENDATION (admin-only) ══════════════════════ */}
-
-      {report.pricing_recommendation && (() => {
-        const pr = report.pricing_recommendation;
-        const TIER_LABELS: Record<string, string> = {
-          starter:      "Starter — €300",
-          core:         "Core — €2,200",
-          premium:      "Premium — €3,500",
-          full_package: "Full Package — €4,500",
-        };
-        const confColor = pr.confidence === "high" ? "#2ecc71" : pr.confidence === "medium" ? "#e0a832" : "#8899aa";
-        return (
-          <div style={{
-            borderRadius: 8, padding: "14px 18px",
-            background: "rgba(200,168,75,0.06)",
-            border: "1px solid rgba(200,168,75,0.35)",
-          }}>
-            <div className="flex items-center justify-between mb-2">
-              <p style={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: "#c8a84b" }}>
-                Pricing Recommendation
-              </p>
-              <span style={{ fontSize: 10, fontWeight: 600, color: confColor, background: `${confColor}18`, borderRadius: 4, padding: "2px 7px", letterSpacing: "0.06em" }}>
-                {pr.confidence.toUpperCase()} CONFIDENCE
-              </span>
-            </div>
-            <p style={{ fontSize: 18, fontWeight: 800, color: "#e8f4ff", marginBottom: 8 }}>
-              {TIER_LABELS[pr.recommended_tier] ?? pr.recommended_price}
-            </p>
-            <p style={{ fontSize: 12, color: "#c0ccd8", lineHeight: 1.6, marginBottom: pr.negotiation_note ? 8 : 0 }}>
-              {pr.reasoning}
-            </p>
-            {pr.negotiation_note && (
-              <p style={{ fontSize: 11, color: "#8899aa", lineHeight: 1.5, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8, marginTop: 4 }}>
-                <span style={{ fontWeight: 600, color: "#c8a84b" }}>Negotiation: </span>{pr.negotiation_note}
-              </p>
-            )}
-            <p style={{ fontSize: 10, color: "#3d4f60", marginTop: 8 }}>Admin-only — not included in client report</p>
-          </div>
-        );
-      })()}
-
-      {/* ══ COMPANY INTELLIGENCE (admin-only) ════════════════════════ */}
-
-      {report.company_intelligence && (() => {
-        const ci = report.company_intelligence;
-        const rows: [string, string | undefined][] = [
-          ["Industry",        ci.industry],
-          ["Headquarters",    ci.headquarters],
-          ["Founded",         ci.founding_year],
-          ["Employees",       ci.employee_count],
-          ["Funding Stage",   ci.funding_stage],
-          ["Total Funding",   ci.total_funding],
-          ["Latest Round",    ci.latest_round],
-        ];
-        const filledRows = rows.filter(([, v]) => v && v !== "Unknown");
-        const investors  = ci.key_investors?.filter(Boolean) ?? [];
-        const signals    = ci.signals?.filter(Boolean) ?? [];
-        if (filledRows.length === 0 && investors.length === 0 && signals.length === 0) return null;
-        return (
-          <div style={{
-            borderRadius: 8, padding: "14px 18px",
-            background: "rgba(45,156,219,0.04)",
-            border: "1px solid rgba(45,156,219,0.2)",
-          }}>
-            <p style={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: "#2d9cdb", marginBottom: 12 }}>
-              Company Intelligence
-            </p>
-            {filledRows.length > 0 && (
-              <div className="grid" style={{ gridTemplateColumns: "140px 1fr", gap: "4px 0", marginBottom: signals.length > 0 ? 10 : 0 }}>
-                {filledRows.map(([label, value]) => (
-                  <React.Fragment key={label}>
-                    <span style={{ fontSize: 11, color: "#3d4f60", fontWeight: 600, paddingRight: 8 }}>{label}</span>
-                    <span style={{ fontSize: 11, color: "#c0ccd8" }}>{value}</span>
-                  </React.Fragment>
-                ))}
-                {investors.length > 0 && (
-                  <React.Fragment>
-                    <span style={{ fontSize: 11, color: "#3d4f60", fontWeight: 600, paddingRight: 8, alignSelf: "start" }}>Investors</span>
-                    <span style={{ fontSize: 11, color: "#c0ccd8" }}>{investors.join(", ")}</span>
-                  </React.Fragment>
-                )}
-              </div>
-            )}
-            {signals.length > 0 && (
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 10, marginTop: filledRows.length > 0 ? 0 : 0 }}>
-                <p style={{ fontSize: 10, fontWeight: 600, color: "#3d4f60", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Key Signals</p>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                  {signals.map((s, i) => (
-                    <li key={i} style={{ fontSize: 11, color: "#8899aa", lineHeight: 1.6, marginBottom: 3 }}>
-                      <span style={{ color: "#2d9cdb", marginRight: 5 }}>•</span>{s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <p style={{ fontSize: 10, color: "#3d4f60", marginTop: 10 }}>Admin-only — not included in client report</p>
-          </div>
-        );
-      })()}
-
-      {/* ══ DSA ALERT (admin-only) ═══════════════════════════════════ */}
-
-      {report.dsa_applicability && report.dsa_applicability !== "unlikely" && (
-        <div style={{
-          borderRadius: 8,
-          padding: "12px 16px",
-          background: report.dsa_applicability === "likely"
-            ? "rgba(224,82,82,0.07)"
-            : "rgba(224,168,50,0.07)",
-          border: `1px solid ${report.dsa_applicability === "likely"
-            ? "rgba(224,82,82,0.3)"
-            : "rgba(224,168,50,0.25)"}`,
-        }}>
-          <p style={{
-            fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase",
-            color: report.dsa_applicability === "likely" ? "#e05252" : "#e0a832",
-            marginBottom: 4,
-          }}>
-            ⚠ DSA May Apply — Dig Deeper
-          </p>
-          <p style={{ fontSize: 12, color: "#c0ccd8", lineHeight: 1.6 }}>
-            {report.dsa_note ?? "This company may be subject to the Digital Services Act (Regulation (EU) 2022/2065) in addition to the EU AI Act. Verify whether they operate as an online intermediary before scoping the engagement."}
-          </p>
-          <p style={{ fontSize: 11, color: "#3d4f60", marginTop: 6 }}>
-            Internal flag — not included in client report
-          </p>
-        </div>
-      )}
-
       {/* ══ EXECUTIVE SUMMARY ════════════════════════════════════════ */}
 
       <div>
@@ -824,6 +693,144 @@ function StructuredReportView({
         This assessment is based on publicly available information only at the time of generation.
         Internal documentation may exist but was not reviewed. Obligation statuses and the overall
         grade may change upon receipt of client documentation and completion of the full diagnostic.
+      </div>
+    </div>
+  );
+}
+
+// ── Admin-only intelligence panel (rendered ABOVE the report preview) ─
+
+function AdminIntelPanel({ report }: { report: StructuredReport }) {
+  const pr = report.pricing_recommendation ?? null;
+  const ci = report.company_intelligence   ?? null;
+  const dsaApplicability = report.dsa_applicability ?? null;
+
+  const hasPricing = !!pr;
+  const hasIntel   = ci && (() => {
+    const rows = [ci.industry, ci.headquarters, ci.founding_year, ci.employee_count,
+                  ci.funding_stage, ci.total_funding, ci.latest_round];
+    return rows.some((v) => v && v !== "Unknown") ||
+           (ci.key_investors?.filter(Boolean).length ?? 0) > 0 ||
+           (ci.signals?.filter(Boolean).length ?? 0) > 0;
+  })();
+  const hasDsa = dsaApplicability && dsaApplicability !== "unlikely";
+
+  if (!hasPricing && !hasIntel && !hasDsa) return null;
+
+  const TIER_LABELS: Record<string, string> = {
+    starter:      "Starter — €300",
+    core:         "Core — €2,200",
+    premium:      "Premium — €3,500",
+    full_package: "Full Package — €4,500",
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Section label */}
+      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#3d4f60" }}>
+        Admin Intelligence — not shown to client
+      </p>
+
+      {/* Pricing */}
+      {hasPricing && pr && (() => {
+        const confColor = pr.confidence === "high" ? "#2ecc71" : pr.confidence === "medium" ? "#e0a832" : "#8899aa";
+        return (
+          <div style={{ borderRadius: 8, padding: "14px 18px", background: "rgba(200,168,75,0.06)", border: "1px solid rgba(200,168,75,0.35)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <p style={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: "#c8a84b" }}>
+                Pricing Recommendation
+              </p>
+              <span style={{ fontSize: 10, fontWeight: 600, color: confColor, background: `${confColor}18`, borderRadius: 4, padding: "2px 7px", letterSpacing: "0.06em" }}>
+                {pr.confidence.toUpperCase()} CONFIDENCE
+              </span>
+            </div>
+            <p style={{ fontSize: 18, fontWeight: 800, color: "#e8f4ff", marginBottom: 8 }}>
+              {TIER_LABELS[pr.recommended_tier] ?? pr.recommended_price}
+            </p>
+            <p style={{ fontSize: 12, color: "#c0ccd8", lineHeight: 1.6, marginBottom: pr.negotiation_note ? 8 : 0 }}>
+              {pr.reasoning}
+            </p>
+            {pr.negotiation_note && (
+              <p style={{ fontSize: 11, color: "#8899aa", lineHeight: 1.5, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8, marginTop: 4 }}>
+                <span style={{ fontWeight: 600, color: "#c8a84b" }}>Negotiation: </span>{pr.negotiation_note}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Company intelligence */}
+      {hasIntel && ci && (() => {
+        const rows: [string, string | undefined][] = [
+          ["Industry",      ci.industry],
+          ["Headquarters",  ci.headquarters],
+          ["Founded",       ci.founding_year],
+          ["Employees",     ci.employee_count],
+          ["Funding Stage", ci.funding_stage],
+          ["Total Funding", ci.total_funding],
+          ["Latest Round",  ci.latest_round],
+        ];
+        const filledRows = rows.filter(([, v]) => v && v !== "Unknown");
+        const investors   = ci.key_investors?.filter(Boolean) ?? [];
+        const signals     = ci.signals?.filter(Boolean) ?? [];
+        return (
+          <div style={{ borderRadius: 8, padding: "14px 18px", background: "rgba(45,156,219,0.04)", border: "1px solid rgba(45,156,219,0.2)" }}>
+            <p style={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: "#2d9cdb", marginBottom: 12 }}>
+              Company Intelligence
+            </p>
+            {filledRows.length > 0 && (
+              <div className="grid" style={{ gridTemplateColumns: "140px 1fr", gap: "4px 0", marginBottom: signals.length > 0 ? 10 : 0 }}>
+                {filledRows.map(([label, value]) => (
+                  <React.Fragment key={label}>
+                    <span style={{ fontSize: 11, color: "#3d4f60", fontWeight: 600, paddingRight: 8 }}>{label}</span>
+                    <span style={{ fontSize: 11, color: "#c0ccd8" }}>{value}</span>
+                  </React.Fragment>
+                ))}
+                {investors.length > 0 && (
+                  <React.Fragment>
+                    <span style={{ fontSize: 11, color: "#3d4f60", fontWeight: 600, paddingRight: 8, alignSelf: "start" }}>Investors</span>
+                    <span style={{ fontSize: 11, color: "#c0ccd8" }}>{investors.join(", ")}</span>
+                  </React.Fragment>
+                )}
+              </div>
+            )}
+            {signals.length > 0 && (
+              <div style={{ borderTop: filledRows.length > 0 ? "1px solid rgba(255,255,255,0.05)" : "none", paddingTop: filledRows.length > 0 ? 10 : 0 }}>
+                <p style={{ fontSize: 10, fontWeight: 600, color: "#3d4f60", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Key Signals</p>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {signals.map((s, i) => (
+                    <li key={i} style={{ fontSize: 11, color: "#8899aa", lineHeight: 1.6, marginBottom: 3 }}>
+                      <span style={{ color: "#2d9cdb", marginRight: 5 }}>•</span>{s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* DSA alert */}
+      {hasDsa && (
+        <div style={{
+          borderRadius: 8, padding: "12px 16px",
+          background: dsaApplicability === "likely" ? "rgba(224,82,82,0.07)" : "rgba(224,168,50,0.07)",
+          border: `1px solid ${dsaApplicability === "likely" ? "rgba(224,82,82,0.3)" : "rgba(224,168,50,0.25)"}`,
+        }}>
+          <p style={{ fontWeight: 700, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: dsaApplicability === "likely" ? "#e05252" : "#e0a832", marginBottom: 4 }}>
+            ⚠ DSA May Apply — Dig Deeper
+          </p>
+          <p style={{ fontSize: 12, color: "#c0ccd8", lineHeight: 1.6 }}>
+            {report.dsa_note ?? "This company may be subject to the Digital Services Act (Regulation (EU) 2022/2065) in addition to the EU AI Act."}
+          </p>
+        </div>
+      )}
+
+      {/* Divider before report */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 4 }}>
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#3d4f60" }}>
+          Client Report Preview
+        </p>
       </div>
     </div>
   );
@@ -1494,6 +1501,9 @@ export default function DemoAnalysisPanel({ demoId, companyName, contactEmail, s
               </button>
             </div>
           )}
+
+          {/* Admin intelligence — above the report preview */}
+          {parsedReport && <AdminIntelPanel report={parsedReport} />}
 
           {/* Document preview */}
           <div className="rounded-lg px-5 py-5"
