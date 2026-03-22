@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createSupabaseAdminClient } from "@/lib/supabase-server";
 import { logError } from "@/lib/log-error";
-import { fetchWebsite } from "@/lib/fetch-website";
+import { fetchPublicFootprint, type FootprintSources } from "@/lib/fetch-public-footprint";
+
+export const maxDuration = 60;
 
 const anthropic = new Anthropic();
 
@@ -12,6 +14,7 @@ type InsightVersion = {
   generated_at: string;
   internal_feedback: string | null;
   website_scan_quality?: "good" | "partial" | "failed";
+  sources_found?: FootprintSources;
 };
 
 type InsightsSnapshot = {
@@ -74,6 +77,8 @@ MINIMAL-RISK: Spam filters, recommendation systems with no significant human imp
 ─────────────────────────────────────
 STEP 2 — ASSESS ALL 8 OBLIGATIONS
 ─────────────────────────────────────
+CITATION RULE: When a finding is based on a specific external source (a news article, LinkedIn post or job posting, Crunchbase data, or a specific page on the company website), cite it inline using this format: (Source: [source name], [Month Year if known]). Examples: "A LinkedIn job posting for a 'Head of AI Ethics' role (Source: LinkedIn Jobs, March 2026) suggests the company is building internal oversight capability, though no formal policy is publicly documented." or "According to funding coverage (Source: TechCrunch, Jan 2025), the company raised €5M Series A — indicating budget capacity for compliance investment."
+
 For each obligation, give status, a specific finding (2-4 sentences), required action, effort, and deadline.
 
 01. Risk Management System | Article 9 | Regulation (EU) 2024/1689
@@ -156,6 +161,44 @@ Set dsa_applicability to:
 Provide a single concise dsa_note sentence explaining your reasoning.
 
 ─────────────────────────────────────
+STEP 6 — COMPANY INTELLIGENCE (ADMIN-ONLY — NOT SENT TO CLIENT)
+─────────────────────────────────────
+Extract factual company intelligence from all available sources. This is for LexSutra admin use only and will not appear in the client-facing report.
+
+Return a company_intelligence object with these fields (use "Unknown" or [] if not found):
+- employee_count: estimated headcount with source, e.g. "45–50 (LinkedIn, March 2026)" or "Unknown"
+- founding_year: e.g. "2021 (Crunchbase)" or "Unknown"
+- funding_stage: e.g. "Series A", "Bootstrapped", "Seed", "Series B", "Unknown"
+- total_funding: e.g. "€5M total (Crunchbase)" or "Unknown"
+- latest_round: e.g. "€5M Series A, January 2025 (TechCrunch)" or "Not disclosed"
+- key_investors: array of investor names, or [] if unknown
+- headquarters: e.g. "Amsterdam, Netherlands (LinkedIn)" or "Unknown"
+- industry: concise category, e.g. "HR Tech — AI Recruitment", "FinTech — Credit Scoring"
+- signals: array of 3–6 key intelligence signals, each with source cited inline. Examples:
+  "Raised €5M Series A in January 2025 (Source: TechCrunch, Jan 2025)"
+  "~45 employees as of March 2026 (Source: LinkedIn)"
+  "Actively hiring a 'Head of AI Governance' role (Source: LinkedIn Jobs, March 2026)"
+  "No public mention of EU AI Act compliance on website or in press (Source: Website + News)"
+
+─────────────────────────────────────
+STEP 7 — PRICING RECOMMENDATION (ADMIN-ONLY — NOT SENT TO CLIENT)
+─────────────────────────────────────
+Based on company size, funding stage, AI system complexity, and compliance posture, recommend the most appropriate LexSutra service tier.
+
+Available tiers:
+- starter (€300): Public footprint scan only. Appropriate for very early-stage, bootstrapped, or pre-revenue companies.
+- core (€2,200): Full diagnostic + scorecard. Appropriate for funded startups and growth-stage companies.
+- premium (€3,500): Core + strategy session + investor compliance certificate. Appropriate for Series A+, companies seeking investor sign-off, or those close to the August 2026 deadline.
+- full_package (€4,500): Everything + competitor compliance snapshot. Appropriate for Series B+, established scale-ups, or companies with board-level compliance urgency.
+
+Return a pricing_recommendation object:
+- recommended_tier: "starter" | "core" | "premium" | "full_package"
+- recommended_price: e.g. "€3,500"
+- confidence: "high" | "medium" | "low" (based on how much company intelligence was available)
+- reasoning: 2–3 sentences explaining the recommendation based on company size, funding, AI system complexity, and compliance gaps
+- negotiation_note: 1 sentence on how to handle pushback or budget objections
+
+─────────────────────────────────────
 OUTPUT FORMAT — VALID JSON ONLY
 ─────────────────────────────────────
 Return this exact JSON structure. No text before or after the JSON.
@@ -173,6 +216,29 @@ Return this exact JSON structure. No text before or after the JSON.
   "executive_summary": "2-3 paragraphs as a single string separated by \\n\\n. Paragraph 1: which AI system is assessed, what it does, and exact risk classification with full legal citation. Paragraph 2: summary stating exact numbers — X obligations with no publicly available evidence, X Partial, X Compliant. Paragraph 3: most urgent action and August 2026 deadline context. NO bullet points.",
   "dsa_applicability": "likely|possible|unlikely",
   "dsa_note": "One sentence — e.g. 'Company operates a hiring marketplace connecting employers and candidates — DSA obligations as an online intermediary may apply alongside EU AI Act.'",
+  "company_intelligence": {
+    "employee_count": "45–50 (LinkedIn, March 2026)",
+    "founding_year": "2021 (Crunchbase)",
+    "funding_stage": "Series A",
+    "total_funding": "€5M total (Crunchbase)",
+    "latest_round": "€5M Series A, January 2025 (TechCrunch)",
+    "key_investors": ["Earlybird Venture Capital", "Point Nine Capital"],
+    "headquarters": "Amsterdam, Netherlands (LinkedIn)",
+    "industry": "HR Tech — AI Recruitment",
+    "signals": [
+      "Raised €5M Series A in January 2025 (Source: TechCrunch, Jan 2025)",
+      "~45 employees as of March 2026 (Source: LinkedIn)",
+      "Actively hiring a Head of AI Governance (Source: LinkedIn Jobs, March 2026)",
+      "No public mention of EU AI Act compliance on website or in press (Source: Website + News)"
+    ]
+  },
+  "pricing_recommendation": {
+    "recommended_tier": "premium",
+    "recommended_price": "€3,500",
+    "confidence": "high",
+    "reasoning": "Company is Series A-funded with ~45 employees and a high-risk AI recruitment platform under Annex III §4(a). Multiple critical compliance gaps and the August 2026 deadline create genuine urgency. The Premium package — which includes a strategy session and investor compliance certificate — is well-matched to a funded scale-up preparing for due diligence.",
+    "negotiation_note": "Offer Core (€2,200) as an entry point if the client needs internal budget approval before committing to the full Premium package."
+  },
   "obligations": [
     {
       "number": "01",
@@ -207,8 +273,9 @@ Language rules (same as initial generation):
 - partial findings: "Based on publicly available information, limited evidence of [requirement] was identified..."
 - compliant findings: "Publicly available information indicates that [Company] [evidence]..."
 Never use: "critical gap found", "gap detected", "lacks [X]", "failure to comply", or "non-compliant".
+Maintain inline source citations in findings where they exist: (Source: [name], [date]).
 
-Return ONLY the same valid JSON structure as the original — no prose outside the JSON. Maintain British English throughout. All 8 obligations and all confidence fields must be present in the output.`;
+Return ONLY the same valid JSON structure as the original — no prose outside the JSON. Maintain British English throughout. All 8 obligations, all confidence fields, company_intelligence, and pricing_recommendation must be present in the output.`;
 
 // ── Failed-scan template (no Claude call) ─────────────────────
 
@@ -296,6 +363,7 @@ export async function POST(req: NextRequest) {
     // ── Branch: initial generation vs refinement ──────────────────
     let parsed: unknown;
     let usedScanQuality: "good" | "partial" | "failed" | undefined;
+    let usedSources: FootprintSources | undefined;
 
     if (isRefinement) {
       // Refinement — call Claude with SYSTEM_REFINE
@@ -317,6 +385,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Refinement produced invalid output. Please try again." }, { status: 500 });
       }
       usedScanQuality = currentVersion?.website_scan_quality as typeof usedScanQuality ?? undefined;
+      usedSources     = currentVersion?.sources_found;
 
     } else {
       // Initial generation — fetch website first
@@ -325,9 +394,10 @@ export async function POST(req: NextRequest) {
       let scanQuality: "good" | "partial" | "failed" = "failed";
       let websiteContent = "";
       if (demo.website_url) {
-        const result = await fetchWebsite(demo.website_url);
-        scanQuality    = result.quality;
-        websiteContent = result.content;
+        const result     = await fetchPublicFootprint(demo.website_url, demo.company_name);
+        scanQuality      = result.quality;
+        websiteContent   = result.content;
+        usedSources      = result.sources;
       }
       usedScanQuality = scanQuality;
 
@@ -364,17 +434,25 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const websiteSection = scanQuality === "failed"
-          ? `\n\nPublic website content: Website was inaccessible — use the admin research brief below as the primary information source.`
-          : scanQuality === "partial"
-          ? `\n\nPublic website content (partial — meta tags only; treat with lower confidence):\n${websiteContent}`
-          : `\n\nPublic website content:\n${websiteContent}`;
-
-        const briefSection = researchBrief
-          ? `\n\n──────────────────────────────────────────\nADMIN RESEARCH BRIEF (manually gathered by LexSutra analyst — treat as primary evidence, higher reliability than website scan):\n${researchBrief}\n──────────────────────────────────────────`
+        // Build a sources summary header for Claude
+        const sourcesSummary = usedSources
+          ? `\nPublic footprint sources scanned:\n` +
+            `  • Website: ${usedSources.websiteQuality.toUpperCase()}\n` +
+            `  • News articles: ${usedSources.newsCount} found\n` +
+            `  • LinkedIn company page: ${usedSources.linkedInFound ? "found" : "not found / blocked"}\n` +
+            `  • LinkedIn job postings: ${usedSources.linkedInJobsFound ? "found" : "not found / blocked"}\n` +
+            `  • Crunchbase profile: ${usedSources.crunchbaseFound ? "found" : "not found"}`
           : "";
 
-        const userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}${websiteSection}${briefSection}\n\nAssessment date: ${assessmentDate}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
+        const footprintSection = scanQuality === "failed"
+          ? `\n\nPublic footprint: All sources inaccessible — use the admin research brief below as the primary information source.${sourcesSummary}`
+          : `\n\nPublic footprint content (${scanQuality} scan):${sourcesSummary}\n\n${websiteContent}`;
+
+        const briefSection = researchBrief
+          ? `\n\n──────────────────────────────────────────\nADMIN RESEARCH BRIEF (manually gathered by LexSutra analyst — treat as primary evidence, higher reliability than automated scan):\n${researchBrief}\n──────────────────────────────────────────`
+          : "";
+
+        const userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}${footprintSection}${briefSection}\n\nAssessment date: ${assessmentDate}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
 
         const message = await anthropic.messages.create({
           model:       "claude-sonnet-4-6",
@@ -405,6 +483,7 @@ export async function POST(req: NextRequest) {
       generated_at:         new Date().toISOString(),
       internal_feedback:    isRefinement ? (feedback ?? null) : null,
       website_scan_quality: usedScanQuality,
+      sources_found:        usedSources,
     };
 
     const updatedSnapshot: InsightsSnapshot = {
