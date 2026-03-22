@@ -51,7 +51,7 @@ export default async function ProfilePage() {
       .single(),
     adminClient
       .from("ai_systems")
-      .select("id, name, url, risk_category, risk_reason, annex_iii_domain, description, role, data_subjects, vendor, deployment_status, created_at")
+      .select("id, name, url, risk_category, risk_reason, annex_iii_domain, description, role, data_subjects, deployment_status, created_at")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false }),
   ]);
@@ -183,11 +183,6 @@ export default async function ProfilePage() {
                         {s.role && (
                           <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(45,156,219,0.08)", color: "#2d9cdb" }}>
                             {ROLE_LABELS[s.role] ?? s.role}
-                          </span>
-                        )}
-                        {s.vendor && (
-                          <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.04)", color: "#8899aa" }}>
-                            {s.vendor}
                           </span>
                         )}
                         {s.data_subjects && (

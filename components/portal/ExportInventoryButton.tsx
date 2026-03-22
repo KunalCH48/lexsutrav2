@@ -28,7 +28,6 @@ export type InventorySystem = {
   description:       string | null;  // use case
   role:              string | null;
   data_subjects:     string | null;
-  vendor:            string | null;
   deployment_status: string | null;
   risk_category:     string | null;
   risk_reason:       string | null;
@@ -50,7 +49,6 @@ function buildCSV(systems: InventorySystem[], companyName: string): string {
     "Primary Purpose / Use Case",
     "Your Role",
     "Data Subjects Affected",
-    "Vendor / Origin",
     "Deployment Status",
     "Risk Category (LexSutra Assessment)",
     "EU AI Act Annex III Domain",
@@ -69,7 +67,6 @@ function buildCSV(systems: InventorySystem[], companyName: string): string {
       s.description ?? "",
       s.role ? (ROLE_LABELS[s.role] ?? s.role) : "",
       s.data_subjects ?? "",
-      s.vendor ?? "",
       s.deployment_status ? (STATUS_LABELS[s.deployment_status] ?? s.deployment_status) : "",
       s.risk_category ? (RISK_LABELS[s.risk_category] ?? s.risk_category) : "Pending",
       s.annex_iii_domain ?? "—",
