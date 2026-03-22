@@ -269,7 +269,7 @@ function buildProspectEmail(
   <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:20px;text-align:center;">
     <p style="color:#8899aa;font-size:13px;line-height:1.75;margin-bottom:10px;">
       Questions? Reply to this email or reach us at
-      <a href="mailto:hello@lexsutra.com" style="color:#c9a84c;text-decoration:none;">hello@lexsutra.com</a>
+      <a href="mailto:hello@send.lexsutra.com" style="color:#c9a84c;text-decoration:none;">hello@send.lexsutra.com</a>
     </p>
     <p style="color:#3d4f60;font-size:11px;margin:0;line-height:1.6;">
       LexSutra &middot; lexsutra.com &middot; Based in the Netherlands<br/>
@@ -378,7 +378,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             from: "LexSutra <hello@send.lexsutra.com>",
             to: [email],
-            replyTo: "hello@lexsutra.com",
+            replyTo: "hello@send.lexsutra.com",
             subject: `Your preliminary EU AI Act profile — ${company_name}`,
             html: buildProspectEmail(company_name, assessment),
           }),
@@ -409,7 +409,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Something went wrong. Please try again or email us at hello@lexsutra.com.",
+          "Something went wrong. Please try again or email us at hello@send.lexsutra.com.",
       },
       { status: 500 }
     );
