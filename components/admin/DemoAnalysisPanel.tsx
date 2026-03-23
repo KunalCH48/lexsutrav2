@@ -108,7 +108,7 @@ const EU_AI_FACTS = [
   "Article 14 requires meaningful human oversight — not just a rubber-stamp review.",
   "Training data must be checked for biases under Article 10 before deployment.",
   "High-risk AI must be registered in an EU-wide public database before market placement (Article 49).",
-  "Non-compliance fines can reach €30M or 6% of global annual turnover.",
+  "Fines for prohibited AI practices reach €35M or 7% of global annual turnover; other non-compliance reaches €15M or 3%.",
   "Employment and HR AI systems fall under Annex III §4(a) — one of the highest-risk categories.",
   "Credit scoring AI is classified as high-risk under Annex III §5.",
   "The CE marking requirement under Article 48 confirms EU AI Act conformity.",

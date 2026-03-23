@@ -1,0 +1,127 @@
+<svg width="1584" height="396" viewBox="0 0 1584 396" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1584" height="396" fill="#080c14"/>
+
+  <!-- Subtle diagonal gradient overlay -->
+  <linearGradient id="bg-grad" x1="0" y1="0" x2="1584" y2="396" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="#0d1520" stop-opacity="1"/>
+    <stop offset="60%" stop-color="#080c14" stop-opacity="1"/>
+    <stop offset="100%" stop-color="#111d2e" stop-opacity="1"/>
+  </linearGradient>
+  <rect width="1584" height="396" fill="url(#bg-grad)"/>
+
+  <!-- Blue glow — left side behind logo -->
+  <radialGradient id="glow-left" cx="0%" cy="50%" r="40%">
+    <stop offset="0%" stop-color="#2d9cdb" stop-opacity="0.1"/>
+    <stop offset="100%" stop-color="#080c14" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1584" height="396" fill="url(#glow-left)"/>
+
+  <!-- Gold glow — right side -->
+  <radialGradient id="glow-right" cx="100%" cy="50%" r="35%">
+    <stop offset="0%" stop-color="#c8a84b" stop-opacity="0.06"/>
+    <stop offset="100%" stop-color="#080c14" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1584" height="396" fill="url(#glow-right)"/>
+
+  <!-- Vertical divider line -->
+  <line x1="520" y1="80" x2="520" y2="316" stroke="#2d9cdb" stroke-width="1" stroke-opacity="0.2"/>
+
+  <!-- ── LEFT BLOCK: Logo ── -->
+  <!-- Shield: original 64x64 scaled 4x = 256x256, centered at (260, 198) -->
+  <g transform="translate(132, 70) scale(4)">
+    <path
+      d="M32 6 L56 15 L56 35 Q56 52 32 61 Q8 52 8 35 L8 15 Z"
+      stroke="#c8a84b"
+      stroke-width="1.6"
+      fill="rgba(200,168,75,0.07)"
+      stroke-linejoin="round"
+    />
+    <circle cx="32" cy="28" r="4" fill="#c8a84b"/>
+    <circle cx="19" cy="21" r="2.5" fill="#2d9cdb"/>
+    <circle cx="45" cy="21" r="2.5" fill="#2d9cdb"/>
+    <circle cx="19" cy="37" r="2.5" fill="#2d9cdb"/>
+    <circle cx="45" cy="37" r="2.5" fill="#2d9cdb"/>
+    <circle cx="32" cy="46" r="2" fill="#2d9cdb" opacity="0.65"/>
+    <line x1="19" y1="21" x2="32" y2="28" stroke="#2d9cdb" stroke-width="1" opacity="0.6"/>
+    <line x1="45" y1="21" x2="32" y2="28" stroke="#2d9cdb" stroke-width="1" opacity="0.6"/>
+    <line x1="19" y1="37" x2="32" y2="28" stroke="#2d9cdb" stroke-width="1" opacity="0.6"/>
+    <line x1="45" y1="37" x2="32" y2="28" stroke="#2d9cdb" stroke-width="1" opacity="0.6"/>
+    <line x1="32" y1="46" x2="32" y2="32" stroke="#2d9cdb" stroke-width="1" opacity="0.4"/>
+    <line x1="19" y1="21" x2="45" y2="21" stroke="#2d9cdb" stroke-width="0.6" opacity="0.25"/>
+    <line x1="19" y1="37" x2="45" y2="37" stroke="#2d9cdb" stroke-width="0.6" opacity="0.25"/>
+    <line x1="19" y1="21" x2="19" y2="37" stroke="#2d9cdb" stroke-width="0.6" opacity="0.25"/>
+    <line x1="45" y1="21" x2="45" y2="37" stroke="#2d9cdb" stroke-width="0.6" opacity="0.25"/>
+  </g>
+
+  <!-- Wordmark under shield -->
+  <text
+    x="260"
+    y="356"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="32"
+    font-weight="700"
+    letter-spacing="2"
+    fill="#c8a84b"
+    text-anchor="middle"
+  >LexSutra</text>
+
+  <!-- ── RIGHT BLOCK: Copy ── -->
+  <!-- Main headline -->
+  <text
+    x="572"
+    y="158"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="42"
+    font-weight="700"
+    fill="#e8f4ff"
+    letter-spacing="0.5"
+  >EU AI Act Compliance</text>
+
+  <text
+    x="572"
+    y="212"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="42"
+    font-weight="400"
+    fill="#c8a84b"
+    letter-spacing="0.5"
+  >Diagnostics for AI Startups</text>
+
+  <!-- Divider -->
+  <line x1="572" y1="238" x2="900" y2="238" stroke="#2d9cdb" stroke-width="1" stroke-opacity="0.4"/>
+
+  <!-- Sub-copy -->
+  <text
+    x="572"
+    y="276"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="20"
+    fill="rgba(232,244,255,0.6)"
+    letter-spacing="0.3"
+  >Graded reports · Legal citations · Human expert review</text>
+
+  <!-- Deadline pill -->
+  <rect x="572" y="304" width="318" height="40" rx="20" fill="rgba(224,82,82,0.12)" stroke="rgba(224,82,82,0.35)" stroke-width="1"/>
+  <text
+    x="731"
+    y="329"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="15"
+    font-weight="600"
+    fill="#e05252"
+    text-anchor="middle"
+    letter-spacing="0.5"
+  >August 2026 deadline approaching</text>
+
+  <!-- Domain — bottom right -->
+  <text
+    x="1544"
+    y="370"
+    font-family="'Helvetica Neue', Arial, sans-serif"
+    font-size="18"
+    fill="rgba(232,244,255,0.25)"
+    text-anchor="end"
+    letter-spacing="0.5"
+  >lexsutra.com</text>
+</svg>

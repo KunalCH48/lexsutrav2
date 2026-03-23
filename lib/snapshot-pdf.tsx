@@ -51,8 +51,14 @@ const C = {
   rowAlt:     "#f7f8fa",
   rowHeader:  "#e8ecf0",
   red:        "#c0392b",
+  redBg:      "#fef2f2",
+  redBorder:  "#f5c6c6",
   amber:      "#b7770a",
+  amberBg:    "#fffbeb",
+  amberBorder:"#f5dfa0",
   green:      "#15803d",
+  greenBg:    "#f0fdf4",
+  greenBorder:"#bbf7d0",
   gold:       "#8b6914",
 };
 
@@ -60,33 +66,68 @@ const C = {
 
 function statusColor(s: string): string {
   if (s === "critical_gap")   return C.red;
+  if (s === "not_started")    return C.amber;
   if (s === "partial")        return C.amber;
   if (s === "compliant")      return C.green;
   return C.textLight;
+}
+
+function statusBg(s: string): string {
+  if (s === "critical_gap")   return C.redBg;
+  if (s === "not_started")    return C.amberBg;
+  if (s === "partial")        return C.amberBg;
+  if (s === "compliant")      return C.greenBg;
+  return C.rowHeader;
+}
+
+function statusBorderColor(s: string): string {
+  if (s === "critical_gap")   return C.redBorder;
+  if (s === "not_started")    return C.amberBorder;
+  if (s === "partial")        return C.amberBorder;
+  if (s === "compliant")      return C.greenBorder;
+  return C.rule;
 }
 
 function statusLabel(s: string): string {
   if (s === "critical_gap")   return "CRITICAL GAP";
   if (s === "partial")        return "PARTIAL";
   if (s === "compliant")      return "COMPLIANT";
-  if (s === "not_started")    return "NOT STARTED";
+  if (s === "not_started")    return "NOT STARTED / NO EVIDENCE FOUND";
+  if (s === "not_applicable") return "N/A";
+  return s.toUpperCase().replace(/_/g, " ");
+}
+
+function statusLabelShort(s: string): string {
+  if (s === "critical_gap")   return "CRITICAL GAP";
+  if (s === "partial")        return "PARTIAL";
+  if (s === "compliant")      return "COMPLIANT";
+  if (s === "not_started")    return "NO EVIDENCE FOUND";
   if (s === "not_applicable") return "N/A";
   return s.toUpperCase().replace(/_/g, " ");
 }
 
 function priorityShort(s: string): string {
-  if (s === "critical_gap" || s === "not_started") return "P1";
-  if (s === "partial")      return "P2";
-  if (s === "compliant")    return "P3";
-  return "N/A";
+  if (s === "critical_gap")  return "P1";
+  if (s === "not_started")   return "P2";
+  if (s === "partial")       return "P3";
+  if (s === "compliant")     return "P4";
+  return "—";
 }
 
 function priorityLabel(s: string): string {
   if (s === "critical_gap") return "P1\nCRITICAL";
-  if (s === "not_started")  return "P1\nHIGH";
-  if (s === "partial")      return "P2\nHIGH";
-  if (s === "compliant")    return "P3\nMONITOR";
-  return "N/A";
+  if (s === "not_started")  return "P2\nNO EVIDENCE";
+  if (s === "partial")      return "P3\nPARTIAL";
+  if (s === "compliant")    return "P4\nCOMPLIANT";
+  return "—";
+}
+
+function statusSortOrder(s: string): number {
+  if (s === "critical_gap")  return 0;
+  if (s === "not_started")   return 1;
+  if (s === "partial")       return 2;
+  if (s === "compliant")     return 3;
+  return 4;
 }
 
 function abbreviateArticle(a: string): string {
@@ -117,26 +158,26 @@ const st = StyleSheet.create({
   body:         { paddingHorizontal: 36, paddingVertical: 22, flex: 1 },
 
   // Typography
-  h1:           { fontFamily: "Times-Bold",    fontSize: 30, color: C.text,    lineHeight: 1.15, marginBottom: 3 },
+  h1:           { fontFamily: "Times-Bold",    fontSize: 28, color: C.text,    lineHeight: 1.15, marginBottom: 3 },
   h2:           { fontFamily: "Times-Bold",    fontSize: 14, color: C.text,    borderBottomWidth: 1.5, borderBottomColor: C.blue, paddingBottom: 5, marginBottom: 12 },
   h3:           { fontFamily: "Helvetica-Bold",fontSize: 8.5, color: C.text   },
-  subTitle:     { fontSize: 11, color: C.textMid, marginBottom: 18 },
+  subTitle:     { fontSize: 10, color: C.textMid, marginBottom: 14 },
   label:        { fontSize: 6.5, color: C.textGhost, letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 3 },
   body1:        { fontSize: 8.5, color: C.text,     lineHeight: 1.65 },
   body2:        { fontSize: 8,   color: C.textMid,  lineHeight: 1.65 },
   small:        { fontSize: 7.5, color: C.textLight, lineHeight: 1.6  },
 
   // Grade badge (square)
-  gradeBadge:   { width: 64, height: 64, borderRadius: 6, borderWidth: 1.5, borderColor: C.gold, backgroundColor: "#fdf8ee", alignItems: "center", justifyContent: "center" },
-  gradeText:    { fontFamily: "Times-Bold", fontSize: 26, color: C.gold, lineHeight: 1 },
+  gradeBadge:   { width: 60, height: 60, borderRadius: 6, borderWidth: 1.5, borderColor: C.gold, backgroundColor: "#fdf8ee", alignItems: "center", justifyContent: "center" },
+  gradeText:    { fontFamily: "Times-Bold", fontSize: 24, color: C.gold, lineHeight: 1 },
 
   // Metadata grid
-  metaGrid:     { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginTop: 18 },
+  metaGrid:     { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginTop: 14 },
   metaRow:      { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: C.rule },
   metaRowLast:  { flexDirection: "row" },
-  metaLabel:    { width: 130, backgroundColor: C.rowHeader, paddingHorizontal: 10, paddingVertical: 7, fontFamily: "Helvetica-Bold", fontSize: 7.5, color: C.textMid },
-  metaValue:    { flex: 1,   paddingHorizontal: 10, paddingVertical: 7, fontSize: 7.5, color: C.text },
-  metaValueRed: { flex: 1,   paddingHorizontal: 10, paddingVertical: 7, fontSize: 7.5, color: C.red, fontFamily: "Helvetica-Bold" },
+  metaLabel:    { width: 130, backgroundColor: C.rowHeader, paddingHorizontal: 10, paddingVertical: 6, fontFamily: "Helvetica-Bold", fontSize: 7.5, color: C.textMid },
+  metaValue:    { flex: 1,   paddingHorizontal: 10, paddingVertical: 6, fontSize: 7.5, color: C.text },
+  metaValueRed: { flex: 1,   paddingHorizontal: 10, paddingVertical: 6, fontSize: 7.5, color: C.red, fontFamily: "Helvetica-Bold" },
 
   // Risk callout box
   callout:      { borderLeftWidth: 3, borderLeftColor: C.gold, backgroundColor: "#fdf8ee", padding: 12, marginBottom: 10 },
@@ -153,7 +194,7 @@ const st = StyleSheet.create({
 
   // Obligation card
   obCard:       { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 10 },
-  obHeader:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: C.rowHeader, paddingHorizontal: 10, paddingVertical: 7, borderBottomWidth: 0.5, borderBottomColor: C.rule },
+  obHeader:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 10, paddingVertical: 7, borderBottomWidth: 0.5, borderBottomColor: C.rule },
   obTitle:      { fontFamily: "Times-Bold", fontSize: 11, color: C.text },
   obRow:        { flexDirection: "row", borderTopWidth: 0.5, borderTopColor: C.rule },
   obRowLabel:   { width: 90, backgroundColor: "#f9fafb", paddingHorizontal: 8, paddingVertical: 7, fontFamily: "Helvetica-Bold", fontSize: 7.5, color: C.textLight, borderRightWidth: 0.5, borderRightColor: C.rule },
@@ -173,8 +214,17 @@ const st = StyleSheet.create({
   stampValue:   { fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.text, flex: 1 },
 
   // Roadmap priority
-  prioCell:     { width: 58, paddingHorizontal: 8, paddingVertical: 6, alignItems: "center", justifyContent: "center", borderRightWidth: 0.5, borderRightColor: C.rule },
-  prioText:     { fontFamily: "Helvetica-Bold", fontSize: 7.5, textAlign: "center", lineHeight: 1.3 },
+  prioCell:     { width: 62, paddingHorizontal: 6, paddingVertical: 6, alignItems: "center", justifyContent: "center", borderRightWidth: 0.5, borderRightColor: C.rule },
+  prioText:     { fontFamily: "Helvetica-Bold", fontSize: 7, textAlign: "center", lineHeight: 1.3 },
+
+  // Legend box (How to Read)
+  legendBox:    { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 14 },
+  legendHeader: { backgroundColor: C.dark, paddingHorizontal: 10, paddingVertical: 6 },
+  legendHeaderText: { fontFamily: "Helvetica-Bold", fontSize: 8, color: "#ffffff", letterSpacing: 0.4 },
+  legendRow:    { flexDirection: "row", borderTopWidth: 0.5, borderTopColor: C.rule, paddingHorizontal: 10, paddingVertical: 5, alignItems: "flex-start" },
+  legendDot:    { width: 8, height: 8, borderRadius: 4, marginTop: 1, marginRight: 8, flexShrink: 0 },
+  legendKey:    { width: 110, fontFamily: "Helvetica-Bold", fontSize: 7.5 },
+  legendDesc:   { flex: 1, fontSize: 7.5, color: C.textMid, lineHeight: 1.5 },
 });
 
 // ── Reusable: Page header + footer ─────────────────────────────────
@@ -199,13 +249,12 @@ function PageHeader({
 }
 
 function PageFooter({ assessmentDate }: { assessmentDate: string }) {
-  const month = new Date(assessmentDate).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   return (
     <View style={st.fBar} fixed>
       <Text
         style={st.fText}
         render={({ pageNumber }) =>
-          `Page ${pageNumber}  |  LexSutra EU AI Act Diagnostic Report  |  ${month}`
+          `Page ${pageNumber}  |  LexSutra EU AI Act Compliance Snapshot  |  ${assessmentDate}`
         }
       />
     </View>
@@ -232,13 +281,6 @@ function CoverPage({
   const nsCount        = report.obligations.filter(o => o.status === "not_started").length;
   const partialCount   = report.obligations.filter(o => o.status === "partial").length;
   const compliantCount = report.obligations.filter(o => o.status === "compliant").length;
-  const urgentCount    = criticalCount + nsCount;
-
-  const statsParts: string[] = [];
-  if (criticalCount > 0)  statsParts.push(`${criticalCount} critical gap${criticalCount !== 1 ? "s" : ""}`);
-  if (nsCount > 0)        statsParts.push(`${nsCount} not started`);
-  if (partialCount > 0)   statsParts.push(`${partialCount} partial`);
-  if (compliantCount > 0) statsParts.push(`${compliantCount} compliant`);
 
   return (
     <Page size="A4" style={st.page}>
@@ -248,63 +290,243 @@ function CoverPage({
       <View style={st.body}>
         {/* Wordmark + rule */}
         <View style={{ marginBottom: 4 }}>
-          <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 22, color: C.text }}>
+          <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 20, color: C.text }}>
             <Text style={{ color: C.blueLight }}>Lex</Text>Sutra
           </Text>
         </View>
         <View style={{ height: 1.5, backgroundColor: C.blue, marginBottom: 8 }} />
 
         {/* Report type label */}
-        <Text style={[st.label, { marginBottom: 6 }]}>EU AI Act Compliance Diagnostic Report</Text>
+        <Text style={[st.label, { marginBottom: 6 }]}>EU AI Act Compliance Snapshot  ·  Public Footprint Assessment</Text>
 
         {/* Company name */}
         <Text style={st.h1}>{companyName}</Text>
 
         {/* Risk classification subtitle */}
-        <Text style={[st.subTitle, { marginBottom: 22 }]}>
+        <Text style={[st.subTitle, { marginBottom: 16 }]}>
           {report.risk_classification}
         </Text>
 
         {/* Grade + stats row */}
-        <View style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 20 }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 16 }}>
           <View style={st.gradeBadge}>
             <Text style={st.gradeText}>{report.grade}</Text>
+            <Text style={{ fontSize: 6, color: C.gold, marginTop: 1 }}>OVERALL GRADE</Text>
           </View>
-          <View style={{ marginLeft: 14, justifyContent: "center" }}>
-            <Text style={[st.small, { marginBottom: 3 }]}>Overall Compliance Grade</Text>
-            <Text style={[st.h3, { fontSize: 10, marginBottom: 4 }]}>
-              {urgentCount} obligation{urgentCount !== 1 ? "s" : ""} require immediate action
+          <View style={{ marginLeft: 14, justifyContent: "center", flex: 1 }}>
+            <Text style={[st.small, { marginBottom: 5, color: C.textMid }]}>
+              Assessment across 8 EU AI Act obligations — see page 2 for how grades and priorities are defined.
             </Text>
-            <Text style={st.small}>{statsParts.join("  ·  ")}</Text>
+            {/* Explicit breakdown */}
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+              {criticalCount > 0 && (
+                <View style={{ backgroundColor: C.redBg, borderWidth: 0.5, borderColor: C.redBorder, borderRadius: 3, paddingHorizontal: 7, paddingVertical: 3 }}>
+                  <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.red }}>
+                    {criticalCount} Critical Gap{criticalCount !== 1 ? "s" : ""}
+                  </Text>
+                </View>
+              )}
+              {nsCount > 0 && (
+                <View style={{ backgroundColor: C.amberBg, borderWidth: 0.5, borderColor: C.amberBorder, borderRadius: 3, paddingHorizontal: 7, paddingVertical: 3 }}>
+                  <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.amber }}>
+                    {nsCount} No Evidence Found
+                  </Text>
+                </View>
+              )}
+              {partialCount > 0 && (
+                <View style={{ backgroundColor: C.amberBg, borderWidth: 0.5, borderColor: C.amberBorder, borderRadius: 3, paddingHorizontal: 7, paddingVertical: 3 }}>
+                  <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.amber }}>
+                    {partialCount} Partial
+                  </Text>
+                </View>
+              )}
+              {compliantCount > 0 && (
+                <View style={{ backgroundColor: C.greenBg, borderWidth: 0.5, borderColor: C.greenBorder, borderRadius: 3, paddingHorizontal: 7, paddingVertical: 3 }}>
+                  <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.green }}>
+                    {compliantCount} Compliant
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
-        {/* Metadata grid */}
-        <View style={st.metaGrid}>
-          {[
-            ["Assessment Date",    assessmentDate, false],
-            ["Report Reference",   reportRef,      false],
-            ["Regulation",         "EU AI Act — Regulation (EU) 2024/1689", false],
-            ["Policy Version",     "v1.0 (Active August 2024)", false],
-            ["Annex Reference",    report.annex_section || "Annex III", false],
-            ["Reviewed By",        "LexSutra Expert Review", false],
-            ["Confidentiality",    "Confidential", false],
-          ].map(([label, value, isRed], i, arr) => (
-            <View key={i} style={i === arr.length - 1 ? st.metaRowLast : st.metaRow}>
-              <Text style={st.metaLabel}>{label as string}</Text>
-              <Text style={isRed ? st.metaValueRed : st.metaValue}>
-                {value as string}
+        {/* Colour-coded obligation grid — instant scan */}
+        <View style={{ borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 14 }}>
+          <View style={{ backgroundColor: C.dark, paddingHorizontal: 10, paddingVertical: 5 }}>
+            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 7, color: "#ffffff", letterSpacing: 0.4 }}>
+              AT A GLANCE — ALL 8 OBLIGATIONS
+            </Text>
+          </View>
+          {report.obligations.map((ob, i) => (
+            <View
+              key={ob.number}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                borderTopWidth: i === 0 ? 0 : 0.5,
+                borderTopColor: C.rule,
+                backgroundColor: statusBg(ob.status),
+                paddingVertical: 5,
+                paddingHorizontal: 0,
+              }}
+            >
+              {/* Coloured left bar */}
+              <View style={{ width: 4, alignSelf: "stretch", backgroundColor: statusColor(ob.status), marginRight: 10 }} />
+              {/* Obligation name */}
+              <Text style={{ fontSize: 7.5, color: C.text, flex: 1 }}>
+                <Text style={{ fontFamily: "Helvetica-Bold" }}>{ob.number}</Text>{"  "}{ob.name}
+              </Text>
+              {/* Priority badge */}
+              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: statusColor(ob.status), width: 22, textAlign: "center" }}>
+                {priorityShort(ob.status)}
+              </Text>
+              {/* Status label */}
+              <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: statusColor(ob.status), width: 120, textAlign: "right", paddingRight: 10 }}>
+                {statusLabelShort(ob.status)}
               </Text>
             </View>
           ))}
         </View>
 
+        {/* Metadata grid */}
+        <View style={st.metaGrid}>
+          {[
+            ["Assessment Date",    assessmentDate],
+            ["Report Reference",   reportRef],
+            ["Regulation",         "EU AI Act — Regulation (EU) 2024/1689"],
+            ["Annex Reference",    report.annex_section || "Annex III"],
+            ["Assessment Basis",   "Public footprint scan only — internal documents not reviewed"],
+            ["Reviewed By",        "LexSutra Expert Review"],
+          ].map(([label, value], i, arr) => (
+            <View key={i} style={i === arr.length - 1 ? st.metaRowLast : st.metaRow}>
+              <Text style={st.metaLabel}>{label}</Text>
+              <Text style={st.metaValue}>{value}</Text>
+            </View>
+          ))}
+        </View>
+
         {/* Disclaimer */}
-        <Text style={[st.small, { marginTop: 16, color: C.textGhost, lineHeight: 1.6 }]}>
+        <Text style={[st.small, { marginTop: 12, color: C.textGhost, lineHeight: 1.6 }]}>
           This report is produced by LexSutra as a compliance infrastructure tool and does not constitute legal advice.
-          LexSutra is not a law firm. The client is responsible for their own regulatory compliance.
-          This report should be reviewed alongside qualified legal counsel for final compliance decisions.
+          All findings are based on publicly available information only. Internal documentation may exist but was not reviewed.
         </Text>
+      </View>
+
+      <PageFooter assessmentDate={assessmentDate} />
+    </Page>
+  );
+}
+
+// ── How to Read This Report page ───────────────────────────────────
+
+function HowToReadPage({
+  reportRef,
+  companyName,
+  assessmentDate,
+}: {
+  reportRef: string;
+  companyName: string;
+  assessmentDate: string;
+}) {
+  return (
+    <Page size="A4" style={st.page}>
+      <PageHeader reportRef={reportRef} companyName={companyName} />
+      <Watermark />
+
+      <View style={st.body}>
+        <Text style={st.h2}>How to Read This Report</Text>
+
+        <Text style={[st.body2, { marginBottom: 14 }]}>
+          This page explains the rating systems used throughout this report. All assessments are based
+          exclusively on publicly available information — company website, published policies, press coverage,
+          and public filings. Where no public evidence was found, this does not necessarily mean no compliance
+          activity exists; internal documentation may be present but was not accessible for this snapshot.
+        </Text>
+
+        {/* Status legend */}
+        <View style={[st.legendBox, { marginBottom: 14 }]}>
+          <View style={st.legendHeader}>
+            <Text style={st.legendHeaderText}>OBLIGATION STATUS — what each finding means</Text>
+          </View>
+          {[
+            { color: C.red,       bg: C.redBg,   label: "CRITICAL GAP",               desc: "Public evidence indicates a significant compliance requirement is unmet. This poses direct legal risk under the EU AI Act. Immediate action is recommended." },
+            { color: C.amber,     bg: C.amberBg, label: "NOT STARTED / NO EVIDENCE FOUND", desc: "No public evidence of compliance activity was identified. Internal work may exist but is not publicly documented. Verification is recommended before the August 2026 deadline." },
+            { color: C.amber,     bg: C.amberBg, label: "PARTIAL",                     desc: "Some evidence of compliance exists, but the requirement is not fully met. Gaps remain that need to be addressed." },
+            { color: C.green,     bg: C.greenBg, label: "COMPLIANT",                   desc: "Public evidence indicates the obligation is met. This finding reflects publicly available information and does not constitute a formal certification." },
+          ].map((item, i) => (
+            <View key={i} style={[st.legendRow, { backgroundColor: item.bg }]}>
+              <View style={[st.legendDot, { backgroundColor: item.color }]} />
+              <Text style={[st.legendKey, { color: item.color }]}>{item.label}</Text>
+              <Text style={st.legendDesc}>{item.desc}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Priority legend */}
+        <View style={[st.legendBox, { marginBottom: 14 }]}>
+          <View style={st.legendHeader}>
+            <Text style={st.legendHeaderText}>PRIORITY LEVELS — remediation urgency in the roadmap</Text>
+          </View>
+          {[
+            { color: C.red,   bg: C.redBg,   label: "P1 — Critical",    desc: "Confirmed compliance gap with direct legal risk. Action required immediately. These items are the highest legal exposure under the EU AI Act." },
+            { color: C.amber, bg: C.amberBg, label: "P2 — No Evidence", desc: "No public evidence found. Cannot confirm compliance. Must be verified or documented before the August 2026 deadline." },
+            { color: C.amber, bg: C.amberBg, label: "P3 — Partial",     desc: "Partially compliant. Some work is in progress or documented, but gaps remain. Address before the deadline." },
+            { color: C.green, bg: C.greenBg, label: "P4 — Compliant",   desc: "No action required based on current evidence. Monitor for regulatory updates and maintain existing documentation." },
+          ].map((item, i) => (
+            <View key={i} style={[st.legendRow, { backgroundColor: item.bg }]}>
+              <View style={[st.legendDot, { backgroundColor: item.color }]} />
+              <Text style={[st.legendKey, { color: item.color }]}>{item.label}</Text>
+              <Text style={st.legendDesc}>{item.desc}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Grade scale */}
+        <View style={st.legendBox}>
+          <View style={st.legendHeader}>
+            <Text style={st.legendHeaderText}>OVERALL GRADE — composite score across all 8 obligations</Text>
+          </View>
+          <View style={[st.legendRow, { backgroundColor: C.rowAlt }]}>
+            <Text style={[st.legendKey, { color: C.green, fontFamily: "Helvetica-Bold" }]}>A+ / A</Text>
+            <Text style={st.legendDesc}>85–100% — Strong compliance posture. Most obligations met. Minor gaps only.</Text>
+          </View>
+          <View style={[st.legendRow]}>
+            <Text style={[st.legendKey, { color: C.green, fontFamily: "Helvetica-Bold" }]}>B+ / B</Text>
+            <Text style={st.legendDesc}>55–84% — Moderate compliance. Some obligations met, others partial. Action needed but risk is manageable.</Text>
+          </View>
+          <View style={[st.legendRow, { backgroundColor: C.rowAlt }]}>
+            <Text style={[st.legendKey, { color: C.amber, fontFamily: "Helvetica-Bold" }]}>C+ / C</Text>
+            <Text style={st.legendDesc}>25–54% — Significant gaps. Multiple obligations unaddressed. Compliance risk is elevated.</Text>
+          </View>
+          <View style={[st.legendRow]}>
+            <Text style={[st.legendKey, { color: C.red, fontFamily: "Helvetica-Bold" }]}>D</Text>
+            <Text style={st.legendDesc}>10–24% — Serious compliance deficit. Likely multiple critical gaps. Immediate engagement with compliance support is advised.</Text>
+          </View>
+          <View style={[st.legendRow, { backgroundColor: C.rowAlt }]}>
+            <Text style={[st.legendKey, { color: C.red, fontFamily: "Helvetica-Bold" }]}>F</Text>
+            <Text style={st.legendDesc}>Below 10% — No meaningful evidence of compliance across obligations. Highest legal risk category.</Text>
+          </View>
+          <View style={[st.legendRow, { borderTopWidth: 0.5, borderTopColor: C.rule }]}>
+            <Text style={[{ fontSize: 7, color: C.textLight, lineHeight: 1.5, paddingHorizontal: 10, paddingVertical: 5, flex: 1 }]}>
+              Hard overrides apply: 2+ critical gaps cap the grade at C+. 3+ critical gaps or 3+ unverified obligations cap the grade at D.
+              Human Oversight (Art. 14) as a critical gap caps the grade at C+ regardless of other scores.
+            </Text>
+          </View>
+        </View>
+
+        {/* Assessment basis note */}
+        <View style={{ marginTop: 14, borderLeftWidth: 3, borderLeftColor: C.blueLight, backgroundColor: "#f0f7ff", padding: 10 }}>
+          <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 7.5, color: C.blue, marginBottom: 4 }}>
+            Important: Assessment Basis
+          </Text>
+          <Text style={{ fontSize: 7.5, color: C.textMid, lineHeight: 1.6 }}>
+            This snapshot is based exclusively on publicly available information gathered at the time of assessment.
+            It is a pre-diagnostic tool — not a formal audit or certification. A full LexSutra diagnostic includes
+            direct client questionnaire responses, document review, and expert analysis across all 8 obligations.
+            Findings marked "No Evidence Found" may reflect strong internal compliance that is simply not publicly documented.
+          </Text>
+        </View>
       </View>
 
       <PageFooter assessmentDate={assessmentDate} />
@@ -321,6 +543,11 @@ function ExecutiveSummaryPage({
   assessmentDate,
 }: SnapshotPDFProps) {
   const paras = report.executive_summary.split(/\n\n+/);
+
+  // Sort obligations by severity for the summary table
+  const sortedObligations = [...report.obligations].sort(
+    (a, b) => statusSortOrder(a.status) - statusSortOrder(b.status)
+  );
 
   return (
     <Page size="A4" style={st.page}>
@@ -344,31 +571,49 @@ function ExecutiveSummaryPage({
           <Text key={i} style={[st.body2, { marginBottom: 8 }]}>{p}</Text>
         ))}
 
-        {/* Obligation summary table */}
+        {/* Obligation summary table — sorted by severity, colour-coded rows */}
         <View style={st.table}>
           <View style={st.tHead}>
+            <Text style={[st.tHeadText, { width: 28 }]}>Pri.</Text>
             <Text style={[st.tHeadText, { flex: 3 }]}>Obligation</Text>
-            <Text style={[st.tHeadText, { flex: 2 }]}>Status</Text>
-            <Text style={[st.tHeadText, { width: 50 }]}>Priority</Text>
+            <Text style={[st.tHeadText, { flex: 2.5 }]}>Status</Text>
             <Text style={[st.tHeadText, { flex: 2 }]}>Article</Text>
           </View>
-          {report.obligations.map((ob, i) => (
-            <View key={ob.number} style={i % 2 === 0 ? st.tRowAlt : st.tRow}>
-              <Text style={[st.tCell, { flex: 3 }]}>
-                {ob.number}. {ob.name}
-              </Text>
-              <Text style={[st.tCell, { flex: 2, fontFamily: "Helvetica-Bold", color: statusColor(ob.status) }]}>
-                {statusLabel(ob.status)}
-              </Text>
-              <Text style={[st.tCell, { width: 50, color: statusColor(ob.status) }]}>
-                {priorityShort(ob.status)}
-              </Text>
-              <Text style={[st.tCellGray, { flex: 2 }]}>
-                {abbreviateArticle(ob.article)}
-              </Text>
-            </View>
-          ))}
+          {sortedObligations.map((ob) => {
+            const color = statusColor(ob.status);
+            const bg    = statusBg(ob.status);
+            return (
+              <View
+                key={ob.number}
+                style={{ flexDirection: "row", borderTopWidth: 0.5, borderTopColor: C.rule, backgroundColor: bg, paddingHorizontal: 0, paddingVertical: 0 }}
+              >
+                {/* Coloured left accent bar */}
+                <View style={{ width: 3, backgroundColor: color, alignSelf: "stretch" }} />
+                {/* Priority */}
+                <Text style={[st.tCell, { width: 25, paddingLeft: 6, paddingVertical: 6, fontFamily: "Helvetica-Bold", color }]}>
+                  {priorityShort(ob.status)}
+                </Text>
+                {/* Obligation name */}
+                <Text style={[st.tCell, { flex: 3, paddingVertical: 6 }]}>
+                  {ob.number}. {ob.name}
+                </Text>
+                {/* Status */}
+                <Text style={[st.tCell, { flex: 2.5, paddingVertical: 6, fontFamily: "Helvetica-Bold", color }]}>
+                  {statusLabelShort(ob.status)}
+                </Text>
+                {/* Article */}
+                <Text style={[st.tCellGray, { flex: 2, paddingVertical: 6, paddingRight: 8 }]}>
+                  {abbreviateArticle(ob.article)}
+                </Text>
+              </View>
+            );
+          })}
         </View>
+
+        <Text style={[st.small, { marginTop: 8, color: C.textGhost }]}>
+          Table sorted by severity. See page 2 for a full explanation of statuses, priorities, and the grade scale.
+          Detailed findings for each obligation are on the following pages.
+        </Text>
       </View>
 
       <PageFooter assessmentDate={assessmentDate} />
@@ -402,15 +647,26 @@ function ObligationAssessmentPage({
         )}
 
         {obligations.map((ob) => {
-          const color = statusColor(ob.status);
+          const color     = statusColor(ob.status);
+          const headerBg  = statusBg(ob.status);
+          const borderCol = statusBorderColor(ob.status);
           return (
-            <View key={ob.number} style={st.obCard}>
-              {/* Obligation header row */}
-              <View style={st.obHeader}>
-                <Text style={st.obTitle}>{ob.number} {ob.name}</Text>
-                <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 8, color, letterSpacing: 0.3 }}>
-                  {statusLabel(ob.status)}
-                </Text>
+            <View key={ob.number} style={[st.obCard, { borderColor: borderCol }]}>
+              {/* Obligation header — colour-coded by status */}
+              <View style={[st.obHeader, { backgroundColor: headerBg, borderBottomColor: borderCol }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                  {/* Status colour bar */}
+                  <View style={{ width: 3, height: 16, backgroundColor: color, borderRadius: 2, marginRight: 8 }} />
+                  <Text style={st.obTitle}>{ob.number} {ob.name}</Text>
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 7, color, letterSpacing: 0.3 }}>
+                    {priorityShort(ob.status)}
+                  </Text>
+                  <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 7.5, color, letterSpacing: 0.3 }}>
+                    {statusLabel(ob.status)}
+                  </Text>
+                </View>
               </View>
 
               {/* Legal Basis */}
@@ -461,10 +717,7 @@ function RoadmapPage({
 }: SnapshotPDFProps) {
   const items = [...report.obligations]
     .filter(o => o.status !== "not_applicable")
-    .sort((a, b) => {
-      const order: Record<string, number> = { critical_gap: 0, not_started: 1, partial: 2, compliant: 3 };
-      return (order[a.status] ?? 4) - (order[b.status] ?? 4);
-    });
+    .sort((a, b) => statusSortOrder(a.status) - statusSortOrder(b.status));
 
   return (
     <Page size="A4" style={st.page}>
@@ -474,28 +727,30 @@ function RoadmapPage({
       <View style={st.body}>
         <Text style={st.h2}>Prioritised Remediation Roadmap</Text>
         <Text style={[st.body2, { marginBottom: 10 }]}>
-          The following roadmap prioritises remediation actions based on severity of compliance gap,
-          implementation effort, and time to the August 2026 deadline. Priority 1 items represent
-          critical legal risk and should be actioned immediately.
+          Ordered by urgency. P1 Critical items carry direct legal risk and require immediate action.
+          P2 items have no publicly available evidence of compliance and must be verified or documented
+          before the August 2026 deadline. See page 2 for a full explanation of priority levels.
         </Text>
 
         {/* Table */}
         <View style={[st.table, { marginTop: 4 }]}>
           {/* Header */}
           <View style={st.tHead}>
-            <Text style={[st.tHeadText, { width: 58 }]}>Priority</Text>
+            <Text style={[st.tHeadText, { width: 62 }]}>Priority</Text>
             <Text style={[st.tHeadText, { flex: 3, paddingLeft: 6 }]}>Action Required</Text>
             <Text style={[st.tHeadText, { flex: 2, paddingLeft: 6 }]}>Obligation</Text>
-            <Text style={[st.tHeadText, { width: 60, paddingLeft: 6 }]}>Effort</Text>
-            <Text style={[st.tHeadText, { width: 60, paddingLeft: 6 }]}>Target</Text>
+            <Text style={[st.tHeadText, { width: 58, paddingLeft: 6 }]}>Effort</Text>
+            <Text style={[st.tHeadText, { width: 58, paddingLeft: 6 }]}>Target</Text>
           </View>
 
-          {items.map((ob, i) => {
+          {items.map((ob) => {
             const color = statusColor(ob.status);
+            const bg    = statusBg(ob.status);
             const pLabel = priorityLabel(ob.status);
-            const rowStyle = i % 2 === 0 ? st.tRowAlt : st.tRow;
             return (
-              <View key={ob.number} style={[rowStyle, { paddingHorizontal: 0, paddingVertical: 0 }]}>
+              <View key={ob.number} style={{ flexDirection: "row", borderTopWidth: 0.5, borderTopColor: C.rule, backgroundColor: bg, paddingHorizontal: 0, paddingVertical: 0 }}>
+                {/* Coloured left bar */}
+                <View style={{ width: 3, backgroundColor: color, alignSelf: "stretch" }} />
                 {/* Priority cell */}
                 <View style={[st.prioCell, { borderRightWidth: 0.5, borderRightColor: C.rule }]}>
                   {pLabel.split("\n").map((line, j) => (
@@ -512,11 +767,11 @@ function RoadmapPage({
                   <Text style={st.tCellGray}>{abbreviateArticle(ob.article)}</Text>
                 </View>
                 {/* Effort */}
-                <Text style={[st.tCellGray, { width: 60, paddingHorizontal: 8, paddingVertical: 6 }]}>
+                <Text style={[st.tCellGray, { width: 58, paddingHorizontal: 8, paddingVertical: 6 }]}>
                   {ob.effort || "—"}
                 </Text>
                 {/* Target */}
-                <Text style={[st.tCellGray, { width: 60, paddingHorizontal: 8, paddingVertical: 6 }]}>
+                <Text style={[st.tCellGray, { width: 58, paddingHorizontal: 8, paddingVertical: 6 }]}>
                   {ob.deadline || "—"}
                 </Text>
               </View>
@@ -565,12 +820,12 @@ function MethodologyPage({
         <View style={st.stamp}>
           <Text style={st.stampTitle}>Authenticity &amp; Version Stamp</Text>
           {[
-            ["Report Reference:",              reportRef],
-            ["Assessment Date:",               assessmentDate],
-            ["Policy Version Assessed Against:","EU AI Act v1.0 — Regulation (EU) 2024/1689"],
-            ["Policy Active From:",            "August 2024"],
-            ["Assessment Basis:",              "Public footprint scan — pre-diagnostic snapshot"],
-            ["Reviewed and Approved By:",      "LexSutra Expert Review Team"],
+            ["Report Reference:",               reportRef],
+            ["Assessment Date:",                assessmentDate],
+            ["Policy Version Assessed Against:", "EU AI Act v1.0 — Regulation (EU) 2024/1689"],
+            ["Policy Active From:",             "August 2024"],
+            ["Assessment Basis:",               "Public footprint scan — pre-diagnostic snapshot"],
+            ["Reviewed and Approved By:",       "LexSutra Expert Review Team"],
           ].map(([label, value], i) => (
             <View key={i} style={st.stampRow}>
               <Text style={st.stampLabel}>{label}</Text>
@@ -622,7 +877,7 @@ function MethodologyPage({
 export function SnapshotPDF(props: SnapshotPDFProps) {
   const { report } = props;
 
-  // Split obligations into groups of 2 per page
+  // Split obligations into groups of 2 per page (original order for detail pages)
   const obligationPages: ObligationItem[][] = [];
   for (let i = 0; i < report.obligations.length; i += 2) {
     obligationPages.push(report.obligations.slice(i, i + 2));
@@ -632,17 +887,24 @@ export function SnapshotPDF(props: SnapshotPDFProps) {
     <Document
       title={`LexSutra Compliance Snapshot — ${props.companyName}`}
       author="LexSutra"
-      subject="EU AI Act Compliance Diagnostic Report"
+      subject="EU AI Act Compliance Snapshot Report"
       creator="LexSutra Diagnostic Platform"
       producer="LexSutra"
     >
       {/* Page 1 — Cover */}
       <CoverPage {...props} />
 
-      {/* Page 2 — Executive Summary */}
+      {/* Page 2 — How to Read This Report */}
+      <HowToReadPage
+        reportRef={props.reportRef}
+        companyName={props.companyName}
+        assessmentDate={props.assessmentDate}
+      />
+
+      {/* Page 3 — Executive Summary */}
       <ExecutiveSummaryPage {...props} />
 
-      {/* Pages 3–6 — Obligation Assessment (2 per page) */}
+      {/* Pages 4–7 — Obligation Assessment (2 per page) */}
       {obligationPages.map((group, i) => (
         <ObligationAssessmentPage
           key={i}

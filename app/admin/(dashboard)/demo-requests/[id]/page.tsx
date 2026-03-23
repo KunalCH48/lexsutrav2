@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import DemoActionPanel from "@/components/admin/DemoActionPanel";
 import DemoAnalysisPanel from "@/components/admin/DemoAnalysisPanel";
 import DemoResearchPanel from "@/components/admin/DemoResearchPanel";
+import RiskBriefPanel from "@/components/admin/RiskBriefPanel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Review Demo Request — LexSutra Admin" };
@@ -227,6 +228,15 @@ export default async function DemoReviewPage({
           contactEmail={demo.contact_email}
           scanQuality={demo.scan_quality as "good" | "partial" | "failed" | null}
           initialSnapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string; internal_feedback: string | null; website_scan_quality?: string }[]; approved_pdf_path?: string; footprint_cache?: { content: string; sources: { websiteQuality: "good" | "partial" | "failed"; newsCount: number; linkedInFound: boolean; linkedInJobsFound: boolean; crunchbaseFound: boolean }; quality: "good" | "partial" | "failed"; fetched_at: string } } | null}
+        />
+      </div>
+
+      {/* Risk Brief Panel — only shown when a snapshot analysis exists */}
+      <div className="mt-6">
+        <RiskBriefPanel
+          demoId={demo.id}
+          companyName={demo.company_name}
+          snapshot={demo.insights_snapshot as { versions: { v: number; content: string; generated_at: string }[] } | null}
         />
       </div>
     </div>
