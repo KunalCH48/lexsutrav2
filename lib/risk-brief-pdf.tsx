@@ -4,8 +4,41 @@ import {
   View,
   Text,
   StyleSheet,
+  Svg,
+  Path,
+  Circle,
+  Line,
 } from "@react-pdf/renderer";
 import React from "react";
+
+function ShieldLogo({ size = 28 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 64 64">
+      <Path
+        d="M32 6 L56 15 L56 35 Q56 52 32 61 Q8 52 8 35 L8 15 Z"
+        stroke="#c8a84b"
+        strokeWidth={2.5}
+        fill="rgba(200,168,75,0.10)"
+        strokeLinejoin="round"
+      />
+      <Circle cx={32} cy={28} r={4} fill="#c8a84b" />
+      <Circle cx={19} cy={21} r={2.5} fill="#2d9cdb" />
+      <Circle cx={45} cy={21} r={2.5} fill="#2d9cdb" />
+      <Circle cx={19} cy={37} r={2.5} fill="#2d9cdb" />
+      <Circle cx={45} cy={37} r={2.5} fill="#2d9cdb" />
+      <Circle cx={32} cy={46} r={2}   fill="#2d9cdb" opacity={0.65} />
+      <Line x1={19} y1={21} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={45} y1={21} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={19} y1={37} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={45} y1={37} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={32} y1={46} x2={32} y2={32} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.4} />
+      <Line x1={19} y1={21} x2={45} y2={21} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+      <Line x1={19} y1={37} x2={45} y2={37} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+      <Line x1={19} y1={21} x2={19} y2={37} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+      <Line x1={45} y1={21} x2={45} y2={37} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+    </Svg>
+  );
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -170,9 +203,14 @@ function CoverContextPage({ props }: { props: RiskBriefProps }) {
     <Page size="A4" style={st.page}>
       {/* Dark header */}
       <View style={st.hBar}>
-        <Text style={st.hLabel}>LexSutra · EU AI Act Compliance</Text>
-        <Text style={st.hTitle}>Compliance Risk Brief</Text>
-        <Text style={st.hSub}>Indicative Assessment — Confidential</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <ShieldLogo size={36} />
+          <View>
+            <Text style={st.hLabel}>EU AI Act Compliance</Text>
+            <Text style={st.hTitle}>Compliance Risk Brief</Text>
+          </View>
+        </View>
+        <Text style={st.hSub}>Indicative Assessment — Confidential · lexsutra.com</Text>
       </View>
 
       {/* Meta strip */}
@@ -277,7 +315,7 @@ function FindingsPage({ props }: { props: RiskBriefProps }) {
           const bg     = statusBg(ob.status);
           const border = statusBorderColor(ob.status);
           return (
-            <View key={ob.number} style={[st.obCard, { borderColor: border }]}>
+            <View key={ob.number} wrap={false} style={[st.obCard, { borderColor: border }]}>
               {/* Card header */}
               <View style={[st.obHeader, { backgroundColor: bg, borderBottomColor: border }]}>
                 <View style={{ flex: 1 }}>

@@ -4,6 +4,10 @@ import {
   View,
   Text,
   StyleSheet,
+  Svg,
+  Path,
+  Circle,
+  Line,
 } from "@react-pdf/renderer";
 import React from "react";
 
@@ -35,6 +39,37 @@ export type SnapshotPDFProps = {
   reportRef: string;
   assessmentDate: string;
 };
+
+// ── Shield logo (SVG) ──────────────────────────────────────────────
+
+function ShieldLogo({ size = 28 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 64 64">
+      <Path
+        d="M32 6 L56 15 L56 35 Q56 52 32 61 Q8 52 8 35 L8 15 Z"
+        stroke="#c8a84b"
+        strokeWidth={2.5}
+        fill="rgba(200,168,75,0.10)"
+        strokeLinejoin="round"
+      />
+      <Circle cx={32} cy={28} r={4} fill="#c8a84b" />
+      <Circle cx={19} cy={21} r={2.5} fill="#2d9cdb" />
+      <Circle cx={45} cy={21} r={2.5} fill="#2d9cdb" />
+      <Circle cx={19} cy={37} r={2.5} fill="#2d9cdb" />
+      <Circle cx={45} cy={37} r={2.5} fill="#2d9cdb" />
+      <Circle cx={32} cy={46} r={2}   fill="#2d9cdb" opacity={0.65} />
+      <Line x1={19} y1={21} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={45} y1={21} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={19} y1={37} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={45} y1={37} x2={32} y2={28} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.5} />
+      <Line x1={32} y1={46} x2={32} y2={32} stroke="#2d9cdb" strokeWidth={1.2} opacity={0.4} />
+      <Line x1={19} y1={21} x2={45} y2={21} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+      <Line x1={19} y1={37} x2={45} y2={37} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+      <Line x1={19} y1={21} x2={19} y2={37} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+      <Line x1={45} y1={21} x2={45} y2={37} stroke="#2d9cdb" strokeWidth={0.8} opacity={0.28} />
+    </Svg>
+  );
+}
 
 // ── Colour palette ─────────────────────────────────────────────────
 
@@ -238,9 +273,12 @@ function PageHeader({
 }) {
   return (
     <View style={st.hBar} fixed>
-      <Text style={st.hLogo}>
-        <Text style={st.hLogoBold}>Lex</Text>Sutra
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <ShieldLogo size={16} />
+        <Text style={st.hLogo}>
+          <Text style={st.hLogoBold}>Lex</Text>Sutra
+        </Text>
+      </View>
       <Text style={st.hMeta}>
         CONFIDENTIAL  |  {reportRef}  |  {companyName}
       </Text>
@@ -288,11 +326,15 @@ function CoverPage({
       <Watermark />
 
       <View style={st.body}>
-        {/* Wordmark + rule */}
-        <View style={{ marginBottom: 4 }}>
-          <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 20, color: C.text }}>
-            <Text style={{ color: C.blueLight }}>Lex</Text>Sutra
-          </Text>
+        {/* Wordmark + logo + rule */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <ShieldLogo size={42} />
+          <View>
+            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 22, color: C.text, lineHeight: 1 }}>
+              <Text style={{ color: C.blueLight }}>Lex</Text>Sutra
+            </Text>
+            <Text style={{ fontSize: 8, color: C.textLight, marginTop: 2 }}>EU AI Act Compliance Diagnostics</Text>
+          </View>
         </View>
         <View style={{ height: 1.5, backgroundColor: C.blue, marginBottom: 8 }} />
 
@@ -628,13 +670,11 @@ function ObligationAssessmentPage({
   companyName,
   reportRef,
   assessmentDate,
-  showHeading,
 }: {
   obligations: ObligationItem[];
   companyName: string;
   reportRef: string;
   assessmentDate: string;
-  showHeading: boolean;
 }) {
   return (
     <Page size="A4" style={st.page}>
@@ -642,16 +682,14 @@ function ObligationAssessmentPage({
       <Watermark />
 
       <View style={st.body}>
-        {showHeading && (
-          <Text style={st.h2}>Detailed Obligation Assessment</Text>
-        )}
+        <Text style={st.h2}>Detailed Obligation Assessment</Text>
 
         {obligations.map((ob) => {
           const color     = statusColor(ob.status);
           const headerBg  = statusBg(ob.status);
           const borderCol = statusBorderColor(ob.status);
           return (
-            <View key={ob.number} style={[st.obCard, { borderColor: borderCol }]}>
+            <View key={ob.number} wrap={false} style={[st.obCard, { borderColor: borderCol }]}>
               {/* Obligation header — colour-coded by status */}
               <View style={[st.obHeader, { backgroundColor: headerBg, borderBottomColor: borderCol }]}>
                 <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
@@ -748,7 +786,7 @@ function RoadmapPage({
             const bg    = statusBg(ob.status);
             const pLabel = priorityLabel(ob.status);
             return (
-              <View key={ob.number} style={{ flexDirection: "row", borderTopWidth: 0.5, borderTopColor: C.rule, backgroundColor: bg, paddingHorizontal: 0, paddingVertical: 0 }}>
+              <View key={ob.number} wrap={false} style={{ flexDirection: "row", borderTopWidth: 0.5, borderTopColor: C.rule, backgroundColor: bg, paddingHorizontal: 0, paddingVertical: 0 }}>
                 {/* Coloured left bar */}
                 <View style={{ width: 3, backgroundColor: color, alignSelf: "stretch" }} />
                 {/* Priority cell */}
@@ -877,12 +915,6 @@ function MethodologyPage({
 export function SnapshotPDF(props: SnapshotPDFProps) {
   const { report } = props;
 
-  // Split obligations into groups of 2 per page (original order for detail pages)
-  const obligationPages: ObligationItem[][] = [];
-  for (let i = 0; i < report.obligations.length; i += 2) {
-    obligationPages.push(report.obligations.slice(i, i + 2));
-  }
-
   return (
     <Document
       title={`LexSutra Compliance Snapshot — ${props.companyName}`}
@@ -904,17 +936,13 @@ export function SnapshotPDF(props: SnapshotPDFProps) {
       {/* Page 3 — Executive Summary */}
       <ExecutiveSummaryPage {...props} />
 
-      {/* Pages 4–7 — Obligation Assessment (2 per page) */}
-      {obligationPages.map((group, i) => (
-        <ObligationAssessmentPage
-          key={i}
-          obligations={group}
-          companyName={props.companyName}
-          reportRef={props.reportRef}
-          assessmentDate={props.assessmentDate}
-          showHeading={i === 0}
-        />
-      ))}
+      {/* Obligation Assessment — all 8 on one flowing page, cards never split */}
+      <ObligationAssessmentPage
+        obligations={report.obligations}
+        companyName={props.companyName}
+        reportRef={props.reportRef}
+        assessmentDate={props.assessmentDate}
+      />
 
       {/* Roadmap page */}
       <RoadmapPage {...props} />
