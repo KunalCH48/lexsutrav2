@@ -67,15 +67,13 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
   if (!latest || obligations.length === 0) return null;
 
   function toggleObligation(num: string) {
-    setSelected((prev) => {
-      if (prev.includes(num)) return prev.filter((n) => n !== num);
-      if (prev.length >= 2)   return prev; // max 2
-      return [...prev, num];
-    });
+    setSelected((prev) =>
+      prev.includes(num) ? [] : [num]  // single selection — click again to deselect
+    );
   }
 
   async function handleGenerate() {
-    if (selected.length !== 2) return;
+    if (selected.length !== 1) return;
     setLoading(true);
     setError(null);
 
@@ -123,7 +121,7 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
             Compliance Risk Brief
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "#3d4f60" }}>
-            Generate a 2-page teaser PDF with 2 selected obligation findings — for referral introductions
+            Generate a 2-page PDF with 1 obligation finding + compliance score — for referral introductions
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 ml-4">
@@ -145,16 +143,13 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
       {/* Collapsible body */}
       {open && <div className="px-5 py-4">
         <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#3d4f60" }}>
-          Select exactly 2 obligations to include
-          <span className="normal-case font-normal ml-2" style={{ color: "#3d4f60" }}>
-            ({selected.length}/2 selected)
-          </span>
+          Select 1 obligation to include in the brief
         </p>
 
         <div className="space-y-2">
           {obligations.map((ob) => {
             const isSelected = selected.includes(ob.number);
-            const isDisabled = !isSelected && selected.length >= 2;
+            const isDisabled = false; // single selection — always clickable
             const { bg, dot } = statusDot(ob.status);
 
             return (
@@ -220,28 +215,26 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
         <div className="mt-4 flex items-center gap-3">
           <button
             onClick={handleGenerate}
-            disabled={selected.length !== 2 || loading}
+            disabled={selected.length !== 1 || loading}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             style={{
-              background:   selected.length === 2 && !loading ? "rgba(200,168,75,0.15)" : "rgba(255,255,255,0.04)",
-              border:       selected.length === 2 && !loading ? "1px solid rgba(200,168,75,0.4)" : "1px solid rgba(255,255,255,0.08)",
-              color:        selected.length === 2 && !loading ? "#c8a84b" : "#3d4f60",
-              cursor:       selected.length !== 2 || loading ? "not-allowed" : "pointer",
+              background:   selected.length === 1 && !loading ? "rgba(200,168,75,0.15)" : "rgba(255,255,255,0.04)",
+              border:       selected.length === 1 && !loading ? "1px solid rgba(200,168,75,0.4)" : "1px solid rgba(255,255,255,0.08)",
+              color:        selected.length === 1 && !loading ? "#c8a84b" : "#3d4f60",
+              cursor:       selected.length !== 1 || loading ? "not-allowed" : "pointer",
             }}
           >
             {loading ? "Generating PDF…" : "Download Risk Brief PDF"}
           </button>
 
-          {selected.length !== 2 && !loading && (
-            <p className="text-xs" style={{ color: "#3d4f60" }}>
-              Select {2 - selected.length} more obligation{selected.length === 1 ? "" : "s"} to continue
-            </p>
+          {selected.length === 0 && !loading && (
+            <p className="text-xs" style={{ color: "#3d4f60" }}>Select an obligation to continue</p>
           )}
         </div>
 
         {/* Info note */}
         <p className="text-xs mt-4 leading-relaxed" style={{ color: "#2d4050" }}>
-          The Risk Brief shows only the finding text for the 2 selected obligations — no remediation steps, no grade, no roadmap. Designed to demonstrate the quality of LexSutra&apos;s framework to a referred prospect without revealing the full report.
+          The Risk Brief shows 1 obligation finding, an indicative compliance score, and a factual business impact line — no remediation steps, no roadmap. Designed for warm referral introductions.
         </p>
       </div>}
     </div>

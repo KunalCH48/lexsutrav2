@@ -12,8 +12,21 @@ type StructuredReport = {
   risk_classification: string;
   risk_tier:           string;
   annex_section:       string;
+  grade:               string;
   obligations:         ObligationItem[];
 };
+
+function calcIndicativeScore(obligations: ObligationItem[]): number {
+  if (!obligations.length) return 0;
+  const total = obligations.reduce((sum, ob) => {
+    if (ob.status === "compliant")    return sum + 100;
+    if (ob.status === "partial")      return sum + 50;
+    if (ob.status === "not_started")  return sum + 25;
+    if (ob.status === "critical_gap") return sum + 0;
+    return sum + 50;
+  }, 0);
+  return Math.round(total / obligations.length);
+}
 
 type InsightVersion = {
   v:            number;
@@ -35,8 +48,8 @@ export async function POST(req: NextRequest) {
     if (!demoId) {
       return NextResponse.json({ error: "Missing demoId" }, { status: 400 });
     }
-    if (!Array.isArray(obligationNumbers) || obligationNumbers.length !== 2) {
-      return NextResponse.json({ error: "Exactly 2 obligation numbers required" }, { status: 400 });
+    if (!Array.isArray(obligationNumbers) || obligationNumbers.length !== 1) {
+      return NextResponse.json({ error: "Exactly 1 obligation number required" }, { status: 400 });
     }
 
     // Load demo request
@@ -75,26 +88,30 @@ export async function POST(req: NextRequest) {
       obligationNumbers.includes(ob.number)
     );
 
-    if (selected.length !== 2) {
+    if (selected.length !== 1) {
       return NextResponse.json({
-        error: `Could not find both selected obligations in the snapshot. Found: ${selected.map((o) => o.number).join(", ")}`,
+        error: `Could not find the selected obligation in the snapshot.`,
       }, { status: 400 });
     }
 
     // Build meta
-    const reportRef      = `LRB-${new Date().getFullYear()}-${demoId.replace(/-/g, "").slice(0, 4).toUpperCase()}`;
-    const assessmentDate = new Date(latest.generated_at).toLocaleDateString("en-GB", {
+    const reportRef        = `LRB-${new Date().getFullYear()}-${demoId.replace(/-/g, "").slice(0, 4).toUpperCase()}`;
+    const assessmentDate   = new Date(latest.generated_at).toLocaleDateString("en-GB", {
       day: "2-digit", month: "long", year: "numeric",
     });
+    const indicativeScore  = calcIndicativeScore(report.obligations);
+    const grade            = report.grade ?? "—";
 
     // Render PDF
     const pdfBuffer = await renderToBuffer(
       React.createElement(RiskBriefPDF, {
-        companyName:       demo.company_name,
+        companyName:        demo.company_name,
         riskClassification: report.risk_classification,
-        riskTier:          report.risk_tier,
-        annexSection:      report.annex_section,
-        obligations:       selected,
+        riskTier:           report.risk_tier,
+        annexSection:       report.annex_section,
+        obligations:        selected,
+        grade,
+        indicativeScore,
         reportRef,
         assessmentDate,
       }) as unknown as React.ReactElement<DocumentProps>

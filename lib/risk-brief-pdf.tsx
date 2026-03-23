@@ -55,9 +55,24 @@ export type RiskBriefProps = {
   riskClassification: string;
   riskTier: string;
   annexSection: string;
-  obligations: ObligationItem[]; // exactly 2
+  obligations: ObligationItem[]; // exactly 1
+  grade: string;
+  indicativeScore: number;
   reportRef: string;
   assessmentDate: string;
+};
+
+// ── Business impact per obligation number (always factual, never guessed) ──
+
+const OBLIGATION_IMPACT: Record<string, string> = {
+  "01": "Absence of a documented risk management system is the primary trigger for regulatory audit action under EU AI Act enforcement guidance.",
+  "02": "Inadequate data governance can result in discriminatory outputs — one of the most directly enforceable provisions under the EU AI Act.",
+  "03": "Without complete technical documentation, lawful market placement of a high-risk AI system in the EU is not possible.",
+  "04": "Without automated logging and audit trails, demonstrating compliance to national market surveillance authorities cannot be done retrospectively.",
+  "05": "Insufficient transparency disclosures may constitute a direct violation of Article 13 — one of the most immediately enforceable provisions of the Act.",
+  "06": "AI systems without documented human override capability may not meet the threshold for lawful high-risk deployment under EU AI Act requirements.",
+  "07": "Undocumented accuracy metrics prevent conformity assessment and create liability exposure if the system produces harmful outputs.",
+  "08": "Without completed conformity assessment, the system cannot be legally placed on the EU market as a high-risk AI system.",
 };
 
 // ── Colours ────────────────────────────────────────────────────────────────
@@ -160,6 +175,16 @@ const st = StyleSheet.create({
   deadlinePillText: { fontFamily: "Helvetica-Bold", fontSize: 7, color: "#ffffff", letterSpacing: 0.3 },
   deadlineText: { flex: 1, fontSize: 8.5, color: C.text, lineHeight: 1.65 },
 
+  // Score box
+  scoreBox:     { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 14 },
+  scoreHeader:  { backgroundColor: C.dark, paddingHorizontal: 12, paddingVertical: 6, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  scoreHeaderText: { fontFamily: "Helvetica-Bold", fontSize: 7.5, color: "#ffffff", letterSpacing: 0.4 },
+  scoreGrade:   { fontFamily: "Times-Bold", fontSize: 18, color: C.goldLight, lineHeight: 1 },
+  scoreBody:    { paddingHorizontal: 12, paddingVertical: 10 },
+  scoreLegendRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  scoreDot:     { width: 7, height: 7, borderRadius: 4 },
+  scoreLegendText: { fontSize: 7.5, color: C.textMid, flex: 1, lineHeight: 1.5 },
+
   // Obligation card
   obCard:       { borderWidth: 0.5, borderRadius: 4, overflow: "hidden", marginBottom: 14 },
   obHeader:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 0.5 },
@@ -171,6 +196,7 @@ const st = StyleSheet.create({
   obBody:       { paddingHorizontal: 12, paddingVertical: 10 },
   obFindingLabel: { fontSize: 6.5, color: C.textGhost, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 5 },
   obFinding:    { fontSize: 8.5, color: C.textMid, lineHeight: 1.7 },
+  obImpact:     { fontSize: 8, color: C.amber, fontStyle: "italic", lineHeight: 1.65, marginTop: 8, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: C.amberBorder },
   obRedacted:   { borderWidth: 0.5, borderColor: C.rule, borderRadius: 3, backgroundColor: "#f7f8fa", paddingHorizontal: 10, paddingVertical: 8, marginTop: 10 },
   obRedactedText: { fontSize: 8, color: C.textGhost, fontStyle: "italic", lineHeight: 1.6 },
 
@@ -196,8 +222,15 @@ const st = StyleSheet.create({
 
 // ── Page 1: Cover + EU AI Act Context ─────────────────────────────────────
 
+function gradeColor(g: string): string {
+  if (g.startsWith("A")) return "#15803d";
+  if (g.startsWith("B")) return "#1d6fa4";
+  if (g.startsWith("C")) return "#b7770a";
+  return "#c0392b";
+}
+
 function CoverContextPage({ props }: { props: RiskBriefProps }) {
-  const { companyName, riskClassification, riskTier, annexSection, reportRef, assessmentDate } = props;
+  const { companyName, riskClassification, riskTier, annexSection, grade, indicativeScore, reportRef, assessmentDate } = props;
 
   return (
     <Page size="A4" style={st.page}>
@@ -250,6 +283,43 @@ function CoverContextPage({ props }: { props: RiskBriefProps }) {
             {"\n\n"}
             {riskClassification}
           </Text>
+        </View>
+
+        {/* Indicative compliance score */}
+        <View style={st.scoreBox}>
+          <View style={st.scoreHeader}>
+            <Text style={st.scoreHeaderText}>INDICATIVE COMPLIANCE SCORE — public data only</Text>
+            <Text style={[st.scoreGrade, { color: gradeColor(grade) }]}>{grade}</Text>
+          </View>
+          <View style={st.scoreBody}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 }}>
+              {/* Score bar */}
+              <View style={{ flex: 1, height: 6, backgroundColor: "#e5e7eb", borderRadius: 3, overflow: "hidden" }}>
+                <View style={{ width: `${indicativeScore}%`, height: 6, backgroundColor: gradeColor(grade), borderRadius: 3 }} />
+              </View>
+              <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, color: gradeColor(grade), width: 50 }}>
+                {indicativeScore} / 100
+              </Text>
+            </View>
+            <Text style={{ fontSize: 7, color: "#6b7280", marginBottom: 8, fontStyle: "italic" }}>
+              Score derived from publicly available information only. Internal documentation, policies, and controls not reviewed.
+            </Text>
+            {[
+              { dot: "#15803d", range: "71–100", label: "Strong public compliance posture. Evidence of most obligations met." },
+              { dot: "#1d6fa4", range: "41–70",  label: "Partial compliance. Some obligations met, others lack public evidence." },
+              { dot: "#b7770a", range: "11–40",  label: "Significant gaps identified. Multiple obligations unaddressed publicly." },
+              { dot: "#c0392b", range: "0–10",   label: "No meaningful public compliance evidence. Highest risk category." },
+            ].map((item, i) => (
+              <View key={i} style={st.scoreLegendRow}>
+                <View style={[st.scoreDot, { backgroundColor: item.dot }]} />
+                <Text style={[st.scoreLegendText, { width: 36, fontFamily: "Helvetica-Bold", color: item.dot, flexShrink: 0 }]}>{item.range}</Text>
+                <Text style={st.scoreLegendText}>{item.label}</Text>
+              </View>
+            ))}
+            <Text style={{ fontSize: 7, color: "#9ca3af", marginTop: 6 }}>
+              Full diagnostic score includes internal document review, questionnaire responses, and expert analysis across all 8 obligations.
+            </Text>
+          </View>
         </View>
 
         {/* EU AI Act context */}
@@ -307,13 +377,14 @@ function FindingsPage({ props }: { props: RiskBriefProps }) {
       <View style={st.body}>
         <Text style={st.sectionTitle}>Selected Obligation Findings</Text>
         <Text style={st.sectionNote}>
-          2 of 8 obligation areas shown below. A full LexSutra diagnostic covers all eight EU AI Act obligations with graded findings, legal citations, and a prioritised remediation roadmap.
+          1 of 8 obligation areas shown. A full LexSutra diagnostic covers all eight EU AI Act obligations with graded findings, legal citations, and a prioritised remediation roadmap.
         </Text>
 
         {obligations.map((ob) => {
           const color  = statusColor(ob.status);
           const bg     = statusBg(ob.status);
           const border = statusBorderColor(ob.status);
+          const impact = OBLIGATION_IMPACT[ob.number] ?? null;
           return (
             <View key={ob.number} wrap={false} style={[st.obCard, { borderColor: border }]}>
               {/* Card header */}
@@ -333,10 +404,15 @@ function FindingsPage({ props }: { props: RiskBriefProps }) {
                 <Text style={st.obFindingLabel}>Finding</Text>
                 <Text style={st.obFinding}>{ob.finding}</Text>
 
+                {/* Business impact — only shown when obligation number is known */}
+                {impact && (
+                  <Text style={st.obImpact}>{impact}</Text>
+                )}
+
                 {/* Redacted remediation — teaser */}
                 <View style={st.obRedacted}>
                   <Text style={st.obRedactedText}>
-                    ▬▬▬ Required actions, remediation steps, and effort estimate are included in the full LexSutra Diagnostic Report. Contact us to commission the full assessment. ▬▬▬
+                    Required actions, technical controls, documentation templates, and remediation steps are included in the full LexSutra Diagnostic Report.
                   </Text>
                 </View>
               </View>
@@ -346,22 +422,22 @@ function FindingsPage({ props }: { props: RiskBriefProps }) {
 
         {/* CTA */}
         <View style={st.ctaBox}>
-          <Text style={st.ctaTag}>Next Step</Text>
-          <Text style={st.ctaTitle}>Commission the Full Diagnostic Report</Text>
+          <Text style={st.ctaTag}>Recommended Next Step</Text>
+          <Text style={st.ctaTitle}>Request a Full Diagnostic Assessment</Text>
           <Text style={st.ctaBody}>
-            The full LexSutra diagnostic covers all 8 obligation areas — each with a compliance grade, specific findings, legal article citations, and a prioritised remediation roadmap. Every report includes human expert review and is version-stamped against the current EU AI Act text.
+            This brief covers one obligation area. The full LexSutra diagnostic assesses all eight EU AI Act obligations — each with a compliance grade, specific findings cited to the exact article, and a prioritised remediation roadmap.{"\n\n"}Every report includes human expert review and is permanently version-stamped against the current EU AI Act text. LexSutra is a structured compliance diagnostic system — not a law firm, and not a generic AI tool.
           </Text>
           <View style={st.ctaHighlight}>
             <View style={st.ctaItem}>
               <Text style={st.ctaItemLabel}>Coverage</Text>
-              <Text style={st.ctaItemValue}>All 8 EU AI Act Obligations</Text>
+              <Text style={st.ctaItemValue}>All 8 Obligations · Graded PDF</Text>
             </View>
             <View style={st.ctaItem}>
-              <Text style={st.ctaItemLabel}>Delivery</Text>
-              <Text style={st.ctaItemValue}>Graded PDF + Remediation Roadmap</Text>
+              <Text style={st.ctaItemLabel}>Human Review</Text>
+              <Text style={st.ctaItemValue}>Every report reviewed by an expert</Text>
             </View>
             <View style={st.ctaItem}>
-              <Text style={st.ctaItemLabel}>Contact</Text>
+              <Text style={st.ctaItemLabel}>Get in Touch</Text>
               <Text style={st.ctaItemValue}>hello@lexsutra.com</Text>
             </View>
           </View>
