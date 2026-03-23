@@ -43,6 +43,7 @@ function statusLabel(s: string) {
 }
 
 export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props) {
+  const [open, setOpen]           = useState(false);
   const [selected, setSelected]   = useState<string[]>([]);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState<string | null>(null);
@@ -111,10 +112,11 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
       className="rounded-xl overflow-hidden"
       style={{ border: "1px solid rgba(200,168,75,0.2)", background: "#0d1520" }}
     >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: "1px solid rgba(200,168,75,0.15)" }}
+      {/* Header — click to toggle */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
+        style={{ borderBottom: open ? "1px solid rgba(200,168,75,0.15)" : "none" }}
       >
         <div>
           <h3 className="text-sm font-semibold" style={{ color: "#c8a84b" }}>
@@ -124,16 +126,24 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
             Generate a 2-page teaser PDF with 2 selected obligation findings — for referral introductions
           </p>
         </div>
-        <span
-          className="text-xs px-2.5 py-1 rounded font-medium"
-          style={{ background: "rgba(200,168,75,0.1)", color: "#c8a84b", border: "1px solid rgba(200,168,75,0.2)" }}
-        >
-          Admin Only
-        </span>
-      </div>
+        <div className="flex items-center gap-3 shrink-0 ml-4">
+          <span
+            className="text-xs px-2.5 py-1 rounded font-medium"
+            style={{ background: "rgba(200,168,75,0.1)", color: "#c8a84b", border: "1px solid rgba(200,168,75,0.2)" }}
+          >
+            Admin Only
+          </span>
+          <svg
+            width="14" height="14" viewBox="0 0 14 14" fill="none"
+            style={{ color: "#c8a84b", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+          >
+            <path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </button>
 
-      {/* Obligation selector */}
-      <div className="px-5 py-4">
+      {/* Collapsible body */}
+      {open && <div className="px-5 py-4">
         <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#3d4f60" }}>
           Select exactly 2 obligations to include
           <span className="normal-case font-normal ml-2" style={{ color: "#3d4f60" }}>
@@ -233,7 +243,7 @@ export default function RiskBriefPanel({ demoId, companyName, snapshot }: Props)
         <p className="text-xs mt-4 leading-relaxed" style={{ color: "#2d4050" }}>
           The Risk Brief shows only the finding text for the 2 selected obligations — no remediation steps, no grade, no roadmap. Designed to demonstrate the quality of LexSutra&apos;s framework to a referred prospect without revealing the full report.
         </p>
-      </div>
+      </div>}
     </div>
   );
 }
