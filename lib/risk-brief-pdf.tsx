@@ -147,7 +147,7 @@ const st = StyleSheet.create({
   hSub:         { fontSize: 8.5, color: "#8899aa" },
 
   // Content area
-  body:         { paddingHorizontal: 28, paddingVertical: 20, flex: 1 },
+  body:         { paddingHorizontal: 28, paddingVertical: 12, flex: 1 },
 
   // Meta strip (cream bg)
   metaStrip:    { backgroundColor: C.cream, paddingHorizontal: 28, paddingVertical: 12, flexDirection: "row", gap: 32, borderBottomWidth: 1, borderBottomColor: "#e2ddd4" },
@@ -160,27 +160,27 @@ const st = StyleSheet.create({
   sectionNote:  { fontSize: 7.5, color: C.textLight, fontStyle: "italic", marginTop: -8, marginBottom: 14 },
 
   // Context card
-  contextCard:  { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, padding: 14, marginBottom: 14 },
+  contextCard:  { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, padding: 10, marginBottom: 10 },
   contextTitle: { fontFamily: "Helvetica-Bold", fontSize: 9, color: C.text, marginBottom: 8 },
   contextPara:  { fontSize: 8.5, color: C.textMid, lineHeight: 1.7, marginBottom: 7 },
 
   // Risk classification callout
-  riskCallout:  { borderLeftWidth: 3, borderLeftColor: C.gold, backgroundColor: "#fdf8ee", padding: 12, marginBottom: 14 },
+  riskCallout:  { borderLeftWidth: 3, borderLeftColor: C.gold, backgroundColor: "#fdf8ee", padding: 10, marginBottom: 10 },
   riskTitle:    { fontFamily: "Helvetica-Bold", fontSize: 8, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 },
   riskText:     { fontSize: 8.5, color: C.text, lineHeight: 1.65 },
 
   // Deadline callout
-  deadlineBox:  { backgroundColor: "#fff8f8", borderWidth: 0.5, borderColor: "#f5c6c6", borderRadius: 4, padding: 12, flexDirection: "row", gap: 10 },
+  deadlineBox:  { backgroundColor: "#fff8f8", borderWidth: 0.5, borderColor: "#f5c6c6", borderRadius: 4, padding: 10, flexDirection: "row", gap: 10 },
   deadlinePill: { backgroundColor: C.red, borderRadius: 3, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" },
   deadlinePillText: { fontFamily: "Helvetica-Bold", fontSize: 7, color: "#ffffff", letterSpacing: 0.3 },
   deadlineText: { flex: 1, fontSize: 8.5, color: C.text, lineHeight: 1.65 },
 
   // Score box
-  scoreBox:     { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 14 },
+  scoreBox:     { borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 10 },
   scoreHeader:  { backgroundColor: C.dark, paddingHorizontal: 12, paddingVertical: 6, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   scoreHeaderText: { fontFamily: "Helvetica-Bold", fontSize: 7.5, color: "#ffffff", letterSpacing: 0.4 },
   scoreGrade:   { fontFamily: "Times-Bold", fontSize: 18, color: C.goldLight, lineHeight: 1 },
-  scoreBody:    { paddingHorizontal: 12, paddingVertical: 10 },
+  scoreBody:    { paddingHorizontal: 12, paddingVertical: 8 },
   scoreLegendRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
   scoreDot:     { width: 7, height: 7, borderRadius: 4 },
   scoreLegendText: { fontSize: 7.5, color: C.textMid, flex: 1, lineHeight: 1.5 },
@@ -326,16 +326,10 @@ function CoverContextPage({ props }: { props: RiskBriefProps }) {
         <View style={st.contextCard}>
           <Text style={st.contextTitle}>EU AI Act — Regulatory Background</Text>
           <Text style={st.contextPara}>
-            Regulation (EU) 2024/1689 — the EU AI Act — is the world&apos;s first comprehensive legal framework for artificial intelligence. It applies to any AI system placed on the market or put into service in the EU, regardless of where the developer is incorporated. AI startups building or deploying AI products affecting EU residents are directly in scope.
-          </Text>
-          <Text style={st.contextPara}>
-            The Act establishes a four-tier risk classification. High-risk AI systems — which include AI used in recruitment, credit scoring, HR management, and other areas directly impacting individuals — are subject to the most stringent obligations: documented risk management, data governance controls, technical documentation, human oversight mechanisms, and pre-market conformity assessment.
-          </Text>
-          <Text style={st.contextPara}>
-            Enforcement powers are already active. Finland became the first EU member state with operational enforcement authority in December 2025, with other EU national market surveillance authorities expected to follow by mid-2026. The regulatory window for voluntary preparation is closing.
+            Regulation (EU) 2024/1689 — the EU AI Act — applies to any AI system placed on the market or used in the EU, regardless of where the developer is incorporated. High-risk AI systems (including AI used in recruitment, credit scoring, and HR management) face the most stringent obligations: documented risk management, data governance, technical documentation, human oversight, and conformity assessment.
           </Text>
           <Text style={[st.contextPara, { marginBottom: 0 }]}>
-            Non-compliant organisations face fines of up to <Text style={{ fontFamily: "Helvetica-Bold" }}>€35 million or 7% of global annual turnover</Text> for violations of prohibited AI practices, and up to <Text style={{ fontFamily: "Helvetica-Bold" }}>€15 million or 3%</Text> for other obligation failures — whichever is higher.
+            Enforcement is active. Non-compliant organisations face fines of up to <Text style={{ fontFamily: "Helvetica-Bold" }}>€35 million or 7% of global annual turnover</Text> for prohibited AI violations, and up to <Text style={{ fontFamily: "Helvetica-Bold" }}>€15 million or 3%</Text> for other obligation failures — whichever is higher.
           </Text>
         </View>
 
