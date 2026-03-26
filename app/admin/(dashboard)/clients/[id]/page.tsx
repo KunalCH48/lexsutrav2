@@ -72,7 +72,7 @@ export default async function ClientDetailPage({
   ] = await Promise.all([
     adminClient.from("ai_systems").select("id, name, risk_category, description").eq("company_id", id),
     adminClient.from("documents").select("id, file_name, file_size, file_type, confirmed_at, created_at").eq("company_id", id).order("created_at", { ascending: false }),
-    adminClient.from("demo_requests").select("id, status, created_at, company_name, contact_email, website_url, research_brief, insights_snapshot, scan_quality").order("created_at", { ascending: false }),
+    adminClient.from("demo_requests").select("id, status, created_at, company_name, contact_email, website_url, research_brief, insights_snapshot, scan_quality").eq("contact_email", company.contact_email ?? "").order("created_at", { ascending: false }),
     adminClient.from("profiles").select("id, display_name, role").eq("company_id", id).eq("role", "client").maybeSingle(),
     adminClient.from("activity_log").select("id, action, created_at").eq("entity_id", id).order("created_at", { ascending: false }).limit(15),
     adminClient.from("profiles").select("id, display_name, credential").eq("role", "reviewer").order("display_name"),
