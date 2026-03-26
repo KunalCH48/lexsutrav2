@@ -28,7 +28,7 @@ type Props = {
 
 function statusDot(s: string) {
   if (s === "critical_gap") return { bg: "rgba(192,57,43,0.15)", dot: "#c0392b" };
-  if (s === "not_started")  return { bg: "rgba(183,119,10,0.12)", dot: "#b7770a" };
+  if (s === "not_started")  return { bg: "rgba(192,85,0,0.12)",   dot: "#c05500" };
   if (s === "partial")      return { bg: "rgba(183,119,10,0.12)", dot: "#b7770a" };
   if (s === "compliant")    return { bg: "rgba(21,128,61,0.12)", dot: "#15803d" };
   return { bg: "rgba(255,255,255,0.05)", dot: "#4a5568" };
