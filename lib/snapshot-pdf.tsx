@@ -496,8 +496,8 @@ function HowToReadPage({
           </View>
           {[
             { color: C.red,       bg: C.redBg,   label: "CRITICAL GAP",               desc: "Public evidence indicates a significant compliance requirement is unmet. This poses direct legal risk under the EU AI Act. Immediate action is recommended." },
-            { color: C.amber,     bg: C.amberBg, label: "NOT STARTED / NO EVIDENCE FOUND", desc: "No public evidence of compliance activity was identified. Internal work may exist but is not publicly documented. Verification is recommended before the August 2026 deadline." },
-            { color: C.amber,     bg: C.amberBg, label: "PARTIAL",                     desc: "Some evidence of compliance exists, but the requirement is not fully met. Gaps remain that need to be addressed." },
+            { color: C.orange,    bg: C.orangeBg, label: "NOT STARTED / NO EVIDENCE FOUND", desc: "No public evidence of compliance activity was identified. Internal work may exist but is not publicly documented. Verification is recommended before the August 2026 deadline." },
+            { color: C.amber,     bg: C.amberBg,  label: "PARTIAL",                     desc: "Some evidence of compliance exists, but the requirement is not fully met. Gaps remain that need to be addressed." },
             { color: C.green,     bg: C.greenBg, label: "COMPLIANT",                   desc: "Public evidence indicates the obligation is met. This finding reflects publicly available information and does not constitute a formal certification." },
           ].map((item, i) => (
             <View key={i} style={[st.legendRow, { backgroundColor: item.bg }]}>

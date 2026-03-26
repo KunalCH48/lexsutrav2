@@ -23,6 +23,20 @@ export const metadata: Metadata = {
     "EU AI Act compliance inspections for AI startups in HR tech and Fintech. Get a graded diagnostic report with legal citations, compliance scores, and a prioritised remediation roadmap.",
   keywords:
     "EU AI Act, AI compliance, AI Act diagnostics, high-risk AI, compliance report, EUAIA",
+  openGraph: {
+    title: "LexSutra — EU AI Act Compliance Diagnostics",
+    description:
+      "Structured compliance diagnostics for AI startups in HR tech and Fintech. Graded report, legal citations, expert reviewed.",
+    url: "https://lexsutra.com",
+    siteName: "LexSutra",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LexSutra — EU AI Act Compliance Diagnostics",
+    description:
+      "Structured compliance diagnostics for AI startups. Graded report, legal citations, expert reviewed.",
+  },
 };
 
 export default function RootLayout({
