@@ -88,6 +88,9 @@ const C = {
   red:        "#c0392b",
   redBg:      "#fef2f2",
   redBorder:  "#f5c6c6",
+  orange:      "#c05500",
+  orangeBg:    "#fff4ed",
+  orangeBorder:"#fbd5b5",
   amber:      "#b7770a",
   amberBg:    "#fffbeb",
   amberBorder:"#f5dfa0",
@@ -101,7 +104,7 @@ const C = {
 
 function statusColor(s: string): string {
   if (s === "critical_gap")   return C.red;
-  if (s === "not_started")    return C.amber;
+  if (s === "not_started")    return C.orange;
   if (s === "partial")        return C.amber;
   if (s === "compliant")      return C.green;
   return C.textLight;
@@ -109,7 +112,7 @@ function statusColor(s: string): string {
 
 function statusBg(s: string): string {
   if (s === "critical_gap")   return C.redBg;
-  if (s === "not_started")    return C.amberBg;
+  if (s === "not_started")    return C.orangeBg;
   if (s === "partial")        return C.amberBg;
   if (s === "compliant")      return C.greenBg;
   return C.rowHeader;
@@ -117,7 +120,7 @@ function statusBg(s: string): string {
 
 function statusBorderColor(s: string): string {
   if (s === "critical_gap")   return C.redBorder;
-  if (s === "not_started")    return C.amberBorder;
+  if (s === "not_started")    return C.orangeBorder;
   if (s === "partial")        return C.amberBorder;
   if (s === "compliant")      return C.greenBorder;
   return C.rule;
@@ -369,8 +372,8 @@ function CoverPage({
                 </View>
               )}
               {nsCount > 0 && (
-                <View style={{ backgroundColor: C.amberBg, borderWidth: 0.5, borderColor: C.amberBorder, borderRadius: 3, paddingHorizontal: 7, paddingVertical: 3 }}>
-                  <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.amber }}>
+                <View style={{ backgroundColor: C.orangeBg, borderWidth: 0.5, borderColor: C.orangeBorder, borderRadius: 3, paddingHorizontal: 7, paddingVertical: 3 }}>
+                  <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.orange }}>
                     {nsCount} No Evidence Found
                   </Text>
                 </View>
@@ -512,8 +515,8 @@ function HowToReadPage({
           </View>
           {[
             { color: C.red,   bg: C.redBg,   label: "P1 — Critical",    desc: "Confirmed compliance gap with direct legal risk. Action required immediately. These items are the highest legal exposure under the EU AI Act." },
-            { color: C.amber, bg: C.amberBg, label: "P2 — No Evidence", desc: "No public evidence found. Cannot confirm compliance. Must be verified or documented before the August 2026 deadline." },
-            { color: C.amber, bg: C.amberBg, label: "P3 — Partial",     desc: "Partially compliant. Some work is in progress or documented, but gaps remain. Address before the deadline." },
+            { color: C.orange, bg: C.orangeBg, label: "P2 — No Evidence", desc: "No public evidence found. Cannot confirm compliance. Must be verified or documented before the August 2026 deadline." },
+            { color: C.amber,  bg: C.amberBg,  label: "P3 — Partial",     desc: "Partially compliant. Some work is in progress or documented, but gaps remain. Address before the deadline." },
             { color: C.green, bg: C.greenBg, label: "P4 — Compliant",   desc: "No action required based on current evidence. Monitor for regulatory updates and maintain existing documentation." },
           ].map((item, i) => (
             <View key={i} style={[st.legendRow, { backgroundColor: item.bg }]}>
