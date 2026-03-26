@@ -92,6 +92,9 @@ const C = {
   red:         "#c0392b",
   redBg:       "#fef2f2",
   redBorder:   "#f5c6c6",
+  orange:       "#c05500",
+  orangeBg:     "#fff4ed",
+  orangeBorder: "#fbd5b5",
   amber:       "#b7770a",
   amberBg:     "#fffbeb",
   amberBorder: "#f5dfa0",
@@ -105,7 +108,7 @@ const C = {
 
 function statusColor(s: string): string {
   if (s === "critical_gap") return C.red;
-  if (s === "not_started")  return C.amber;
+  if (s === "not_started")  return C.orange;
   if (s === "partial")      return C.amber;
   if (s === "compliant")    return C.green;
   return C.textLight;
@@ -113,7 +116,7 @@ function statusColor(s: string): string {
 
 function statusBg(s: string): string {
   if (s === "critical_gap") return C.redBg;
-  if (s === "not_started")  return C.amberBg;
+  if (s === "not_started")  return C.orangeBg;
   if (s === "partial")      return C.amberBg;
   if (s === "compliant")    return C.greenBg;
   return "#f9fafb";
@@ -121,7 +124,7 @@ function statusBg(s: string): string {
 
 function statusBorderColor(s: string): string {
   if (s === "critical_gap") return C.redBorder;
-  if (s === "not_started")  return C.amberBorder;
+  if (s === "not_started")  return C.orangeBorder;
   if (s === "partial")      return C.amberBorder;
   if (s === "compliant")    return C.greenBorder;
   return C.rule;
