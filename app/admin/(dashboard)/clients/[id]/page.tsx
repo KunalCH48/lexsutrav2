@@ -7,6 +7,7 @@ import { CompanyReviewerPanel } from "@/components/admin/CompanyReviewerPanel";
 import { ClientNotesPanel } from "@/components/admin/ClientNotesPanel";
 import { ResearchIntelSummary } from "@/components/admin/ResearchIntelSummary";
 import { ClientOnboardingChecklist } from "@/components/admin/ClientOnboardingChecklist";
+import { InvoicePanel, type Invoice } from "@/components/admin/InvoicePanel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Client Detail — LexSutra Admin" };
@@ -69,6 +70,7 @@ export default async function ClientDetailPage({
     { data: notes },
     { data: noteAuthors },
     { data: onboarding },
+    { data: invoicesData },
   ] = await Promise.all([
     adminClient.from("ai_systems").select("id, name, risk_category, description").eq("company_id", id),
     adminClient.from("documents").select("id, file_name, file_size, file_type, confirmed_at, created_at").eq("company_id", id).order("created_at", { ascending: false }),
@@ -80,10 +82,12 @@ export default async function ClientDetailPage({
     adminClient.from("company_notes").select("id, content, created_at, created_by").eq("company_id", id).order("created_at", { ascending: false }),
     adminClient.from("profiles").select("id, display_name, role"),
     adminClient.from("client_onboarding").select("*").eq("company_id", id).maybeSingle(),
+    adminClient.from("invoices").select("id, invoice_number, status, amount, tier, description, issued_at, due_at, paid_at, notes").eq("company_id", id).order("created_at", { ascending: false }),
   ]);
 
-  const systems = aiSystems ?? [];
-  const docs    = documents ?? [];
+  const systems  = aiSystems ?? [];
+  const docs     = documents ?? [];
+  const invoices = (invoicesData ?? []) as Invoice[];
 
   // Match ALL demo requests to this company by email OR URL
   const matchedDemos = (allDemoRequests ?? []).filter((d: any) =>
@@ -380,6 +384,16 @@ export default async function ClientDetailPage({
 
         {/* Right */}
         <div className="space-y-6">
+
+          {/* Invoices */}
+          <Section title={`Invoices (${invoices.length})`}>
+            <InvoicePanel
+              companyId={id}
+              companyName={company.name}
+              contactEmail={company.contact_email ?? ""}
+              initialInvoices={invoices}
+            />
+          </Section>
 
           {/* Documents */}
           <Section title={`Documents (${docs.length})`}>
