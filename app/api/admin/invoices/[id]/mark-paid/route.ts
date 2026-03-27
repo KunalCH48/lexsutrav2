@@ -41,22 +41,24 @@ export async function PATCH(
       .update({ status: "paid", paid_at: paidAt })
       .eq("id", id);
 
-    // Flip payment_received on client_onboarding if the row exists
-    await adminClient
-      .from("client_onboarding")
-      .update({ payment_received: true })
-      .eq("company_id", invoice.company_id)
-      .not("id", "is", null) // only update existing rows, don't upsert
-      .catch(() => null); // non-critical
+    // Flip payment_received on client_onboarding if the row exists (non-critical)
+    try {
+      await adminClient
+        .from("client_onboarding")
+        .update({ payment_received: true })
+        .eq("company_id", invoice.company_id);
+    } catch { /* non-critical */ }
 
-    // Log
-    await adminClient.from("activity_log").insert({
-      actor_id:    user.id,
-      action:      "mark_invoice_paid",
-      entity_type: "invoices",
-      entity_id:   invoice.company_id,
-      metadata:    { invoice_id: id, invoice_number: invoice.invoice_number, paid_at: paidAt },
-    }).catch(() => null);
+    // Log (non-critical)
+    try {
+      await adminClient.from("activity_log").insert({
+        actor_id:    user.id,
+        action:      "mark_invoice_paid",
+        entity_type: "invoices",
+        entity_id:   invoice.company_id,
+        metadata:    { invoice_id: id, invoice_number: invoice.invoice_number, paid_at: paidAt },
+      });
+    } catch { /* non-critical */ }
 
     return NextResponse.json({ success: true, paidAt });
 

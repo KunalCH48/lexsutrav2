@@ -271,14 +271,16 @@ export async function POST(
       .eq("id", id)
       .eq("status", "draft"); // only update if still draft
 
-    // Log
-    await adminClient.from("activity_log").insert({
-      actor_id:    user.id,
-      action:      "send_invoice",
-      entity_type: "invoices",
-      entity_id:   invoice.company_id,
-      metadata:    { invoice_id: id, invoice_number: invoice.invoice_number, to_email: toEmail },
-    }).catch(() => null);
+    // Log (non-critical)
+    try {
+      await adminClient.from("activity_log").insert({
+        actor_id:    user.id,
+        action:      "send_invoice",
+        entity_type: "invoices",
+        entity_id:   invoice.company_id,
+        metadata:    { invoice_id: id, invoice_number: invoice.invoice_number, to_email: toEmail },
+      });
+    } catch { /* non-critical */ }
 
     return NextResponse.json({ success: true, sentTo: toEmail });
 

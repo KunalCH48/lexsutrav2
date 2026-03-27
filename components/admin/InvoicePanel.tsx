@@ -16,17 +16,17 @@ export type Invoice = {
 };
 
 type Props = {
-  companyId:      string;
-  companyName:    string;
-  contactEmail:   string;
+  companyId:       string;
+  companyName:     string;
+  contactEmail:    string;
   initialInvoices: Invoice[];
 };
 
-const TIERS = [
-  { value: "starter",      label: "Starter",      price: 300  },
-  { value: "core",         label: "Core",         price: 2200 },
-  { value: "premium",      label: "Premium",      price: 3500 },
-  { value: "full_package", label: "Full Package", price: 4500 },
+const PACKAGES = [
+  { value: "starter",      label: "Starter",      desc: "EU AI Act Public Footprint Pre-Scan",                            defaultPrice: 300  },
+  { value: "core",         label: "Core",          desc: "Full Diagnostic + Scorecard",                                   defaultPrice: 2200 },
+  { value: "premium",      label: "Premium",       desc: "Diagnostic + Strategy Session + Investor Readiness Pack",       defaultPrice: 3500 },
+  { value: "full_package", label: "Full Package",  desc: "Complete Compliance Engagement (incl. Competitor Snapshot)",    defaultPrice: 4500 },
 ];
 
 function fmtDate(iso: string | null) {
@@ -40,19 +40,16 @@ function fmtEur(n: number) {
   }).format(n);
 }
 
-function StatusBadge({ status }: { status: Invoice["status"] }) {
+function InvoiceStatusBadge({ status }: { status: Invoice["status"] }) {
   const MAP = {
     draft:     { label: "Draft",     bg: "rgba(255,255,255,0.06)", color: "#8899aa" },
-    sent:      { label: "Sent",      bg: "rgba(45,156,219,0.12)", color: "#2d9cdb" },
-    paid:      { label: "Paid",      bg: "rgba(46,204,113,0.12)", color: "#2ecc71" },
-    cancelled: { label: "Cancelled", bg: "rgba(224,82,82,0.1)",   color: "#e05252" },
+    sent:      { label: "Sent",      bg: "rgba(45,156,219,0.12)",  color: "#2d9cdb" },
+    paid:      { label: "Paid",      bg: "rgba(46,204,113,0.12)",  color: "#2ecc71" },
+    cancelled: { label: "Cancelled", bg: "rgba(224,82,82,0.1)",    color: "#e05252" },
   };
   const { label, bg, color } = MAP[status] ?? MAP.draft;
   return (
-    <span
-      className="text-xs px-2 py-0.5 rounded-full font-medium"
-      style={{ background: bg, color }}
-    >
+    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: bg, color }}>
       {label}
     </span>
   );
@@ -60,18 +57,24 @@ function StatusBadge({ status }: { status: Invoice["status"] }) {
 
 export function InvoicePanel({ companyId, companyName, contactEmail, initialInvoices }: Props) {
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
-  const [tier, setTier]             = useState("core");
-  const [description, setDescription] = useState("");
-  const [notes, setNotes]           = useState("");
-  const [isPending, startTransition] = useTransition();
-  const [error, setError]           = useState<string | null>(null);
+
+  // Per-package price state — keyed by package value
+  const [prices, setPrices] = useState<Record<string, string>>(
+    Object.fromEntries(PACKAGES.map(p => [p.value, String(p.defaultPrice)]))
+  );
+  const [selectedTier, setSelectedTier] = useState("core");
+  const [description, setDescription]   = useState("");
+  const [notes, setNotes]               = useState("");
+
+  const [, startTransition]        = useTransition();
+  const [error, setError]          = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   // Per-invoice UI state
-  const [sendConfirm, setSendConfirm]   = useState<string | null>(null); // invoiceId awaiting send confirm
-  const [sendEmail, setSendEmail]       = useState(contactEmail);
-  const [paidConfirm, setPaidConfirm]   = useState<string | null>(null); // invoiceId awaiting paid confirm
-  const [loadingAction, setLoadingAction] = useState<string | null>(null); // "generate" | `send-${id}` | `paid-${id}` | `dl-${id}`
+  const [sendConfirm, setSendConfirm] = useState<string | null>(null);
+  const [sendEmail, setSendEmail]     = useState(contactEmail);
+  const [paidConfirm, setPaidConfirm] = useState<string | null>(null);
 
   function flash(msg: string) {
     setSuccessMsg(msg);
@@ -80,6 +83,13 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
 
   async function handleGenerate() {
     setError(null);
+    const rawPrice = prices[selectedTier] ?? "";
+    const amount   = parseFloat(rawPrice.replace(",", "."));
+    if (isNaN(amount) || amount < 0) {
+      setError("Please enter a valid amount.");
+      return;
+    }
+
     setLoadingAction("generate");
     startTransition(async () => {
       try {
@@ -88,7 +98,8 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             companyId,
-            tier,
+            tier:        selectedTier,
+            amount,
             description: description.trim() || undefined,
             notes:       notes.trim()       || undefined,
           }),
@@ -96,19 +107,19 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
         const data = await res.json();
         if (!res.ok) { setError(data.error ?? "Generation failed"); return; }
 
-        // Refresh invoice list
+        // Refresh list from server
         const listRes = await fetch(`/api/admin/invoices/list?companyId=${companyId}`);
         if (listRes.ok) {
           const { invoices: fresh } = await listRes.json();
           setInvoices(fresh);
         } else {
-          // Optimistically add a placeholder — page reload will fix it
+          // Optimistic fallback
           setInvoices(prev => [{
             id:             data.invoiceId,
             invoice_number: data.invoiceNumber,
             status:         "draft",
-            amount:         TIERS.find(t => t.value === tier)?.price ?? 0,
-            tier,
+            amount,
+            tier:           selectedTier,
             description:    description.trim() || null,
             issued_at:      new Date().toISOString(),
             due_at:         new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -117,12 +128,10 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
           }, ...prev]);
         }
 
-        // Open PDF download immediately
         if (data.signedUrl) window.open(data.signedUrl, "_blank");
-
         setDescription("");
         setNotes("");
-        flash(`Invoice ${data.invoiceNumber} generated.`);
+        flash(`Invoice ${data.invoiceNumber} generated — ${fmtEur(amount)}.`);
       } catch {
         setError("Network error. Please try again.");
       } finally {
@@ -134,7 +143,7 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
   async function handleDownload(invoiceId: string) {
     setLoadingAction(`dl-${invoiceId}`);
     try {
-      const res = await fetch(`/api/admin/invoices/${invoiceId}/pdf`);
+      const res  = await fetch(`/api/admin/invoices/${invoiceId}/pdf`);
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Download failed"); return; }
       window.open(data.url, "_blank");
@@ -147,17 +156,14 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
     setError(null);
     setLoadingAction(`send-${invoiceId}`);
     try {
-      const res = await fetch(`/api/admin/invoices/${invoiceId}/send-email`, {
+      const res  = await fetch(`/api/admin/invoices/${invoiceId}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toEmail: sendEmail }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Send failed"); return; }
-
-      setInvoices(prev => prev.map(inv =>
-        inv.id === invoiceId ? { ...inv, status: "sent" } : inv
-      ));
+      setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: "sent" } : inv));
       setSendConfirm(null);
       flash(`Invoice emailed to ${sendEmail}.`);
     } finally {
@@ -169,15 +175,10 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
     setError(null);
     setLoadingAction(`paid-${invoiceId}`);
     try {
-      const res = await fetch(`/api/admin/invoices/${invoiceId}/mark-paid`, {
-        method: "PATCH",
-      });
+      const res  = await fetch(`/api/admin/invoices/${invoiceId}/mark-paid`, { method: "PATCH" });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Update failed"); return; }
-
-      setInvoices(prev => prev.map(inv =>
-        inv.id === invoiceId ? { ...inv, status: "paid", paid_at: data.paidAt } : inv
-      ));
+      setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: "paid", paid_at: data.paidAt } : inv));
       setPaidConfirm(null);
       flash("Invoice marked as paid.");
     } finally {
@@ -185,11 +186,11 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
     }
   }
 
-  const selectedTierPrice = TIERS.find(t => t.value === tier)?.price ?? 0;
+  const selectedAmount = parseFloat((prices[selectedTier] ?? "0").replace(",", ".")) || 0;
 
   return (
     <div>
-      {/* Success / error banners */}
+      {/* Banners */}
       {successMsg && (
         <div className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(46,204,113,0.1)", color: "#2ecc71", border: "1px solid rgba(46,204,113,0.2)" }}>
           {successMsg}
@@ -201,32 +202,70 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
         </div>
       )}
 
-      {/* Generate form */}
+      {/* Package selector */}
       <div className="mb-5 pb-5" style={{ borderBottom: "1px solid rgba(45,156,219,0.08)" }}>
         <p className="text-xs font-medium mb-3" style={{ color: "#8899aa" }}>New Invoice</p>
 
-        {/* Tier selector */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {TIERS.map(t => (
-            <button
-              key={t.value}
-              onClick={() => setTier(t.value)}
-              className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{
-                background: tier === t.value ? "rgba(45,156,219,0.15)" : "rgba(255,255,255,0.04)",
-                border:     tier === t.value ? "1px solid rgba(45,156,219,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                color:      tier === t.value ? "#2d9cdb" : "#8899aa",
-              }}
-            >
-              {t.label} · {fmtEur(t.price)}
-            </button>
-          ))}
+        {/* Package list with editable prices */}
+        <div className="space-y-1.5 mb-3">
+          {PACKAGES.map(pkg => {
+            const active = selectedTier === pkg.value;
+            return (
+              <div
+                key={pkg.value}
+                onClick={() => setSelectedTier(pkg.value)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer"
+                style={{
+                  background: active ? "rgba(45,156,219,0.08)" : "rgba(255,255,255,0.02)",
+                  border:     active ? "1px solid rgba(45,156,219,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                {/* Radio dot */}
+                <div
+                  className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ border: active ? "2px solid #2d9cdb" : "2px solid #3d4f60" }}
+                >
+                  {active && <div className="w-2 h-2 rounded-full" style={{ background: "#2d9cdb" }} />}
+                </div>
+
+                {/* Label + desc */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium" style={{ color: active ? "#e8f4ff" : "#8899aa" }}>
+                    {pkg.label}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: "#3d4f60" }}>{pkg.desc}</p>
+                </div>
+
+                {/* Editable price */}
+                <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  <span className="text-xs" style={{ color: "#5a6a7a" }}>€</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="50"
+                    value={prices[pkg.value] ?? ""}
+                    onChange={e => {
+                      setPrices(prev => ({ ...prev, [pkg.value]: e.target.value }));
+                      setSelectedTier(pkg.value); // selecting by editing price
+                    }}
+                    className="text-xs text-right rounded px-2 py-1 outline-none w-20"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border:     "1px solid rgba(45,156,219,0.15)",
+                      color:      "#c8a84b",
+                      fontWeight: 600,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Optional description */}
         <input
           type="text"
-          placeholder="Description (optional — defaults to tier name)"
+          placeholder="Description (optional — defaults to package name)"
           value={description}
           onChange={e => setDescription(e.target.value)}
           className="w-full text-xs rounded-lg px-3 py-2 mb-2 outline-none"
@@ -245,7 +284,7 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
 
         <button
           onClick={handleGenerate}
-          disabled={loadingAction === "generate" || isPending}
+          disabled={loadingAction === "generate"}
           className="text-xs px-4 py-2 rounded-lg font-medium"
           style={{
             background: "rgba(45,156,219,0.15)",
@@ -254,7 +293,7 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
             opacity:    loadingAction === "generate" ? 0.6 : 1,
           }}
         >
-          {loadingAction === "generate" ? "Generating…" : `Generate Invoice — ${fmtEur(selectedTierPrice)}`}
+          {loadingAction === "generate" ? "Generating…" : `Generate Invoice — ${fmtEur(selectedAmount)}`}
         </button>
       </div>
 
@@ -269,20 +308,18 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
               className="rounded-lg px-4 py-3"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(45,156,219,0.06)" }}
             >
-              {/* Row 1: number + status + amount */}
-              <div className="flex items-center justify-between gap-2 mb-2">
+              {/* Number + status + amount */}
+              <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium" style={{ color: "#e8f4ff", fontFamily: "monospace" }}>
                     {inv.invoice_number}
                   </span>
-                  <StatusBadge status={inv.status} />
+                  <InvoiceStatusBadge status={inv.status} />
                 </div>
-                <span className="text-sm font-semibold" style={{ color: "#c8a84b" }}>
-                  {fmtEur(inv.amount)}
-                </span>
+                <span className="text-sm font-semibold" style={{ color: "#c8a84b" }}>{fmtEur(inv.amount)}</span>
               </div>
 
-              {/* Row 2: description + dates */}
+              {/* Description + dates */}
               <p className="text-xs mb-1 truncate" style={{ color: "#5a6a7a" }}>
                 {inv.description ?? inv.tier ?? "Invoice"}
               </p>
@@ -301,7 +338,6 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
               {/* Actions */}
               {inv.status !== "paid" && inv.status !== "cancelled" && (
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  {/* Download */}
                   <button
                     onClick={() => handleDownload(inv.id)}
                     disabled={loadingAction === `dl-${inv.id}`}
@@ -311,7 +347,6 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
                     {loadingAction === `dl-${inv.id}` ? "…" : "Download PDF"}
                   </button>
 
-                  {/* Send email */}
                   {sendConfirm === inv.id ? (
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <input
@@ -329,11 +364,7 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
                       >
                         {loadingAction === `send-${inv.id}` ? "Sending…" : "Send"}
                       </button>
-                      <button
-                        onClick={() => setSendConfirm(null)}
-                        className="text-xs px-2 py-1 rounded"
-                        style={{ color: "#3d4f60" }}
-                      >
+                      <button onClick={() => setSendConfirm(null)} className="text-xs px-2 py-1 rounded" style={{ color: "#3d4f60" }}>
                         Cancel
                       </button>
                     </div>
@@ -347,7 +378,6 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
                     </button>
                   )}
 
-                  {/* Mark Paid */}
                   {paidConfirm === inv.id ? (
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs" style={{ color: "#8899aa" }}>Mark as paid?</span>
@@ -359,11 +389,7 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
                       >
                         {loadingAction === `paid-${inv.id}` ? "…" : "Confirm Paid"}
                       </button>
-                      <button
-                        onClick={() => setPaidConfirm(null)}
-                        className="text-xs px-2 py-1 rounded"
-                        style={{ color: "#3d4f60" }}
-                      >
+                      <button onClick={() => setPaidConfirm(null)} className="text-xs px-2 py-1 rounded" style={{ color: "#3d4f60" }}>
                         Cancel
                       </button>
                     </div>
@@ -379,7 +405,6 @@ export function InvoicePanel({ companyId, companyName, contactEmail, initialInvo
                 </div>
               )}
 
-              {/* Paid: download only */}
               {inv.status === "paid" && (
                 <div className="mt-3">
                   <button

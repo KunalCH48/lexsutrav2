@@ -8,13 +8,6 @@ import { InvoicePDF } from "@/lib/invoice-pdf";
 export const runtime    = "nodejs";
 export const maxDuration = 60;
 
-const TIER_PRICES: Record<string, number> = {
-  starter:      300,
-  core:         2200,
-  premium:      3500,
-  full_package: 4500,
-};
-
 const TIER_LABELS: Record<string, string> = {
   starter:      "Starter — EU AI Act Public Footprint Pre-Scan",
   core:         "Core — Full Diagnostic + Scorecard",
@@ -42,17 +35,22 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json() as {
-      companyId:    string;
+      companyId:     string;
       diagnosticId?: string;
-      tier:         string;
-      description?: string;
-      notes?:       string;
+      tier:          string;
+      amount:        number;   // caller passes the (possibly overridden) amount
+      description?:  string;
+      notes?:        string;
     };
 
-    const { companyId, diagnosticId, tier, description, notes } = body;
+    const { companyId, diagnosticId, tier, amount, description, notes } = body;
 
-    if (!companyId || !tier) {
-      return NextResponse.json({ error: "Missing companyId or tier" }, { status: 400 });
+    if (!companyId || !tier || amount == null) {
+      return NextResponse.json({ error: "Missing companyId, tier, or amount" }, { status: 400 });
+    }
+
+    if (amount < 0) {
+      return NextResponse.json({ error: "Amount cannot be negative" }, { status: 400 });
     }
 
     // Fetch company
@@ -75,15 +73,13 @@ export async function POST(req: NextRequest) {
     const seq           = ((count ?? 0) + 1).toString().padStart(4, "0");
     const invoiceNumber = `LS-${year}-${seq}`;
 
-    const amount = TIER_PRICES[tier.toLowerCase()] ?? 0;
     const issuedAt = new Date();
     const dueAt    = new Date(issuedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-    // Build line items
-    const lineItemDescription = description || TIER_LABELS[tier.toLowerCase()] || `EU AI Act Compliance Diagnostic — ${tier}`;
+    const lineItemDescription = description?.trim() || TIER_LABELS[tier.toLowerCase()] || `EU AI Act Compliance Diagnostic — ${tier}`;
     const lineItems = [{ description: lineItemDescription, qty: 1, unitPrice: amount }];
 
-    // Insert invoice row (status=draft, no pdf_path yet)
+    // Insert invoice row
     const { data: invoice, error: insertErr } = await adminClient
       .from("invoices")
       .insert({
@@ -95,7 +91,7 @@ export async function POST(req: NextRequest) {
         amount,
         tier:           tier.toLowerCase(),
         description:    lineItemDescription,
-        notes:          notes ?? null,
+        notes:          notes?.trim() ?? null,
         status:         "draft",
       })
       .select()
@@ -110,13 +106,13 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = await renderToBuffer(
       React.createElement(InvoicePDF, {
         invoiceNumber,
-        issuedAt:  issuedAt.toISOString(),
-        dueAt:     dueAt.toISOString(),
+        issuedAt:     issuedAt.toISOString(),
+        dueAt:        dueAt.toISOString(),
         companyName:  company.name,
         contactEmail: company.contact_email ?? "",
         tier:         tier.toLowerCase(),
         lineItems,
-        notes:        notes ?? null,
+        notes:        notes?.trim() ?? null,
       }) as unknown as React.ReactElement<DocumentProps>
     );
 
@@ -149,14 +145,16 @@ export async function POST(req: NextRequest) {
       .from("invoices")
       .createSignedUrl(storagePath, 60 * 60 * 24);
 
-    // Log to activity_log
-    await adminClient.from("activity_log").insert({
-      actor_id:    user.id,
-      action:      "generate_invoice",
-      entity_type: "invoices",
-      entity_id:   companyId,
-      metadata:    { invoice_id: invoice.id, invoice_number: invoiceNumber, tier, amount },
-    }).catch(() => null);
+    // Log to activity_log (non-critical — don't let it fail the request)
+    try {
+      await adminClient.from("activity_log").insert({
+        actor_id:    user.id,
+        action:      "generate_invoice",
+        entity_type: "invoices",
+        entity_id:   companyId,
+        metadata:    { invoice_id: invoice.id, invoice_number: invoiceNumber, tier, amount },
+      });
+    } catch { /* non-critical */ }
 
     return NextResponse.json({
       success:       true,
