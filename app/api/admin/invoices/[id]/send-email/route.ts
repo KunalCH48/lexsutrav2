@@ -89,7 +89,7 @@ function buildInvoiceEmailHtml({
                   </tr>
                   <tr>
                     <td style="font-size:11px;color:#9ca3af;padding-top:4px;">Due ${fmtDate(dueAt)}</td>
-                    <td align="right" style="font-size:11px;color:#9ca3af;padding-top:4px;">14 days net</td>
+                    <td align="right" style="font-size:11px;color:#9ca3af;padding-top:4px;"></td>
                   </tr>
                 </table>
               </td>
@@ -108,6 +108,7 @@ function buildInvoiceEmailHtml({
                     ["Due Date",       fmtDate(dueAt)],
                     ["Description",   description ?? "EU AI Act Compliance Diagnostic"],
                     ["VAT",           "€0.00 (VAT number pending registration)"],
+                    ["Processing",    "We will send your report upon receipt of payment"],
                   ].map(([l, v]) => `
                   <tr>
                     <td style="font-size:11.5px;color:#9ca3af;padding:3px 0;width:160px;">${l}</td>
@@ -123,9 +124,10 @@ function buildInvoiceEmailHtml({
             <tr>
               <td style="padding:14px 16px;">
                 <p style="font-size:12px;font-weight:700;color:#1d6fa4;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px 0;">Payment Instructions</p>
-                <p style="font-size:12px;color:#374151;margin:0 0 4px 0;">Please transfer the amount due by bank transfer.</p>
+                <p style="font-size:12px;color:#374151;margin:0 0 4px 0;">Please transfer the amount due by bank transfer using the reference below.</p>
                 <p style="font-size:12px;color:#374151;margin:0 0 4px 0;"><strong>Reference:</strong> ${invoiceNumber}</p>
-                <p style="font-size:11px;color:#6b7280;margin:0;">Bank details are included in the attached PDF invoice.</p>
+                <p style="font-size:12px;color:#374151;margin:0 0 4px 0;">Bank details are included in the PDF invoice attached above.</p>
+                <p style="font-size:11px;color:#1d6fa4;font-weight:600;margin:0;">Once we receive your payment, we will process your diagnostic report and send it over.</p>
               </td>
             </tr>
           </table>

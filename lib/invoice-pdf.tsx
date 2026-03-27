@@ -419,8 +419,8 @@ export function InvoicePDF({
             <Text style={S.metaValue}>{fmtDate(dueAt)}</Text>
           </View>
           <View style={S.metaItem}>
-            <Text style={S.metaLabel}>Payment Terms</Text>
-            <Text style={S.metaValue}>14 days net</Text>
+            <Text style={S.metaLabel}>Processing</Text>
+            <Text style={S.metaValue}>Upon payment</Text>
           </View>
         </View>
 
@@ -482,7 +482,7 @@ export function InvoicePDF({
             <Text style={S.paymentValue}>{invoiceNumber}</Text>
           </View>
           <Text style={S.paymentNote}>
-            Please use the invoice number as payment reference. Payment due within 14 days of issue date.
+            Please use the invoice number as payment reference. Once we receive your payment, we will process your diagnostic and send it over.
           </Text>
         </View>
 
