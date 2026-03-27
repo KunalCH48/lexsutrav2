@@ -30,6 +30,7 @@ export function ReviewerManagePanel(props: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError]            = useState("");
   const [showInvite, setShowInvite]  = useState(false);
+  const [pendingFd, setPendingFd]    = useState<FormData | null>(null);
 
   // ── TOP-LEVEL INVITE FORM ─────────────────────────────────────
   if (!props.compact) {
@@ -54,12 +55,7 @@ export function ReviewerManagePanel(props: Props) {
           <form
             action={async (fd) => {
               setError("");
-              const result = await inviteReviewer(fd);
-              if ("error" in result) {
-                setError(result.error);
-              } else {
-                setShowInvite(false);
-              }
+              setPendingFd(fd);
             }}
             className="space-y-3"
           >
@@ -101,17 +97,59 @@ export function ReviewerManagePanel(props: Props) {
               />
             </div>
             {error && <p className="text-xs" style={{ color: "#e05252" }}>{error}</p>}
-            <button
-              type="submit"
-              className="text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2"
-              style={{ background: "rgba(45,156,219,0.15)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.3)" }}
-            >
-              <Plus size={13} />
-              Send Invite
-            </button>
-            <p className="text-xs" style={{ color: "rgba(232,244,255,0.3)" }}>
-              An invite email will be sent from hello@lexsutra.com. The reviewer logs in via Google SSO using their registered email.
-            </p>
+            {pendingFd ? (
+              <div className="rounded-lg px-3 py-3 space-y-2" style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.25)" }}>
+                <p className="text-xs font-semibold" style={{ color: "#2d9cdb" }}>
+                  Send invite to <span className="font-mono">{pendingFd.get("email") as string}</span>?
+                </p>
+                <p className="text-xs" style={{ color: "#8899aa" }}>
+                  An invite email will be sent from hello@lexsutra.com.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={async () => {
+                      const fd = pendingFd;
+                      setPendingFd(null);
+                      setError("");
+                      const result = await inviteReviewer(fd);
+                      if ("error" in result) {
+                        setError(result.error);
+                      } else {
+                        setShowInvite(false);
+                      }
+                    }}
+                    className="px-4 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                    style={{ background: "rgba(45,156,219,0.18)", border: "1px solid rgba(45,156,219,0.4)", color: "#2d9cdb" }}
+                  >
+                    Yes, send invite →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingFd(null)}
+                    className="px-4 py-1.5 rounded-lg text-xs font-medium"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8899aa" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                className="text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2"
+                style={{ background: "rgba(45,156,219,0.15)", color: "#2d9cdb", border: "1px solid rgba(45,156,219,0.3)" }}
+              >
+                <Plus size={13} />
+                Send Invite
+              </button>
+            )}
+            {!pendingFd && (
+              <p className="text-xs" style={{ color: "rgba(232,244,255,0.3)" }}>
+                An invite email will be sent from hello@lexsutra.com. The reviewer logs in via Google SSO using their registered email.
+              </p>
+            )}
           </form>
         )}
       </div>

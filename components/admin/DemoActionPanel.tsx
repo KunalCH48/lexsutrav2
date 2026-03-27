@@ -23,6 +23,8 @@ export default function DemoActionPanel({ demoId, status, companyName, email }: 
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [confirmCreate, setConfirmCreate] = useState(false);
+  const [confirmResend, setConfirmResend] = useState(false);
 
   const isConverted = status === "converted";
   const isRejected  = status === "rejected";
@@ -103,28 +105,54 @@ export default function DemoActionPanel({ demoId, status, companyName, email }: 
           >
             ✓ Client account has been created. Invite sent to {email}.
           </div>
-          <button
-            onClick={() => {
-              setFeedback(null);
-              startTransition(async () => {
-                const result = await resendWelcomeEmail(email, companyName);
-                if ("error" in result) {
-                  setFeedback({ type: "error", message: result.error });
-                } else {
-                  setFeedback({ type: "success", message: `Welcome email resent to ${email}.` });
-                }
-              });
-            }}
-            disabled={isPending}
-            className="w-full rounded-lg py-2 text-xs font-medium transition-colors disabled:opacity-50"
-            style={{
-              background: "rgba(45,156,219,0.1)",
-              border:     "1px solid rgba(45,156,219,0.25)",
-              color:      "#2d9cdb",
-            }}
-          >
-            {isPending ? "Sending…" : "Resend welcome email →"}
-          </button>
+          {confirmResend ? (
+            <div className="rounded-lg px-3 py-3 space-y-2" style={{ background: "rgba(45,156,219,0.06)", border: "1px solid rgba(45,156,219,0.25)" }}>
+              <p className="text-xs font-semibold" style={{ color: "#2d9cdb" }}>
+                Resend welcome email to <span className="font-mono">{email}</span>?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setConfirmResend(false);
+                    setFeedback(null);
+                    startTransition(async () => {
+                      const result = await resendWelcomeEmail(email, companyName);
+                      if ("error" in result) {
+                        setFeedback({ type: "error", message: result.error });
+                      } else {
+                        setFeedback({ type: "success", message: `Welcome email resent to ${email}.` });
+                      }
+                    });
+                  }}
+                  disabled={isPending}
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
+                  style={{ background: "rgba(45,156,219,0.18)", border: "1px solid rgba(45,156,219,0.4)", color: "#2d9cdb" }}
+                >
+                  {isPending ? "Sending…" : "Yes, resend →"}
+                </button>
+                <button
+                  onClick={() => setConfirmResend(false)}
+                  className="px-4 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8899aa" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmResend(true)}
+              disabled={isPending}
+              className="w-full rounded-lg py-2 text-xs font-medium transition-colors disabled:opacity-50"
+              style={{
+                background: "rgba(45,156,219,0.1)",
+                border:     "1px solid rgba(45,156,219,0.25)",
+                color:      "#2d9cdb",
+              }}
+            >
+              Resend welcome email →
+            </button>
+          )}
         </div>
       )}
 
@@ -200,14 +228,42 @@ export default function DemoActionPanel({ demoId, status, companyName, email }: 
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }} />
 
           {/* Primary Action */}
-          <button
-            onClick={handleCreateAccount}
-            disabled={isPending}
-            className="w-full rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
-            style={{ background: "#2d9cdb", color: "#fff" }}
-          >
-            {isPending ? "Creating…" : "Create Client Account →"}
-          </button>
+          {confirmCreate ? (
+            <div className="rounded-lg px-4 py-3 space-y-2" style={{ background: "rgba(45,156,219,0.07)", border: "1px solid rgba(45,156,219,0.3)" }}>
+              <p className="text-xs font-semibold" style={{ color: "#e8f4ff" }}>
+                Create account for <span style={{ color: "#2d9cdb" }}>{email}</span>?
+              </p>
+              <p className="text-xs" style={{ color: "#8899aa" }}>
+                A welcome email with a portal sign-in link will be sent immediately.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => { setConfirmCreate(false); handleCreateAccount(); }}
+                  disabled={isPending}
+                  className="flex-1 rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
+                  style={{ background: "#2d9cdb", color: "#fff" }}
+                >
+                  {isPending ? "Creating…" : "Yes, create & send →"}
+                </button>
+                <button
+                  onClick={() => setConfirmCreate(false)}
+                  className="px-4 rounded-lg text-sm font-medium"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#8899aa" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmCreate(true)}
+              disabled={isPending}
+              className="w-full rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
+              style={{ background: "#2d9cdb", color: "#fff" }}
+            >
+              Create Client Account →
+            </button>
+          )}
 
           {/* Secondary Actions */}
           <div className="grid grid-cols-2 gap-3">

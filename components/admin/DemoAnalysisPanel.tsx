@@ -870,10 +870,11 @@ function ApproveSection({
   const [stage, setStage]               = useState<Stage>("idle");
   const [errMsg, setErrMsg]             = useState("");
   const [pdfUrl, setPdfUrl]             = useState<string | null>(null);
-  const [emailTo, setEmailTo]           = useState(contactEmail ?? "");
-  const [emailSending, setEmailSending] = useState(false);
-  const [emailSent, setEmailSent]       = useState(false);
-  const [emailErr, setEmailErr]         = useState("");
+  const [emailTo, setEmailTo]               = useState(contactEmail ?? "");
+  const [emailConfirming, setEmailConfirming] = useState(false);
+  const [emailSending, setEmailSending]     = useState(false);
+  const [emailSent, setEmailSent]           = useState(false);
+  const [emailErr, setEmailErr]             = useState("");
   const [, startTransition]             = useTransition();
 
   // Saved PDF state
@@ -923,6 +924,8 @@ function ApproveSection({
 
   async function handleSendEmail() {
     if (!emailTo.trim()) return;
+    if (!emailConfirming) { setEmailConfirming(true); return; }
+    setEmailConfirming(false);
     setEmailSending(true);
     setEmailErr("");
     try {
@@ -1186,13 +1189,36 @@ function ApproveSection({
                   Sends email prompting the client to log in to the portal to view their snapshot report.
                 </p>
                 {emailErr && <p className="text-xs" style={{ color: "#e05252" }}>{emailErr}</p>}
-                <button
-                  onClick={handleSendEmail}
-                  disabled={emailSending || !emailTo.trim()}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 transition-colors"
-                  style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.3)", color: "#c8a84b" }}>
-                  {emailSending ? "Sending…" : "Send Email to Client →"}
-                </button>
+                {emailConfirming ? (
+                  <div className="rounded-lg px-3 py-3 space-y-2" style={{ background: "rgba(200,168,75,0.06)", border: "1px solid rgba(200,168,75,0.25)" }}>
+                    <p className="text-xs font-semibold" style={{ color: "#c8a84b" }}>
+                      Confirm: send email to <span className="font-mono">{emailTo}</span>?
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSendEmail}
+                        disabled={emailSending}
+                        className="px-4 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                        style={{ background: "rgba(200,168,75,0.18)", border: "1px solid rgba(200,168,75,0.4)", color: "#c8a84b" }}>
+                        {emailSending ? "Sending…" : "Yes, send it →"}
+                      </button>
+                      <button
+                        onClick={() => setEmailConfirming(false)}
+                        className="px-4 py-1.5 rounded-lg text-xs font-medium"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8899aa" }}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleSendEmail}
+                    disabled={emailSending || !emailTo.trim()}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 transition-colors"
+                    style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.3)", color: "#c8a84b" }}>
+                    Send Email to Client →
+                  </button>
+                )}
               </>
             )}
             {emailSent && (
