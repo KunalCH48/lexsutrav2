@@ -126,7 +126,10 @@ export default function PrivacyPage() {
           {/* 1. Who we are */}
           <Section id="identity" title="1. Who We Are">
             <p>
-              <strong style={{ color: "#e8f4ff" }}>Data Controller:</strong> LexSutra, Netherlands.
+              <strong style={{ color: "#e8f4ff" }}>Data Controller:</strong> Lexsutra, Netherlands.
+            </p>
+            <p>
+              <strong style={{ color: "#e8f4ff" }}>KVK (Chamber of Commerce):</strong> 42020470
             </p>
             <p>
               <strong style={{ color: "#e8f4ff" }}>Contact:</strong>{" "}
@@ -344,7 +347,8 @@ export default function PrivacyPage() {
               className="rounded-lg px-5 py-4 mt-3"
               style={{ background: "#0d1520", border: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <p style={{ color: "#e8f4ff" }}><strong>LexSutra</strong></p>
+              <p style={{ color: "#e8f4ff" }}><strong>Lexsutra</strong></p>
+              <p>KVK: 42020470</p>
               <p>Netherlands</p>
               <p>
                 <a href="mailto:hello@send.lexsutra.com" style={{ color: "#2d9cdb" }}>hello@send.lexsutra.com</a>

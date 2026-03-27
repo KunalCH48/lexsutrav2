@@ -98,7 +98,7 @@ export default function TermsPage() {
           {/* 1. Who we are */}
           <Section id="identity" title="1. Who We Are">
             <p>
-              LexSutra is a compliance infrastructure company based in the Netherlands.
+              Lexsutra is a compliance infrastructure company based in the Netherlands (KVK: 42020470).
               We provide structured diagnostic tools, reports, and guidance to help businesses understand
               their obligations under the EU Artificial Intelligence Act (Regulation (EU) 2024/1689).
             </p>

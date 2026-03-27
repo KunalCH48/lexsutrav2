@@ -35,7 +35,7 @@ type CardData = {
 // ── Email blocking ────────────────────────────────────────────────────────────
 
 const BLOCKED_DOMAINS = new Set([
-  // "gmail.com", // TODO: RE-ENABLE BEFORE PRODUCTION DEPLOY
+  "gmail.com",
   "yahoo.com", "outlook.com", "hotmail.com", "icloud.com",
   "protonmail.com", "aol.com", "mail.com", "live.com", "msn.com",
   "yahoo.co.uk", "googlemail.com", "me.com", "mac.com",

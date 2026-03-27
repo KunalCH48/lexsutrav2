@@ -177,28 +177,6 @@ export function ReportViewer({
 
   return (
     <>
-      {/* ── Print watermark — appears on every printed page via position:fixed ── */}
-      <style>{`
-        @media print {
-          .draft-print-watermark {
-            display: block !important;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 72pt;
-            font-weight: 900;
-            color: rgba(160, 0, 0, 0.055);
-            z-index: 9999;
-            pointer-events: none;
-            white-space: nowrap;
-            letter-spacing: 0.15em;
-            font-family: Georgia, serif;
-          }
-        }
-      `}</style>
-      <div className="draft-print-watermark hidden" aria-hidden="true">DRAFT — TESTING ONLY</div>
-
       {/* ── Fixed screen top bar ──────────────────────────── */}
       <div
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-12 print:hidden"
@@ -223,19 +201,8 @@ export function ReportViewer({
         </button>
       </div>
 
-      {/* ── DRAFT screen banner (hidden in print) ─────────── */}
-      <div
-        className="fixed top-12 left-0 right-0 z-40 flex items-center justify-center gap-3 px-6 py-2 print:hidden"
-        style={{ background: "#7a1a1a", borderBottom: "1px solid #a02020" }}
-      >
-        <span className="text-xs font-bold tracking-widest uppercase text-white">⚠ Draft — Testing Purposes Only</span>
-        <span className="text-xs text-red-200 opacity-80">
-          This document has no legal standing and may not be relied upon for any regulatory or compliance purpose.
-        </span>
-      </div>
-
       {/* ── Report body ───────────────────────────────────── */}
-      <div className="pt-20 min-h-screen print:pt-0" style={{ background: "#f4f0e8", color: "#1a1a2e" }}>
+      <div className="pt-12 min-h-screen print:pt-0" style={{ background: "#f4f0e8", color: "#1a1a2e" }}>
         <div className="max-w-4xl mx-auto px-8 py-10 print:px-10 print:py-0">
 
           {/* ═══════════════════════════════════════════════
@@ -246,7 +213,6 @@ export function ReportViewer({
             style={{ borderBottom: "1px solid #c8c0b0", color: "#8b6914" }}
           >
             <span style={{ fontFamily: "Georgia, serif", fontWeight: 700 }}>LexSutra</span>
-            <span style={{ color: "#a02020", fontWeight: 700 }}>DRAFT — TESTING ONLY &nbsp;|&nbsp; NO LEGAL STANDING</span>
             <span>LexSutra EU AI Act Diagnostic Report &nbsp;|&nbsp; {fmtDateShort(diagnostic.created_at)}</span>
           </div>
 
@@ -265,29 +231,6 @@ export function ReportViewer({
             <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8b6914" }}>
               EU AI Act Compliance Diagnostic Report
             </p>
-
-            {/* DRAFT stamp */}
-            <div
-              className="inline-block rounded border-2 px-4 py-1.5 mb-6"
-              style={{ borderColor: "#a02020", borderStyle: "solid" }}
-            >
-              <p className="text-xs font-bold tracking-[0.25em] uppercase" style={{ color: "#a02020" }}>
-                Draft — Testing Purposes Only
-              </p>
-            </div>
-
-            {/* Legal notice box */}
-            <div
-              className="rounded-lg px-4 py-3 mb-8 text-xs leading-relaxed"
-              style={{ background: "rgba(160,32,32,0.06)", border: "1px solid rgba(160,32,32,0.2)", color: "#7a3030" }}
-            >
-              <strong>This document has been produced for evaluation and testing purposes only.</strong>{" "}
-              It does not constitute a formal LexSutra compliance diagnostic report. The findings,
-              classifications, and any information contained herein carry no legal standing and may not
-              be relied upon for any regulatory, legal, commercial, or compliance purpose. This document
-              is not a certifiable compliance statement and creates no legal relationship between
-              LexSutra and any party. A formally issued report will be clearly marked as such.
-            </div>
 
             {/* Company name (primary) */}
             <h1
@@ -788,7 +731,7 @@ export function ReportViewer({
                 the fee paid for this diagnostic service.
               </p>
               <p className="text-xs mt-4" style={{ color: "#c8c0b0" }}>
-                LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.com · Netherlands · Founded February 2026
+                LexSutra · AI Compliance Diagnostic Infrastructure · lexsutra.com · KVK: 42020470 · Netherlands
               </p>
             </div>
           </Section>
