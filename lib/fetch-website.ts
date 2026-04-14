@@ -6,24 +6,26 @@ export type WebsiteFetchResult = {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const MAX_EXTRA_PAGES   = 4;      // additional pages beyond homepage
+const MAX_EXTRA_PAGES   = 8;      // additional pages beyond homepage
 const HOME_CHARS        = 6_000;  // max chars kept from homepage
-const PAGE_CHARS        = 3_000;  // max chars kept per additional page
+const PAGE_CHARS        = 5_000;  // max chars kept per additional page
 const JINA_TIMEOUT_MS   = 8_000;
 const HTML_TIMEOUT_MS   = 8_000;
 
 // Pages most likely to contain EU AI Act compliance evidence — ordered by value
 const PRIORITY_PATTERNS: { re: RegExp; score: number; label: string }[] = [
-  { re: /\/privac/i,                                     score: 10, label: "Privacy Policy"    },
-  { re: /\/terms/i,                                      score: 9,  label: "Terms of Service"  },
-  { re: /\/about/i,                                      score: 8,  label: "About"             },
-  { re: /\/product|\/features|\/solution|\/platform/i,   score: 8,  label: "Product/Features"  },
-  { re: /\/careers|\/jobs|\/hiring|\/vacancies/i,        score: 7,  label: "Careers/Jobs"      },
-  { re: /\/security|\/trust|\/compliance|\/responsible/i,score: 7,  label: "Security/Trust"    },
-  { re: /\/how-it-works|\/technology|\/approach/i,       score: 6,  label: "Technology"        },
-  { re: /\/docs|\/documentation|\/developers|\/api/i,    score: 5,  label: "Documentation"     },
-  { re: /\/blog|\/news|\/press|\/media|\/insights/i,     score: 4,  label: "Blog/Press"        },
-  { re: /\/pricing/i,                                    score: 2,  label: "Pricing"           },
+  { re: /\/privac/i,                                                    score: 10, label: "Privacy Policy"       },
+  { re: /\/terms/i,                                                     score: 9,  label: "Terms of Service"     },
+  { re: /\/about/i,                                                     score: 8,  label: "About"                },
+  { re: /\/product|\/features|\/solution|\/platform/i,                  score: 8,  label: "Product/Features"     },
+  { re: /\/responsible|\/ethics|\/ai-governance|\/ai-policy/i,          score: 8,  label: "Responsible AI/Ethics" },
+  { re: /\/security|\/trust|\/compliance/i,                             score: 7,  label: "Security/Trust"       },
+  { re: /\/careers|\/jobs|\/hiring|\/vacancies/i,                       score: 7,  label: "Careers/Jobs"         },
+  { re: /\/how-it-works|\/technology|\/approach|\/methodology/i,        score: 6,  label: "Technology"           },
+  { re: /\/data-processing|\/dpa|\/cookie|\/gdpr/i,                     score: 6,  label: "Data/GDPR Policy"     },
+  { re: /\/docs|\/documentation|\/developers|\/api/i,                   score: 5,  label: "Documentation"        },
+  { re: /\/blog|\/news|\/press|\/media|\/insights/i,                    score: 4,  label: "Blog/Press"           },
+  { re: /\/pricing/i,                                                   score: 2,  label: "Pricing"              },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

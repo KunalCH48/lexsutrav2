@@ -14,6 +14,7 @@ import {
   Radar,
   UserCheck,
   Receipt,
+  Send,
 } from "lucide-react";
 import { SidebarLink } from "./SidebarLink";
 import { SignOutButton } from "./SignOutButton";
@@ -26,7 +27,8 @@ const OPERATIONS = [
   { href: "/admin/clients",   label: "All Clients",  icon: Users,         exact: false },
   { href: "/admin/feedback",  label: "Feedback",     icon: MessageSquare, exact: false },
   { href: "/admin/reports",   label: "Reports",      icon: FileText,      exact: false },
-  { href: "/admin/invoices",  label: "Invoices",     icon: Receipt,       exact: false },
+  { href: "/admin/invoices",    label: "Invoices",         icon: Receipt,       exact: false },
+  { href: "/admin/quick-send", label: "Quick Send Brief", icon: Send,          exact: false },
 ];
 
 const PLATFORM = [

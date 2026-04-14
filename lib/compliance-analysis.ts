@@ -1,42 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
-import { logError } from "@/lib/log-error";
-import type { FootprintSources } from "@/lib/fetch-public-footprint";
+/**
+ * Shared compliance analysis prompts and utilities.
+ * Used by demo-analysis and quick-brief routes.
+ */
 
-export const maxDuration = 120;
+import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic();
 
-type InsightVersion = {
-  v: number;
-  content: string;            // JSON string of StructuredReport
-  generated_at: string;
-  internal_feedback: string | null;
-  website_scan_quality?: "good" | "partial" | "failed";
-  sources_found?: FootprintSources;
-  // Immutable evidence log — raw public content used to generate THIS version.
-  // Locked at generation time so future re-gathers cannot overwrite it.
-  evidence_snapshot?: {
-    raw_content:  string;      // full scraped text passed to Claude
-    fetched_at:   string;      // ISO timestamp of when it was gathered
-    sources:      FootprintSources;
-  };
-};
-
-type InsightsSnapshot = {
-  versions:         InsightVersion[];
-  footprint_cache?: {
-    content:    string;
-    quality:    "good" | "partial" | "failed";
-    sources:    FootprintSources;
-    fetched_at: string;
-  };
-};
-
-// ── System prompts ────────────────────────────────────────────
-
-const SYSTEM_INITIAL = `You are a senior EU AI Act compliance specialist at LexSutra, a regulatory intelligence firm based in the Netherlands.
+export const SYSTEM_INITIAL = `You are a senior EU AI Act compliance specialist at LexSutra, a regulatory intelligence firm based in the Netherlands.
 
 Based on a prospective client's company name and public website, produce a full pre-diagnostic compliance snapshot report assessed against all 8 mandatory obligations of the EU AI Act for High-Risk AI systems.
 
@@ -286,22 +257,7 @@ Return this exact JSON structure. No text before or after the JSON.
   ]
 }`;
 
-const SYSTEM_REFINE = `You are a senior EU AI Act compliance specialist at LexSutra. You are revising a pre-diagnostic compliance snapshot report based on internal expert feedback.
-
-The client will receive only the final document. Never include version numbers, "draft" labels, internal notes, or any language referencing the revision process.
-
-Apply the feedback to improve the report. You may change obligation statuses, finding text, required actions, confidence levels, grade, or any field. Produce a complete revised report.
-
-Language rules (same as initial generation):
-- critical_gap / not_started findings: "Based on publicly available information at the time of this assessment, no evidence of [specific requirement] was identified..."
-- partial findings: "Based on publicly available information, limited evidence of [requirement] was identified..."
-- compliant findings: "Publicly available information indicates that [Company] [evidence]..."
-Never use: "critical gap found", "gap detected", "lacks [X]", "failure to comply", or "non-compliant".
-Maintain inline source citations in findings where they exist: (Source: [name], [date]).
-
-Return ONLY the same valid JSON structure as the original — no prose outside the JSON. Maintain British English throughout. All 8 obligations, all confidence fields, company_intelligence, and pricing_recommendation must be present in the output.`;
-
-const SYSTEM_EVIDENCE = `You are an evidence extraction specialist. From the provided public company content, extract all specific evidence relevant to each EU AI Act obligation.
+export const SYSTEM_EVIDENCE = `You are an evidence extraction specialist. From the provided public company content, extract all specific evidence relevant to each EU AI Act obligation.
 
 For each obligation, identify:
 1. Direct quotes, specific claims, or statements from public sources (with source cited)
@@ -331,65 +287,9 @@ Obligations to extract evidence for (all 8):
 
 IMPORTANT: For obligation 07, always record any quantitative metric claim (e.g. "85% success rate") as evidence even if the methodology is not disclosed.`;
 
-// ── Failed-scan template (no Claude call) ─────────────────────
-
-function buildFailedScanReport(companyName: string, websiteUrl: string | null, date: string) {
-  const FINDING =
-    "The company's website was not accessible at the time of this assessment. " +
-    "No public information was available to evaluate this obligation. " +
-    "This finding reflects only the absence of publicly available evidence and " +
-    "should not be interpreted as a compliance determination.";
-  const CONFIDENCE_REASON =
-    "Assessment based on zero public information — the company's website could not be accessed.";
-  const REQUIRED_ACTION =
-    `Contact ${companyName} directly to obtain a description of their AI systems and relevant ` +
-    `documentation before a substantive assessment can be conducted.`;
-
-  const obligations = [
-    { number: "01", name: "Risk Management System",   article: "Article 9 | Regulation (EU) 2024/1689" },
-    { number: "02", name: "Data Governance",           article: "Article 10 | Regulation (EU) 2024/1689" },
-    { number: "03", name: "Technical Documentation",  article: "Article 11 + Annex IV | Regulation (EU) 2024/1689" },
-    { number: "04", name: "Logging & Record-Keeping", article: "Article 12 | Regulation (EU) 2024/1689" },
-    { number: "05", name: "Transparency",             article: "Article 13 | Regulation (EU) 2024/1689" },
-    { number: "06", name: "Human Oversight",          article: "Article 14 | Regulation (EU) 2024/1689" },
-    { number: "07", name: "Accuracy & Robustness",    article: "Article 15 | Regulation (EU) 2024/1689" },
-    { number: "08", name: "Conformity Assessment",    article: "Article 43 | Regulation (EU) 2024/1689" },
-  ].map((ob) => ({
-    ...ob,
-    status:            "not_started",
-    finding:           FINDING,
-    required_action:   REQUIRED_ACTION,
-    effort:            "To be confirmed after client contact",
-    deadline:          "To be confirmed",
-    confidence:        "low",
-    confidence_reason: CONFIDENCE_REASON,
-  }));
-
-  return {
-    identified_systems:      [],
-    primary_system_assessed: "Unknown — website inaccessible",
-    risk_classification:
-      `Needs Assessment — the website for ${companyName} ` +
-      `(${websiteUrl ?? "URL not provided"}) could not be accessed at the time of assessment. ` +
-      `No risk classification can be made without public or client-provided information.`,
-    risk_tier:    "needs_assessment",
-    annex_section: "To be determined",
-    grade:         "F",
-    executive_summary:
-      `This snapshot was generated for ${companyName} on ${date}. ` +
-      `The company's public website (${websiteUrl ?? "not provided"}) was not accessible at the time of assessment.\n\n` +
-      `No public information was available to evaluate any of the 8 EU AI Act obligations. ` +
-      `All findings reflect only the absence of publicly available evidence and should not be interpreted as a compliance determination. ` +
-      `A substantive assessment requires either access to the company's website or direct engagement with the company.\n\n` +
-      `It is recommended that LexSutra contact ${companyName} directly to gather basic information ` +
-      `about their AI systems before generating a substantive report.`,
-    obligations,
-  };
-}
-
 // ── Pass 1: Evidence extraction (locks evidence before scoring) ───────────────
 
-async function extractEvidence(content: string, companyName: string): Promise<string> {
+export async function extractEvidence(content: string, companyName: string): Promise<string> {
   try {
     const msg = await anthropic.messages.create({
       model:       "claude-haiku-4-5-20251001",
@@ -406,215 +306,5 @@ async function extractEvidence(content: string, companyName: string): Promise<st
     return raw;
   } catch {
     return ""; // evidence extraction failed — proceed without locked evidence
-  }
-}
-
-// ── Route handler ─────────────────────────────────────────────
-
-export async function POST(req: NextRequest) {
-  const adminClient = createSupabaseAdminClient();
-
-  try {
-    const body = await req.json() as { demoId: string; feedback?: string };
-    const { demoId, feedback } = body;
-
-    if (!demoId) return NextResponse.json({ error: "Missing demoId" }, { status: 400 });
-
-    // Load demo
-    const { data: demo, error: demoError } = await adminClient
-      .from("demo_requests")
-      .select("id, company_name, website_url, contact_email, insights_snapshot, research_brief")
-      .eq("id", demoId)
-      .single();
-
-    if (demoError || !demo) {
-      return NextResponse.json({ error: "Demo request not found" }, { status: 404 });
-    }
-
-    const snapshot        = (demo.insights_snapshot ?? { versions: [] }) as InsightsSnapshot;
-    const existingVersions = snapshot.versions ?? [];
-    const currentVersion   = existingVersions[existingVersions.length - 1] ?? null;
-    const isRefinement     = !!feedback && !!currentVersion;
-
-    // ── Branch: initial generation vs refinement ──────────────────
-    let parsed: unknown;
-    let usedScanQuality: "good" | "partial" | "failed" | undefined;
-    let usedSources: FootprintSources | undefined;
-
-    if (isRefinement) {
-      // Refinement — call Claude with SYSTEM_REFINE
-      const refineMessage = await anthropic.messages.create({
-        model:       "claude-sonnet-4-6",
-        max_tokens:  8192,
-        temperature: 0,
-        system:      SYSTEM_REFINE,
-        messages:    [{ role: "user", content: `Current report JSON:\n${currentVersion.content}\n\nInternal revision notes from expert reviewer:\n${feedback}\n\nReturn the complete revised report as JSON.` }],
-      });
-      let raw = refineMessage.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text).join("").trim();
-      raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
-      try {
-        parsed = JSON.parse(raw);
-      } catch {
-        await logError({ error: new Error("Claude returned invalid JSON"), source: "api/admin/demo-analysis", action: "POST:refine:parse", metadata: { demoId, raw: raw.slice(0, 500) } });
-        return NextResponse.json({ error: "Refinement produced invalid output. Please try again." }, { status: 500 });
-      }
-      usedScanQuality = currentVersion?.website_scan_quality as typeof usedScanQuality ?? undefined;
-      usedSources     = currentVersion?.sources_found;
-
-    } else {
-      // Initial generation — fetch website first
-      const assessmentDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
-
-      let scanQuality: "good" | "partial" | "failed" = "failed";
-      let websiteContent = "";
-
-      // Use cached footprint from Step 1 (demo-footprint route) if available
-      if (snapshot.footprint_cache?.content) {
-        scanQuality    = snapshot.footprint_cache.quality;
-        websiteContent = snapshot.footprint_cache.content;
-        usedSources    = snapshot.footprint_cache.sources;
-      } else if (demo.website_url) {
-        // No cache — fall back to basic website scan only
-        const { fetchWebsite } = await import("@/lib/fetch-website");
-        const result   = await fetchWebsite(demo.website_url);
-        scanQuality    = result.quality;
-        websiteContent = result.content;
-      }
-      usedScanQuality = scanQuality;
-
-      const researchBrief = (demo.research_brief as string | null) ?? null;
-
-      if (scanQuality === "failed" && !researchBrief) {
-        // ── No website content AND no research brief — return deterministic template ──
-        // Claude hallucinates from the company name (e.g. "Fin" → fintech).
-        // Only skip Claude when we have truly zero information to analyse.
-        parsed = buildFailedScanReport(demo.company_name, demo.website_url, assessmentDate);
-
-      } else {
-        // ── Good or partial scan — call Claude with SYSTEM_INITIAL ────────────
-        const { data: company } = await adminClient
-          .from("companies")
-          .select("onboarding")
-          .eq("contact_email", demo.contact_email)
-          .maybeSingle();
-
-        const answers = (company?.onboarding as { answers?: Record<string, unknown> } | null)?.answers;
-        let clientContext = "";
-        if (answers && Object.keys(answers).length > 0) {
-          const lines: string[] = [];
-          if (answers.ai_system_description)    lines.push(`- AI System Description: ${answers.ai_system_description}`);
-          if (answers.decision_making_role)     lines.push(`- Decision-making role: ${answers.decision_making_role}`);
-          if (answers.who_is_affected)          lines.push(`- Who is affected: ${Array.isArray(answers.who_is_affected) ? (answers.who_is_affected as string[]).join(", ") : answers.who_is_affected}`);
-          if (answers.scale_of_impact)          lines.push(`- Scale of impact (people/month): ${answers.scale_of_impact}`);
-          if (answers.existing_compliance_docs) lines.push(`- Existing compliance docs: ${answers.existing_compliance_docs}`);
-          if (answers.human_override_capability) lines.push(`- Human override capability: ${answers.human_override_capability}`);
-          if (answers.deployment_status)        lines.push(`- Deployment status: ${answers.deployment_status}`);
-          if (answers.additional_context)       lines.push(`- Additional context: ${answers.additional_context}`);
-          if (lines.length > 0) {
-            clientContext = `\n\nCLIENT-PROVIDED CONTEXT (from company onboarding questionnaire — treat as self-reported, unverified):\n${lines.join("\n")}\nNote: This context was provided directly by the client. Use it to refine obligation findings where relevant, but maintain the public-information caveat in all findings.`;
-          }
-        }
-
-        // Build a sources summary header for Claude
-        const sourcesSummary = usedSources
-          ? `\nPublic footprint sources scanned:\n` +
-            `  • Website: ${usedSources.websiteQuality.toUpperCase()}\n` +
-            `  • News articles: ${usedSources.newsCount} found\n` +
-            `  • LinkedIn company page: ${usedSources.linkedInFound ? "found" : "not found / blocked"}\n` +
-            `  • LinkedIn job postings: ${usedSources.linkedInJobsFound ? "found" : "not found / blocked"}\n` +
-            `  • Crunchbase profile: ${usedSources.crunchbaseFound ? "found" : "not found"}`
-          : "";
-
-        const footprintSection = scanQuality === "failed"
-          ? `\n\nPublic footprint: All sources inaccessible — use the admin research brief below as the primary information source.${sourcesSummary}`
-          : `\n\nPublic footprint content (${scanQuality} scan):${sourcesSummary}\n\n${websiteContent}`;
-
-        const briefSection = researchBrief
-          ? `\n\n──────────────────────────────────────────\nADMIN RESEARCH BRIEF (manually gathered by LexSutra analyst — treat as primary evidence, higher reliability than automated scan):\n${researchBrief}\n──────────────────────────────────────────`
-          : "";
-
-        // Pass 1 — extract and lock evidence before scoring (prevents borderline drift across runs)
-        const contentForExtraction = [websiteContent, researchBrief].filter(Boolean).join("\n\n");
-        const lockedEvidence = (scanQuality !== "failed" || researchBrief)
-          ? await extractEvidence(contentForExtraction, demo.company_name)
-          : "";
-        const lockedEvidenceSection = lockedEvidence
-          ? `\n\nLOCKED EVIDENCE — Pre-extracted and verified by Pass 1. Assign all obligation statuses based on this evidence only — do not re-derive scores from the raw content above:\n${lockedEvidence}`
-          : "";
-
-        const userMessage = `Company name: ${demo.company_name}\nWebsite: ${demo.website_url ?? "(not provided)"}${footprintSection}${briefSection}${lockedEvidenceSection}\n\nAssessment date: ${assessmentDate}${clientContext}\n\nGenerate the full diagnostic snapshot report JSON.`;
-
-        const message = await anthropic.messages.create({
-          model:       "claude-sonnet-4-6",
-          max_tokens:  8192,
-          temperature: 0,
-          system:      SYSTEM_INITIAL,
-          messages:    [{ role: "user", content: userMessage }],
-        });
-
-        let rawContent = message.content
-          .filter((b): b is Anthropic.TextBlock => b.type === "text")
-          .map((b) => b.text).join("").trim();
-        rawContent = rawContent.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
-
-        try {
-          parsed = JSON.parse(rawContent);
-        } catch {
-          await logError({ error: new Error("Claude returned invalid JSON"), source: "api/admin/demo-analysis", action: "POST:parse", metadata: { demoId, rawContent: rawContent.slice(0, 500) } });
-          return NextResponse.json({ error: "Analysis generation produced invalid output. Please try again." }, { status: 500 });
-        }
-      }
-    }
-
-    // Save new version (content = JSON string)
-    // evidence_snapshot locks the raw evidence used for this specific version —
-    // re-gathering later cannot overwrite what backed this report.
-    const evidenceSnapshot = snapshot.footprint_cache
-      ? {
-          raw_content: snapshot.footprint_cache.content,
-          fetched_at:  snapshot.footprint_cache.fetched_at,
-          sources:     snapshot.footprint_cache.sources,
-        }
-      : undefined;
-
-    const newVersion: InsightVersion = {
-      v:                    existingVersions.length + 1,
-      content:              JSON.stringify(parsed),
-      generated_at:         new Date().toISOString(),
-      internal_feedback:    isRefinement ? (feedback ?? null) : null,
-      website_scan_quality: usedScanQuality,
-      sources_found:        usedSources,
-      evidence_snapshot:    evidenceSnapshot,
-    };
-
-    // Preserve the live footprint_cache so the UI can still show it
-    const updatedSnapshot: InsightsSnapshot = {
-      ...snapshot,
-      versions: [...existingVersions, newVersion],
-    };
-
-    const { error: saveError } = await adminClient
-      .from("demo_requests")
-      .update({ insights_snapshot: updatedSnapshot })
-      .eq("id", demoId);
-
-    if (saveError) {
-      await logError({ error: saveError, source: "api/admin/demo-analysis", action: "POST:save", metadata: { demoId } });
-      return NextResponse.json({ error: "Failed to save analysis." }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success:       true,
-      version:       newVersion.v,
-      content:       newVersion.content,
-      totalVersions: updatedSnapshot.versions.length,
-    });
-
-  } catch (err) {
-    await logError({ error: err, source: "api/admin/demo-analysis", action: "POST", metadata: {} });
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: `Analysis generation failed: ${msg}` }, { status: 500 });
   }
 }
