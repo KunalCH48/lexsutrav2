@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         website_url:   websiteUrl?.trim() || null,
         contact_name:  contactName?.trim() || null,
         contact_email: contactEmail.trim().toLowerCase(),
-        status:        "new",
+        status:        "pending",
         source:        "manual",
       })
       .select("id")
