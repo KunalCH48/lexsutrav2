@@ -42,3 +42,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Salesforce DX (not part of this project)
+.sfdx/
+
+# Standalone CRM app (separate deployment)
+apps/
+
+# Test/draft PDF files
+*.pdf
+"Test report/"
+Test\ report/
