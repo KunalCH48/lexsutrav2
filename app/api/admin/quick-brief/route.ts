@@ -150,6 +150,11 @@ export async function POST(req: NextRequest) {
       reportRef,
     });
 
+    // Generate a 1-hour signed URL so admin can preview before sending
+    const { data: signedData } = await adminClient.storage
+      .from("demo-reports")
+      .createSignedUrl(storagePath, 60 * 60);
+
     return NextResponse.json({
       success:          true,
       grade:            report.grade,
@@ -161,6 +166,7 @@ export async function POST(req: NextRequest) {
       assessmentDate,
       storagePath,
       fileName,
+      previewUrl:   signedData?.signedUrl ?? null,
       emailSubject,
       emailBodyText,
     });
@@ -187,9 +193,12 @@ function buildEmailBodyText({
   criticalCount:      number;
   reportRef:          string;
 }): string {
+  const goodGrades = ["A+", "A", "B+", "B"];
   const urgencyNote = criticalCount > 0
-    ? `Our initial analysis flags ${criticalCount} area${criticalCount !== 1 ? "s" : ""} that will require action before the August 2026 deadline.`
-    : "Your initial compliance posture is encouraging — the attached brief has the full picture.";
+    ? `Our initial analysis flags ${criticalCount} critical area${criticalCount !== 1 ? "s" : ""} that will require action before the August 2026 deadline.`
+    : goodGrades.includes(grade)
+      ? "Your initial compliance posture is encouraging — the attached brief has the full picture."
+      : "The attached brief outlines the specific gaps and the steps needed to address them before the August 2026 deadline.";
 
   const riskShort = riskClassification.split("—")[0]?.trim() ?? riskClassification;
 

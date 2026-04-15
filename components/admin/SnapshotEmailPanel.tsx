@@ -11,6 +11,7 @@ type BriefData = {
   reportRef:          string;
   storagePath:        string;
   fileName:           string;
+  previewUrl:         string | null;
   emailSubject:       string;
   emailBodyText:      string;
 };
@@ -187,9 +188,19 @@ export default function SnapshotEmailPanel({
               />
             </div>
             {/* Attachment */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.35rem 1.25rem", fontSize: "0.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.35rem 1.25rem", fontSize: "0.75rem" }}>
               <span style={{ color: "#3d4f60", width: 56, flexShrink: 0 }}>Attach</span>
               <span style={{ color: "#2ecc71" }}>📎 {brief.fileName}</span>
+              {brief.previewUrl && (
+                <a
+                  href={brief.previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#2d9cdb", textDecoration: "underline", fontSize: "0.72rem" }}
+                >
+                  Preview PDF ↗
+                </a>
+              )}
             </div>
           </div>
 
