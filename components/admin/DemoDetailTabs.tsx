@@ -26,13 +26,15 @@ type InsightVersion = {
 };
 
 type SavedBrief = {
-  storagePath:   string;
-  fileName:      string;
-  grade:         string;
-  reportRef:     string;
-  criticalCount: number;
-  partialCount:  number;
-  compliantCount:number;
+  report:         { grade: string; risk_classification: string; obligations: { number: string; name: string; article: string; status: string; finding: string; required_action: string; effort: string; deadline: string }[] };
+  reportRef:      string;
+  assessmentDate: string;
+  generatedAt:    string;
+  teaser?: {
+    obligationIndex: number;
+    storagePath:     string;
+    fileName:        string;
+  };
 };
 
 type Snapshot = {
