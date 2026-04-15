@@ -24,6 +24,7 @@ export type ObligationItem = {
   deadline: string;
   confidence?: "low" | "medium" | "high";
   confidence_reason?: string;
+  commercial_impact?: string;
 };
 
 export type StructuredReport = {
@@ -689,6 +690,39 @@ function ExecutiveSummaryPage({
           <Text key={i} style={[st.body2, { marginBottom: 8 }]}>{p}</Text>
         ))}
 
+        {/* Identified AI Systems */}
+        {report.identified_systems && report.identified_systems.length > 0 && (
+          <View style={{ borderWidth: 0.5, borderColor: C.rule, borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
+            <View style={{ backgroundColor: C.dark, paddingHorizontal: 10, paddingVertical: 5 }}>
+              <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 7, color: "#ffffff", letterSpacing: 0.4 }}>
+                IDENTIFIED AI SYSTEMS — all systems identified from public information
+              </Text>
+            </View>
+            {report.identified_systems.map((sys, i) => {
+              const isPrimary  = sys.name === report.primary_system_assessed;
+              const tierColor  = sys.likely_risk_tier === "high_risk" ? C.red : sys.likely_risk_tier === "limited_risk" ? C.amber : C.green;
+              const tierLabel  = sys.likely_risk_tier === "high_risk" ? "HIGH-RISK" : sys.likely_risk_tier === "limited_risk" ? "LIMITED-RISK" : "MINIMAL-RISK";
+              return (
+                <View key={i} style={{ flexDirection: "row", alignItems: "flex-start", borderTopWidth: i === 0 ? 0 : 0.5, borderTopColor: C.rule, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: isPrimary ? "#f7f9fc" : "#ffffff" }}>
+                  {isPrimary && (
+                    <View style={{ backgroundColor: C.blue, borderRadius: 2, paddingHorizontal: 5, paddingVertical: 1.5, marginRight: 7, marginTop: 1.5, flexShrink: 0 }}>
+                      <Text style={{ fontSize: 6, color: "#ffffff", fontFamily: "Helvetica-Bold", letterSpacing: 0.3 }}>PRIMARY</Text>
+                    </View>
+                  )}
+                  {!isPrimary && <View style={{ width: 40, marginRight: 7 }} />}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.text, marginBottom: 1 }}>{sys.name}</Text>
+                    <Text style={{ fontSize: 7.5, color: C.textMid, lineHeight: 1.4 }}>{sys.description}</Text>
+                  </View>
+                  <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: tierColor, marginLeft: 10, marginTop: 1.5, flexShrink: 0 }}>
+                    {tierLabel}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
         {/* Obligation summary table — sorted by severity, colour-coded rows */}
         <View style={st.table}>
           <View style={st.tHead}>
@@ -814,6 +848,16 @@ function ObligationAssessmentPage({
                 <Text style={st.obRowValue}>{ob.required_action}</Text>
               </View>
 
+              {/* Commercial Impact */}
+              {ob.commercial_impact && (
+                <View style={st.obRow}>
+                  <Text style={st.obRowLabel}>Commercial Impact</Text>
+                  <Text style={[st.obRowValue, { color: C.red, fontFamily: "Helvetica-Oblique" }]}>
+                    {ob.commercial_impact}
+                  </Text>
+                </View>
+              )}
+
               {/* Effort + Target */}
               {(ob.effort || ob.deadline) && (
                 <View style={st.obRow}>
@@ -915,7 +959,7 @@ function RoadmapPage({
 // ── Methodology & Authenticity page ────────────────────────────────
 
 function MethodologyPage({
-  report,
+  report: _report,
   companyName,
   reportRef,
   assessmentDate,

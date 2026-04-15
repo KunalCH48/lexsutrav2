@@ -16,6 +16,7 @@ export type ObligationItem = {
   deadline:         string;
   confidence?:      "low" | "medium" | "high";
   confidence_reason?: string;
+  commercial_impact?: string;
 };
 
 export type TeaserPDFProps = {

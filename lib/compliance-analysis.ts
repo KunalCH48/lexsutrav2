@@ -79,7 +79,13 @@ STEP 2 — ASSESS ALL 8 OBLIGATIONS
 ─────────────────────────────────────
 CITATION RULE: When a finding is based on a specific external source (a news article, LinkedIn post or job posting, Crunchbase data, or a specific page on the company website), cite it inline using this format: (Source: [source name], [Month Year if known]). Examples: "A LinkedIn job posting for a 'Head of AI Ethics' role (Source: LinkedIn Jobs, March 2026) suggests the company is building internal oversight capability, though no formal policy is publicly documented." or "According to funding coverage (Source: TechCrunch, Jan 2025), the company raised €5M Series A — indicating budget capacity for compliance investment."
 
-For each obligation, give status, a specific finding (2-4 sentences), required action, effort, and deadline.
+For each obligation, give status, a specific finding (2-4 sentences), required action, effort, deadline, and commercial_impact.
+
+commercial_impact: One sentence on the real-world commercial or legal consequence if this gap remains unaddressed by August 2026. Write in plain language — avoid regulatory jargon. Focus on market access, investor due diligence, or enterprise sales risk. Examples:
+- "Unresolved, this gap would prevent the system from being legally placed on the EU market after the August 2026 deadline — directly blocking EU revenue."
+- "Enterprise customers and investors conducting technical due diligence are likely to flag the absence of this documentation as a material compliance risk."
+- "Without documented human oversight, the company's deployer contracts may be unenforceable, exposing clients to liability and reducing enterprise sales."
+- "If this gap persists, the system cannot pass conformity self-assessment, meaning it cannot be CE-marked or registered in the EU AI database before the deadline."
 
 01. Risk Management System | Article 9 | Regulation (EU) 2024/1689
 Article 9 requires an ongoing iterative risk management system covering the full AI lifecycle — not a one-off assessment. It must include identification and analysis of foreseeable risks, estimation and evaluation of emerging risks, and documented mitigation measures.
@@ -277,16 +283,17 @@ Return this exact JSON structure. No text before or after the JSON.
       "required_action": "Create and document a Risk Management System... [specific, starts with a verb]",
       "effort": "1-2 weeks documentation",
       "deadline": "April 2026",
+      "commercial_impact": "Without a documented risk management system, the company cannot complete the Article 43 conformity self-assessment required before placing the system on the EU market — directly blocking EU market access post–August 2026.",
       "confidence": "low",
       "confidence_reason": "Assessment based on public website and press coverage only; no technical documentation or compliance pages were identified."
     },
-    { "number": "02", "name": "Data Governance", "article": "Article 10 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
-    { "number": "03", "name": "Technical Documentation", "article": "Article 11 + Annex IV | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
-    { "number": "04", "name": "Logging & Record-Keeping", "article": "Article 12 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
-    { "number": "05", "name": "Transparency", "article": "Article 13 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
-    { "number": "06", "name": "Human Oversight", "article": "Article 14 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
-    { "number": "07", "name": "Accuracy & Robustness", "article": "Article 15 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
-    { "number": "08", "name": "Conformity Assessment", "article": "Article 43 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "confidence": "low|medium|high", "confidence_reason": "..." }
+    { "number": "02", "name": "Data Governance", "article": "Article 10 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
+    { "number": "03", "name": "Technical Documentation", "article": "Article 11 + Annex IV | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
+    { "number": "04", "name": "Logging & Record-Keeping", "article": "Article 12 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
+    { "number": "05", "name": "Transparency", "article": "Article 13 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
+    { "number": "06", "name": "Human Oversight", "article": "Article 14 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
+    { "number": "07", "name": "Accuracy & Robustness", "article": "Article 15 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." },
+    { "number": "08", "name": "Conformity Assessment", "article": "Article 43 | Regulation (EU) 2024/1689", "status": "...", "finding": "...", "required_action": "...", "effort": "...", "deadline": "...", "commercial_impact": "...", "confidence": "low|medium|high", "confidence_reason": "..." }
   ]
 }`;
 
