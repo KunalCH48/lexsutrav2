@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# one-off scripts (may contain sensitive data)
+/scripts/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
