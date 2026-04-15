@@ -5,7 +5,7 @@ import DemoActionPanel from "./DemoActionPanel";
 import DemoResearchPanel from "./DemoResearchPanel";
 import DemoAnalysisPanel from "./DemoAnalysisPanel";
 import RiskBriefPanel from "./RiskBriefPanel";
-import SnapshotEmailPanel from "./SnapshotEmailPanel";
+import SnapshotEmailPanel, { type SavedBrief } from "./SnapshotEmailPanel";
 
 // ── Prop types (mirror what the server page has) ──────────────────
 
@@ -23,18 +23,6 @@ type InsightVersion = {
   generated_at:         string;
   internal_feedback:    string | null;
   website_scan_quality?: string;
-};
-
-type SavedBrief = {
-  report:         { grade: string; risk_classification: string; obligations: { number: string; name: string; article: string; status: string; finding: string; required_action: string; effort: string; deadline: string }[] };
-  reportRef:      string;
-  assessmentDate: string;
-  generatedAt:    string;
-  teaser?: {
-    obligationIndex: number;
-    storagePath:     string;
-    fileName:        string;
-  };
 };
 
 type Snapshot = {

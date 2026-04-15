@@ -21,7 +21,7 @@ type StructuredReport = {
   obligations:     ObligationItem[];
 };
 
-type SavedBrief = {
+export type SavedBrief = {
   report:        StructuredReport;
   reportRef:     string;
   assessmentDate:string;
