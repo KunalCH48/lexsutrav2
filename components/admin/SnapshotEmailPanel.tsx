@@ -5,20 +5,28 @@ import { useState } from "react";
 // ── Types ──────────────────────────────────────────────────────────
 
 type ObligationItem = {
-  number:          string;
-  name:            string;
-  article:         string;
-  status:          string;
-  finding:         string;
-  required_action: string;
-  effort:          string;
-  deadline:        string;
+  number:           string;
+  name:             string;
+  article:          string;
+  status:           string;
+  finding:          string;
+  required_action:  string;
+  effort:           string;
+  deadline:         string;
+  confidence?:      "low" | "medium" | "high";
+  confidence_reason?: string;
 };
 
 type StructuredReport = {
-  grade:           string;
-  risk_classification: string;
-  obligations:     ObligationItem[];
+  grade:                   string;
+  risk_classification:     string;
+  obligations:             ObligationItem[];
+  identified_systems?:     { name: string; description: string; likely_risk_tier: string }[];
+  primary_system_assessed?: string;
+  indicative_role?:        "provider" | "deployer" | "provider_and_deployer" | "distributor";
+  role_reasoning?:         string;
+  conformity_readiness?:   "not_ready" | "early_stage" | "partially_structured" | "assessment_ready";
+  conformity_readiness_note?: string;
 };
 
 export type SavedBrief = {
@@ -48,6 +56,31 @@ type Props = {
   websiteUrl:   string | null;
   savedBrief:   SavedBrief | null;
 };
+
+// ── Role / readiness helpers ────────────────────────────────────────
+
+function formatRoleShort(role?: string): string {
+  if (role === "provider")              return "Provider";
+  if (role === "deployer")              return "Deployer";
+  if (role === "provider_and_deployer") return "Provider & Deployer";
+  if (role === "distributor")           return "Distributor";
+  return role ?? "";
+}
+
+function conformityColor(r?: string): string {
+  if (r === "assessment_ready")     return "#2ecc71";
+  if (r === "partially_structured") return "#2d9cdb";
+  if (r === "early_stage")          return "#e0a832";
+  return "#e05252";
+}
+
+function formatConformityShort(r?: string): string {
+  if (r === "not_ready")            return "Not Ready";
+  if (r === "early_stage")          return "Early Stage";
+  if (r === "partially_structured") return "Partially Structured";
+  if (r === "assessment_ready")     return "Assessment Ready";
+  return r ?? "";
+}
 
 // ── Status helpers ─────────────────────────────────────────────────
 
@@ -272,9 +305,35 @@ export default function SnapshotEmailPanel({
       {/* ── Step 2: Pick obligation ── */}
       {step === "pick" && report && (
         <div style={{ padding: "1.25rem" }}>
-          <p className="text-xs mb-3" style={{ color: "#3d4f60" }}>
+          <p className="text-xs mb-2" style={{ color: "#3d4f60" }}>
             Select the most compelling gap to feature in the teaser brief. The recipient will only see this one obligation.
           </p>
+
+          {/* Role + conformity readiness intel */}
+          {(report.indicative_role || report.conformity_readiness) && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", marginBottom: "0.75rem", padding: "0.45rem 0.7rem", background: "rgba(255,255,255,0.02)", borderRadius: 6, border: "1px solid rgba(45,156,219,0.1)", fontSize: "0.72rem" }}>
+              {report.indicative_role && (
+                <span>
+                  <span style={{ color: "#3d4f60" }}>Role: </span>
+                  <strong style={{ color: "#2d9cdb" }}>{formatRoleShort(report.indicative_role)}</strong>
+                  {report.role_reasoning && (
+                    <span style={{ color: "#3d4f60" }}> — {report.role_reasoning}</span>
+                  )}
+                </span>
+              )}
+              {report.conformity_readiness && (
+                <span>
+                  <span style={{ color: "#3d4f60" }}>Conformity readiness: </span>
+                  <strong style={{ color: conformityColor(report.conformity_readiness) }}>
+                    {formatConformityShort(report.conformity_readiness)}
+                  </strong>
+                  {report.conformity_readiness_note && (
+                    <span style={{ color: "#3d4f60" }}> — {report.conformity_readiness_note}</span>
+                  )}
+                </span>
+              )}
+            </div>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>
             {report.obligations.map((ob, i) => {

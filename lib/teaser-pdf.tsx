@@ -6,14 +6,16 @@ import React from "react";
 // ── Types ──────────────────────────────────────────────────────────
 
 export type ObligationItem = {
-  number:          string;
-  name:            string;
-  article:         string;
-  status:          string;
-  finding:         string;
-  required_action: string;
-  effort:          string;
-  deadline:        string;
+  number:           string;
+  name:             string;
+  article:          string;
+  status:           string;
+  finding:          string;
+  required_action:  string;
+  effort:           string;
+  deadline:         string;
+  confidence?:      "low" | "medium" | "high";
+  confidence_reason?: string;
 };
 
 export type TeaserPDFProps = {

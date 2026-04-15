@@ -38,6 +38,22 @@ Then select the highest-risk system as primary_system_assessed — this is the s
 If only one system is identifiable, list it alone. If no distinct systems can be identified, list the company's primary AI capability as inferred from the website.
 
 ─────────────────────────────────────
+STEP 0.5 — INDICATIVE ROLE ASSESSMENT
+─────────────────────────────────────
+Under the EU AI Act, obligations differ significantly based on the company's legal role. Based on all available public evidence, assign the most likely role:
+
+PROVIDER (Art. 3(3)): Develops an AI system and places it on the market or puts it into service under its own name or trademark — even if built on third-party models (e.g. GPT, Claude, open-source). Full Chapter 3 obligations apply (Articles 9–15 and Article 43). This is the default for AI product companies.
+
+DEPLOYER (Art. 3(4)): Uses a third-party AI system under its own authority in the course of professional activity. Subject to Article 26 obligations — ensure human oversight, monitor in-production operation, inform employees, conduct DPIAs where required. Applies to companies using AI tools rather than building them.
+
+PROVIDER_AND_DEPLOYER: Both roles apply simultaneously — company develops and markets its own AI system AND deploys third-party AI tools in its own operations.
+
+DISTRIBUTOR (Art. 3(7)): Makes an AI system available on the market without placing it under own name and without substantial modification. Limited obligations (primarily due diligence on provider compliance). Rare — applies to resellers or app stores.
+
+Return indicative_role: "provider" | "deployer" | "provider_and_deployer" | "distributor"
+Return role_reasoning: one sentence citing the specific public evidence basis for this assessment.
+
+─────────────────────────────────────
 STEP 1 — RISK CLASSIFICATION
 ─────────────────────────────────────
 First determine the risk tier from the company's likely AI use:
@@ -130,6 +146,19 @@ HARD OVERRIDES (apply after percentage grade):
 - 3 or more not_started → grade cannot exceed D
 
 ─────────────────────────────────────
+STEP 3.5 — CONFORMITY READINESS SIGNAL
+─────────────────────────────────────
+Based on the overall grade and obligation statuses, assess how ready the company is to initiate a formal EU AI Act conformity self-assessment. This is the practical question founders care about: "Can we pass conformity assessment before August 2026?"
+
+Assign conformity_readiness:
+- "not_ready": Grade D or F, or 3+ critical_gap obligations. No meaningful evidence of compliance infrastructure. Foundational work must occur before conformity assessment can begin.
+- "early_stage": Grade C or C+, or 2 critical_gap obligations. Some compliance activity visible but major structural gaps remain. Assessment cannot begin until these are addressed.
+- "partially_structured": Grade B or B+. Most obligations show evidence of activity but documentation is not yet structured for formal conformity self-assessment under Article 43.
+- "assessment_ready": Grade A or A+. Compliance posture is sufficiently strong to initiate the formal conformity self-assessment process now.
+
+Return conformity_readiness_note: one sentence naming the single most critical blocker (or confirming readiness if assessment_ready).
+
+─────────────────────────────────────
 STEP 4 — ASSESS CONFIDENCE PER OBLIGATION
 ─────────────────────────────────────
 For each obligation, assign a confidence level based on how much public evidence was available:
@@ -204,10 +233,14 @@ Return this exact JSON structure. No text before or after the JSON.
     { "name": "Salary Benchmarking Engine", "description": "Recommends salary bands for roles based on market data.", "likely_risk_tier": "limited_risk" }
   ],
   "primary_system_assessed": "CVSort AI",
+  "indicative_role": "provider",
+  "role_reasoning": "Company develops and markets CVSort AI under its own brand — places the system on the EU market under its own name, meeting the definition of provider under Article 3(3).",
   "risk_classification": "Full sentence — e.g. 'High-Risk under Regulation (EU) 2024/1689, Article 6 and Annex III, Section 4(a) — AI systems used in employment, workers management and access to self-employment, specifically for screening and ranking of candidates.'",
   "risk_tier": "high_risk",
   "annex_section": "Section 4(a)",
   "grade": "C+",
+  "conformity_readiness": "early_stage",
+  "conformity_readiness_note": "Two critical gaps in Risk Management and Data Governance must be remediated before a formal Article 43 conformity self-assessment can be initiated.",
   "executive_summary": "2-3 paragraphs as a single string separated by \\n\\n. Paragraph 1: which AI system is assessed, what it does, and exact risk classification with full legal citation. Paragraph 2: summary stating exact numbers — X obligations with no publicly available evidence, X Partial, X Compliant. Paragraph 3: most urgent action and August 2026 deadline context. NO bullet points.",
   "dsa_applicability": "likely|possible|unlikely",
   "dsa_note": "One sentence — e.g. 'Company operates a hiring marketplace connecting employers and candidates — DSA obligations as an online intermediary may apply alongside EU AI Act.'",
