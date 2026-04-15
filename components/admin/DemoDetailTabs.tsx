@@ -195,7 +195,7 @@ export default function DemoDetailTabs({
           companyName={companyName}
           contactEmail={contactEmail}
           contactName={contactName}
-          snapshot={snapshot}
+          websiteUrl={websiteUrl}
         />
       )}
     </div>
