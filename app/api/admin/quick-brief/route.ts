@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
   const adminClient = createSupabaseAdminClient();
 
   try {
-    const body = await req.json() as { companyName: string; websiteUrl?: string };
-    const { companyName, websiteUrl } = body;
+    const body = await req.json() as { companyName: string; websiteUrl?: string; demoId?: string };
+    const { companyName, websiteUrl, demoId } = body;
 
     if (!companyName?.trim()) {
       return NextResponse.json({ error: "companyName is required" }, { status: 400 });
@@ -135,7 +135,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Step 7: Build email draft ──────────────────────────────────
+    // ── Step 7: Save brief reference to demo_requests ─────────────
+    if (demoId) {
+      const { data: existing } = await adminClient
+        .from("demo_requests")
+        .select("insights_snapshot")
+        .eq("id", demoId)
+        .single();
+
+      await adminClient
+        .from("demo_requests")
+        .update({
+          insights_snapshot: {
+            ...(existing?.insights_snapshot ?? {}),
+            brief_data: {
+              storagePath,
+              fileName,
+              grade:        report.grade,
+              reportRef,
+              criticalCount: (report.obligations ?? []).filter((o: { status: string }) => o.status === "critical_gap").length,
+              partialCount:  (report.obligations ?? []).filter((o: { status: string }) => o.status === "partial").length,
+              compliantCount:(report.obligations ?? []).filter((o: { status: string }) => o.status === "compliant").length,
+            },
+          },
+        })
+        .eq("id", demoId);
+    }
+
+    // ── Step 8: Build email draft ──────────────────────────────────
     const obligations   = report.obligations ?? [];
     const criticalCount = obligations.filter(o => o.status === "critical_gap").length;
     const partialCount  = obligations.filter(o => o.status === "partial").length;

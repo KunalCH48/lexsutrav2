@@ -25,9 +25,20 @@ type InsightVersion = {
   website_scan_quality?: string;
 };
 
+type SavedBrief = {
+  storagePath:   string;
+  fileName:      string;
+  grade:         string;
+  reportRef:     string;
+  criticalCount: number;
+  partialCount:  number;
+  compliantCount:number;
+};
+
 type Snapshot = {
   versions:          InsightVersion[];
   approved_pdf_path?: string;
+  brief_data?:       SavedBrief;
   footprint_cache?: {
     content:    string;
     sources:    FootprintSources;
@@ -196,6 +207,7 @@ export default function DemoDetailTabs({
           contactEmail={contactEmail}
           contactName={contactName}
           websiteUrl={websiteUrl}
+          savedBrief={snapshot?.brief_data ?? null}
         />
       )}
     </div>
