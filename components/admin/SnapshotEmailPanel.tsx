@@ -73,29 +73,40 @@ function statusLabel(s: string) {
   return s;
 }
 
-// ── Email body builder (short, human, no pricing) ──────────────────
+// ── Email body builder ─────────────────────────────────────────────
 
-function buildEmailBody(companyName: string, contactName: string, obligation: ObligationItem): string {
+function buildEmailBody(
+  companyName:       string,
+  contactName:       string,
+  obligation:        ObligationItem,
+  grade:             string,
+  riskClassification:string,
+): string {
   const firstName = contactName?.trim().split(" ")[0] ?? "";
   const greeting  = firstName ? `Hi ${firstName},` : "Hi,";
-  // First sentence of finding, capped at ~120 chars
+
+  // One concrete gap — first full sentence of finding
   const findingSnippet = obligation.finding.split(".")[0]?.trim() ?? obligation.finding;
-  const truncated = findingSnippet.length > 130 ? findingSnippet.slice(0, 127) + "…" : findingSnippet;
+  const gap = findingSnippet.length > 140 ? findingSnippet.slice(0, 137) + "…" : findingSnippet;
+
+  // Softened risk classification — first clause only
+  const riskShort = riskClassification.split("—")[0]?.split(",")[0]?.trim() ?? "likely High-Risk";
 
   return `${greeting}
 
-I ran a quick EU AI Act check on ${companyName} and wanted to flag one finding directly.
+I took a quick look at ${companyName} from an EU AI Act perspective and put together a short compliance snapshot based on publicly available information.
 
-${obligation.name} — ${truncated}.
+From what's visible, the system appears likely to fall within the ${riskShort} category (depending on how it's used), which brings specific obligations ahead of the August 2026 deadline.
 
-The one-page brief attached covers what this means and the specific action needed before August 2026.
+The indicative posture comes out at ${grade}, based on publicly available evidence. For example, ${obligation.name} — ${gap}.
 
-Happy to walk through the full picture on a short call if useful.
+I've attached a short brief showing this in more detail.
 
-Kind regards,
-Kunal Chaudhari
-LexSutra — AI Compliance Diagnostic Infrastructure
-kunal@lexsutra.com · lexsutra.com · Netherlands`;
+Curious if this roughly aligns with your internal view — happy to walk through it if useful.
+
+Best,
+Kunal
+LexSutra`;
 }
 
 // ── Component ──────────────────────────────────────────────────────
@@ -128,10 +139,12 @@ export default function SnapshotEmailPanel({
 
   const selectedOb = report && selected !== null ? report.obligations[selected] : null;
   const [subject,   setSubject]     = useState(
-    teaser && selectedOb ? `LexSutra Compliance Brief — ${companyName} [${reportRef}]` : ""
+    teaser && selectedOb ? `${companyName} — EU AI Act snapshot (brief attached)` : ""
   );
   const [body,      setBody]        = useState(
-    teaser && selectedOb ? buildEmailBody(companyName, contactName, selectedOb) : ""
+    teaser && selectedOb
+      ? buildEmailBody(companyName, contactName, selectedOb, savedBrief?.report.grade ?? "", savedBrief?.report.risk_classification ?? "")
+      : ""
   );
   const [toEmail,   setToEmail]     = useState(contactEmail);
   const [sending,   setSending]     = useState(false);
@@ -181,8 +194,8 @@ export default function SnapshotEmailPanel({
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setTeaser({ storagePath: data.storagePath, fileName: data.fileName, previewUrl: data.previewUrl, obligationIndex: selected });
       const ob = report!.obligations[selected];
-      setSubject(`LexSutra Compliance Brief — ${companyName} [${reportRef}]`);
-      setBody(buildEmailBody(companyName, contactName, ob));
+      setSubject(`${companyName} — EU AI Act snapshot (brief attached)`);
+      setBody(buildEmailBody(companyName, contactName, ob, report!.grade, report!.risk_classification));
       setStep("compose");
     } catch (err) {
       setGenErr(err instanceof Error ? err.message : "Generation failed");
